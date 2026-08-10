@@ -81,16 +81,29 @@ def main() -> None:
             f"| status: {d['status']} | finalized_on: {d.get('finalized_on')}"
         )
 
+    stores = {key: ShopifyStore.from_env(key) for key in STORE_KEYS}
+    order_number_cache: dict[tuple[str, int], str] = {}
+
+    def order_number_for(d: dict) -> str:
+        cache_key = (d["_store"], d["order_id"])
+        if cache_key not in order_number_cache:
+            try:
+                order = stores[d["_store"]].order(d["order_id"])
+                order_number_cache[cache_key] = str(order["order_number"])
+            except Exception:
+                order_number_cache[cache_key] = ""
+        return order_number_cache[cache_key]
+
     out_path = "disputes_export.csv"
     with open(out_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(
-            ["store", "dispute_id", "order_id", "amount", "currency", "reason", "status",
+            ["store", "dispute_id", "order_id", "order_number", "amount", "currency", "reason", "status",
              "evidence_sent_on", "evidence_due_by", "finalized_on"]
         )
         for d in sorted(all_disputes, key=lambda x: x["_store"]):
             writer.writerow(
-                [d["_store"], d["id"], d["order_id"], d.get("amount"), d.get("currency"),
+                [d["_store"], d["id"], d["order_id"], order_number_for(d), d.get("amount"), d.get("currency"),
                  d.get("reason"), d["status"], d.get("evidence_sent_on"),
                  d.get("evidence_due_by"), d.get("finalized_on")]
             )
