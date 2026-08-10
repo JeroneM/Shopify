@@ -40,3 +40,9 @@ class ShopifyStore:
 
     def orders(self, limit: int = 50, status: str = "any") -> list[dict]:
         return self.get("orders.json", params={"limit": limit, "status": status})["orders"]
+
+    def disputes(self, limit: int = 250) -> list[dict]:
+        return self.get("shopify_payments/disputes.json", params={"limit": limit})["disputes"]
+
+    def order(self, order_id: int) -> dict:
+        return self.get(f"orders/{order_id}.json")["order"]

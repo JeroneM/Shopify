@@ -7,3 +7,6 @@ venv/
 .env
 .env.*
 !.env.example
+
+# Local data exports - business/customer data, not source code
+*.csv
