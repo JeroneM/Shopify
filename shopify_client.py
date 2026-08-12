@@ -1,4 +1,5 @@
 import os
+import re
 
 import requests
 from dotenv import load_dotenv
@@ -6,6 +7,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 API_VERSION = "2024-01"
+
+
+def _next_page_info(link_header: str) -> str | None:
+    for part in link_header.split(","):
+        if 'rel="next"' not in part:
+            continue
+        match = re.search(r"page_info=([^&>]+)", part)
+        if match:
+            return match.group(1)
+    return None
 
 
 class ShopifyStore:
@@ -40,6 +51,20 @@ class ShopifyStore:
 
     def orders(self, limit: int = 50, status: str = "any") -> list[dict]:
         return self.get("orders.json", params={"limit": limit, "status": status})["orders"]
+
+    def orders_all(self, status: str = "any") -> list[dict]:
+        """Fetch every order, following cursor pagination."""
+        all_orders = []
+        params = {"limit": 250, "status": status}
+        while True:
+            response = self._session.get(f"{self.base_url}/orders.json", params=params)
+            response.raise_for_status()
+            all_orders.extend(response.json()["orders"])
+            next_page_info = _next_page_info(response.headers.get("Link", ""))
+            if not next_page_info:
+                break
+            params = {"limit": 250, "page_info": next_page_info}
+        return all_orders
 
     def disputes(self, limit: int = 250) -> list[dict]:
         return self.get("shopify_payments/disputes.json", params={"limit": limit})["disputes"]
