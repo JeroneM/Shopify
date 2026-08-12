@@ -11,6 +11,18 @@ def has_tag(order: dict, tag: str) -> bool:
     return tag.lower() in {t.strip().lower() for t in raw.split(",") if t.strip()}
 
 
+def tracking_numbers(order: dict) -> str:
+    numbers = []
+    for f in order.get("fulfillments") or []:
+        numbers.extend(f.get("tracking_numbers") or [])
+    return "; ".join(numbers)
+
+
+def delivery_status(order: dict) -> str:
+    statuses = [f.get("shipment_status") for f in order.get("fulfillments") or [] if f.get("shipment_status")]
+    return "; ".join(statuses)
+
+
 def main() -> None:
     all_replacements = []
     for key in STORE_KEYS:
@@ -37,7 +49,7 @@ def main() -> None:
         writer.writerow(
             ["store", "order_id", "order_number", "name", "customer_email", "customer_name",
              "created_at", "total_price", "currency", "financial_status", "fulfillment_status",
-             "tags", "note"]
+             "tracking_number", "delivery_status", "tags", "note"]
         )
         for o in sorted(all_replacements, key=lambda x: (x["_store"], x["created_at"])):
             customer = o.get("customer") or {}
@@ -48,7 +60,8 @@ def main() -> None:
                 [o["_store"], o["id"], o.get("order_number"), o.get("name"),
                  o.get("email") or o.get("contact_email"), customer_name, o.get("created_at"),
                  o.get("total_price"), o.get("currency"), o.get("financial_status"),
-                 o.get("fulfillment_status"), o.get("tags"), o.get("note")]
+                 o.get("fulfillment_status"), tracking_numbers(o), delivery_status(o),
+                 o.get("tags"), o.get("note")]
             )
     print(f"Full export written to {out_path}")
 
