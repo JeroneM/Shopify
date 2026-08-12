@@ -12,6 +12,26 @@ CLOSED_STATUSES = {"won", "lost", "accepted", "charge_refunded", "warning_closed
 # Auto-blocked by Shopify's chargeback protection before it became a real dispute - no action needed.
 PREVENTED_STATUSES = {"prevented"}
 
+# Simplified pending / win / lost bucket for reporting, per Shopify's dispute status enum.
+# https://shopify.dev/docs/api/admin-rest/latest/resources/dispute
+STATUS_OUTCOME = {
+    "needs_response": "Pending",
+    "warning_needs_response": "Pending",
+    "under_review": "Pending",
+    "warning_under_review": "Pending",
+    "won": "Win",
+    "lost": "Lost",
+    "accepted": "Lost",  # merchant accepted the chargeback without contesting it
+    "response_disabled": "Lost",  # window to respond closed with no evidence submitted
+    "charge_refunded": "Lost",  # order was refunded before the dispute closed
+    "warning_closed": "Closed (inquiry, no charge)",  # bank inquiry only, not a real chargeback
+    "prevented": "N/A (auto-prevented)",
+}
+
+
+def outcome_for(status: str) -> str:
+    return STATUS_OUTCOME.get(status, f"Unknown ({status})")
+
 
 def fmt_amount(d: dict) -> str:
     return f"{d.get('amount')} {d.get('currency')}"
@@ -43,24 +63,54 @@ def main() -> None:
 
     submitted_awaiting_reply = [d for d in open_disputes if d["status"] in UNDER_REVIEW_STATUSES]
     needs_our_evidence = [d for d in open_disputes if d["status"] in NEEDS_RESPONSE_STATUSES]
+    won_disputes = [d for d in all_disputes if d["status"] == "won"]
+    lost_disputes = [d for d in all_disputes if outcome_for(d["status"]) == "Lost"]
+
+    stores = {key: ShopifyStore.from_env(key) for key in STORE_KEYS}
+    order_cache: dict[tuple[str, int], dict] = {}
+
+    def order_for(d: dict) -> dict:
+        cache_key = (d["_store"], d["order_id"])
+        if cache_key not in order_cache:
+            try:
+                order_cache[cache_key] = stores[d["_store"]].order(d["order_id"])
+            except Exception:
+                order_cache[cache_key] = {}
+        return order_cache[cache_key]
+
+    def order_number_for(d: dict) -> str:
+        order = order_for(d)
+        return str(order["order_number"]) if "order_number" in order else ""
+
+    def customer_name_for(d: dict) -> str:
+        customer = order_for(d).get("customer") or {}
+        name = f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip()
+        return name or "(unknown)"
+
+    def customer_email_for(d: dict) -> str:
+        order = order_for(d)
+        return order.get("email") or (order.get("customer") or {}).get("email") or "(unknown)"
+
+    def order_summary(d: dict) -> str:
+        return f"order #{order_number_for(d) or d['order_id']} | {customer_name_for(d)} <{customer_email_for(d)}>"
 
     print("=" * 70)
     print(
-        f"TOTAL DISPUTES: {len(all_disputes)}  |  OPEN: {len(open_disputes)}  |  CLOSED: {len(closed_disputes)}"
-        f"  |  PREVENTED (no action needed): {len(prevented_disputes)}"
+        f"TOTAL DISPUTES: {len(all_disputes)}  |  PENDING: {len(open_disputes)}  |  WIN: {len(won_disputes)}"
+        f"  |  LOST: {len(lost_disputes)}  |  PREVENTED (no action needed): {len(prevented_disputes)}"
     )
     if other_disputes:
         print(f"UNRECOGNIZED STATUS: {len(other_disputes)} -> {[d['status'] for d in other_disputes]}")
     print("=" * 70)
 
-    print(f"\n--- OPEN: submitted evidence, awaiting reply ({len(submitted_awaiting_reply)}) ---")
+    print(f"\n--- PENDING: submitted evidence, awaiting reply ({len(submitted_awaiting_reply)}) ---")
     for d in submitted_awaiting_reply:
         print(
-            f"[{d['_store']}] dispute {d['id']} | order_id {d['order_id']} | {fmt_amount(d)} "
+            f"[{d['_store']}] dispute {d['id']} | {order_summary(d)} | {fmt_amount(d)} "
             f"| reason: {d.get('reason')} | evidence_sent_on: {d.get('evidence_sent_on')}"
         )
 
-    print(f"\n--- OPEN: still need to submit evidence ({len(needs_our_evidence)}) ---")
+    print(f"\n--- PENDING: still need to submit evidence ({len(needs_our_evidence)}) ---")
     now = datetime.now(timezone.utc)
     for d in sorted(needs_our_evidence, key=lambda x: x.get("evidence_due_by") or ""):
         due = d.get("evidence_due_by")
@@ -70,42 +120,31 @@ def main() -> None:
             days_left = (due_dt - now).days
             overdue_flag = f" ({'OVERDUE' if days_left < 0 else f'{days_left}d left'})"
         print(
-            f"[{d['_store']}] dispute {d['id']} | order_id {d['order_id']} | {fmt_amount(d)} "
+            f"[{d['_store']}] dispute {d['id']} | {order_summary(d)} | {fmt_amount(d)} "
             f"| reason: {d.get('reason')} | DEADLINE: {due}{overdue_flag}"
         )
 
-    print(f"\n--- CLOSED ({len(closed_disputes)}) ---")
+    print(f"\n--- CLOSED: win / lost ({len(closed_disputes)}) ---")
     for d in closed_disputes:
         print(
-            f"[{d['_store']}] dispute {d['id']} | order_id {d['order_id']} | {fmt_amount(d)} "
-            f"| status: {d['status']} | finalized_on: {d.get('finalized_on')}"
+            f"[{d['_store']}] dispute {d['id']} | {order_summary(d)} | {fmt_amount(d)} "
+            f"| outcome: {outcome_for(d['status'])} (status: {d['status']}) | finalized_on: {d.get('finalized_on')}"
         )
-
-    stores = {key: ShopifyStore.from_env(key) for key in STORE_KEYS}
-    order_number_cache: dict[tuple[str, int], str] = {}
-
-    def order_number_for(d: dict) -> str:
-        cache_key = (d["_store"], d["order_id"])
-        if cache_key not in order_number_cache:
-            try:
-                order = stores[d["_store"]].order(d["order_id"])
-                order_number_cache[cache_key] = str(order["order_number"])
-            except Exception:
-                order_number_cache[cache_key] = ""
-        return order_number_cache[cache_key]
 
     out_path = "disputes_export.csv"
     with open(out_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(
-            ["store", "dispute_id", "order_id", "order_number", "amount", "currency", "reason", "status",
+            ["store", "dispute_id", "order_id", "order_number", "customer_name", "customer_email",
+             "amount", "currency", "reason", "status", "outcome",
              "evidence_sent_on", "evidence_due_by", "finalized_on"]
         )
         for d in sorted(all_disputes, key=lambda x: x["_store"]):
             writer.writerow(
-                [d["_store"], d["id"], d["order_id"], order_number_for(d), d.get("amount"), d.get("currency"),
-                 d.get("reason"), d["status"], d.get("evidence_sent_on"),
-                 d.get("evidence_due_by"), d.get("finalized_on")]
+                [d["_store"], d["id"], d["order_id"], order_number_for(d), customer_name_for(d),
+                 customer_email_for(d), d.get("amount"), d.get("currency"), d.get("reason"), d["status"],
+                 outcome_for(d["status"]), d.get("evidence_sent_on"), d.get("evidence_due_by"),
+                 d.get("finalized_on")]
             )
     print(f"\nFull export written to {out_path}")
 
