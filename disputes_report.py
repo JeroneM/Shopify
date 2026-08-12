@@ -1,4 +1,5 @@
 import csv
+from collections import Counter
 from datetime import datetime, timezone
 
 from shopify_client import ShopifyStore
@@ -35,6 +36,12 @@ def outcome_for(status: str) -> str:
 
 def fmt_amount(d: dict) -> str:
     return f"{d.get('amount')} {d.get('currency')}"
+
+
+def initiated_date(d: dict) -> str:
+    """Calendar date (store-local) the customer's bank filed the dispute, or '' if missing."""
+    initiated_at = d.get("initiated_at")
+    return initiated_at[:10] if initiated_at else ""
 
 
 def main() -> None:
@@ -131,22 +138,35 @@ def main() -> None:
             f"| outcome: {outcome_for(d['status'])} (status: {d['status']}) | finalized_on: {d.get('finalized_on')}"
         )
 
+    by_date = Counter(initiated_date(d) for d in all_disputes)
+    print(f"\n--- DISPUTES SUBMITTED BY CUSTOMER, PER DATE ({len(by_date)} distinct dates) ---")
+    for date, count in sorted(by_date.items()):
+        print(f"{date or '(unknown date)'}: {count}")
+
     out_path = "disputes_export.csv"
     with open(out_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(
             ["store", "dispute_id", "order_id", "order_number", "customer_name", "customer_email",
-             "amount", "currency", "reason", "status", "outcome",
+             "amount", "currency", "reason", "status", "outcome", "initiated_at",
              "evidence_sent_on", "evidence_due_by", "finalized_on"]
         )
-        for d in sorted(all_disputes, key=lambda x: x["_store"]):
+        for d in sorted(all_disputes, key=lambda x: (x.get("initiated_at") or "", x["_store"])):
             writer.writerow(
                 [d["_store"], d["id"], d["order_id"], order_number_for(d), customer_name_for(d),
                  customer_email_for(d), d.get("amount"), d.get("currency"), d.get("reason"), d["status"],
-                 outcome_for(d["status"]), d.get("evidence_sent_on"), d.get("evidence_due_by"),
-                 d.get("finalized_on")]
+                 outcome_for(d["status"]), d.get("initiated_at"), d.get("evidence_sent_on"),
+                 d.get("evidence_due_by"), d.get("finalized_on")]
             )
     print(f"\nFull export written to {out_path}")
+
+    by_date_path = "disputes_by_date.csv"
+    with open(by_date_path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["date_submitted", "dispute_count"])
+        for date, count in sorted(by_date.items()):
+            writer.writerow([date, count])
+    print(f"Per-date submission counts written to {by_date_path}")
 
 
 if __name__ == "__main__":
