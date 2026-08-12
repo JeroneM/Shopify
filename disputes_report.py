@@ -163,10 +163,18 @@ def main() -> None:
     by_date_path = "disputes_by_date.csv"
     with open(by_date_path, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["date_submitted", "dispute_count"])
-        for date, count in sorted(by_date.items()):
-            writer.writerow([date, count])
-    print(f"Per-date submission counts written to {by_date_path}")
+        writer.writerow(
+            ["date_submitted", "disputes_that_day", "store", "order_number", "customer_name",
+             "customer_email", "amount", "currency", "concern_reason", "status", "outcome", "dispute_id"]
+        )
+        for d in sorted(all_disputes, key=lambda x: (initiated_date(x), x["_store"])):
+            date = initiated_date(d)
+            writer.writerow(
+                [date or "(unknown date)", by_date[date], d["_store"], order_number_for(d) or d["order_id"],
+                 customer_name_for(d), customer_email_for(d), d.get("amount"), d.get("currency"),
+                 d.get("reason"), d["status"], outcome_for(d["status"]), d["id"]]
+            )
+    print(f"Full detail grouped by submission date written to {by_date_path}")
 
 
 if __name__ == "__main__":
