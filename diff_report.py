@@ -3,7 +3,16 @@ Compare the live disputes_export.csv against a snapshot exported from the
 Google Sheet (markdown pipe-table pasted from Drive's read_file_content) and
 produce a diff: brand-new disputes and status changes on ones already there.
 
+Google Drive's tools only support reading and creating new files, not
+editing an existing spreadsheet's cells - so this script's output is meant
+to be handed to a human (or pasted in) rather than written back automatically.
+
 Usage: python3 diff_report.py path/to/sheet_snapshot.md
+Requires disputes_export.csv and disputes_by_date.csv (run disputes_report.py first).
+
+Outputs:
+  sheet_new_rows.csv       - new disputes, in the sheet's exact column order, ready to append
+  sheet_status_changes.csv - dispute_ids already in the sheet whose status/outcome changed
 """
 import csv
 import sys
@@ -30,7 +39,7 @@ def parse_sheet_snapshot(path: str) -> dict[str, dict]:
     return rows
 
 
-def load_live_disputes(path: str) -> list[dict]:
+def load_csv(path: str) -> list[dict]:
     with open(path) as f:
         return list(csv.DictReader(f))
 
@@ -41,36 +50,31 @@ def main() -> None:
         sys.exit(1)
 
     sheet_rows = parse_sheet_snapshot(sys.argv[1])
-    live = load_live_disputes("disputes_export.csv")
+    live = load_csv("disputes_export.csv")
+    by_date_rows = {r["dispute_id"]: r for r in load_csv("disputes_by_date.csv")}
 
-    new_rows = []
+    new_ids = set()
     changed_rows = []
     for d in live:
         dispute_id = d["dispute_id"]
-        outcome = d["outcome"]
         if dispute_id not in sheet_rows:
-            new_rows.append(d)
+            new_ids.add(dispute_id)
         else:
             old = sheet_rows[dispute_id]
-            if old["outcome"] != outcome or old["status"] != d["status"]:
+            if old["outcome"] != d["outcome"] or old["status"] != d["status"]:
                 changed_rows.append({**d, "previous_status": old["status"], "previous_outcome": old["outcome"]})
 
-    print(f"NEW disputes since last sheet update: {len(new_rows)}")
-    print(f"STATUS CHANGES on existing disputes: {len(changed_rows)}")
+    new_rows = sorted(
+        (by_date_rows[i] for i in new_ids if i in by_date_rows),
+        key=lambda r: (r["date_submitted"], r["store"]),
+    )
 
-    with open("diff_new_disputes.csv", "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(
-            ["store", "order_number", "customer_name", "customer_email", "amount", "currency",
-             "concern_reason", "status", "outcome", "initiated_at", "dispute_id"]
-        )
-        for d in sorted(new_rows, key=lambda x: x.get("initiated_at") or ""):
-            writer.writerow(
-                [d["store"], d["order_number"], d["customer_name"], d["customer_email"], d["amount"],
-                 d["currency"], d["reason"], d["status"], d["outcome"], d.get("initiated_at"), d["dispute_id"]]
-            )
+    with open("sheet_new_rows.csv", "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=SHEET_COLUMNS)
+        writer.writeheader()
+        writer.writerows(new_rows)
 
-    with open("diff_status_changes.csv", "w", newline="") as f:
+    with open("sheet_status_changes.csv", "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(
             ["store", "order_number", "customer_name", "customer_email", "dispute_id",
@@ -82,7 +86,8 @@ def main() -> None:
                  d["previous_status"], d["previous_outcome"], d["status"], d["outcome"]]
             )
 
-    print("Wrote diff_new_disputes.csv and diff_status_changes.csv")
+    print(f"NEW disputes since last sheet update: {len(new_rows)} -> sheet_new_rows.csv")
+    print(f"STATUS CHANGES on existing disputes: {len(changed_rows)} -> sheet_status_changes.csv")
 
 
 if __name__ == "__main__":
