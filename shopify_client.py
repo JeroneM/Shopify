@@ -52,10 +52,12 @@ class ShopifyStore:
     def orders(self, limit: int = 50, status: str = "any") -> list[dict]:
         return self.get("orders.json", params={"limit": limit, "status": status})["orders"]
 
-    def orders_all(self, status: str = "any") -> list[dict]:
+    def orders_all(self, status: str = "any", created_at_min: str | None = None) -> list[dict]:
         """Fetch every order, following cursor pagination."""
         all_orders = []
         params = {"limit": 250, "status": status}
+        if created_at_min:
+            params["created_at_min"] = created_at_min
         while True:
             response = self._session.get(f"{self.base_url}/orders.json", params=params)
             response.raise_for_status()

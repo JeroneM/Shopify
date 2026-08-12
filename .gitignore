@@ -10,3 +10,6 @@ venv/
 
 # Local data exports - business/customer data, not source code
 *.csv
+
+# Local sync watermark - runtime state, not source code
+replacement_sync_state.json
