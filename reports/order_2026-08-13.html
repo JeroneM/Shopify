@@ -1,0 +1,419 @@
+<title>Size Curve Shift</title>
+<style>
+:root{
+  color-scheme: light;
+  --ground:#F1F4F5; --surface:#FFFFFF; --surface-2:#F7F9FA;
+  --ink:#131719; --ink-2:#55636A; --ink-3:#7D8A91;
+  --rule:#DCE3E6; --rule-2:#EDF1F2;
+  --accent:#14595F; --accent-soft:#E2EFF0;
+  --pos:#2a78d6; --neg:#e34948; --mid:#f0efec;
+  --warn:#8A5B00; --warn-bg:#FBF0DA;
+  --crit:#9C2B2B; --crit-bg:#FBE4E4;
+  --ok:#0B6B4F; --ok-bg:#DFF1EA;
+  --shadow:0 1px 2px rgba(19,23,25,.05), 0 8px 24px -16px rgba(19,23,25,.25);
+  --serif: ui-serif, "Iowan Old Style", "Source Serif 4", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --ground:#0E1214; --surface:#181D20; --surface-2:#1E2427;
+    --ink:#E9EEF0; --ink-2:#9DAAB1; --ink-3:#77858C;
+    --rule:#2A3337; --rule-2:#222A2D;
+    --accent:#5FBCC1; --accent-soft:#15302F;
+    --pos:#3987e5; --neg:#e66767; --mid:#383835;
+    --warn:#E4B155; --warn-bg:#2E2415;
+    --crit:#EE8A8A; --crit-bg:#331A1A;
+    --ok:#5FC3A2; --ok-bg:#122A22;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --ground:#0E1214; --surface:#181D20; --surface-2:#1E2427;
+  --ink:#E9EEF0; --ink-2:#9DAAB1; --ink-3:#77858C;
+  --rule:#2A3337; --rule-2:#222A2D;
+  --accent:#5FBCC1; --accent-soft:#15302F;
+  --pos:#3987e5; --neg:#e66767; --mid:#383835;
+  --warn:#E4B155; --warn-bg:#2E2415;
+  --crit:#EE8A8A; --crit-bg:#331A1A;
+  --ok:#5FC3A2; --ok-bg:#122A22;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px; margin:0 auto; padding:clamp(24px,5vw,64px) clamp(16px,4vw,40px) 96px;
+  display:flex; flex-direction:column; gap:44px}
+.prose{max-width:68ch}
+h1,h2,h3{font-family:var(--serif); font-weight:600; text-wrap:balance; margin:0; letter-spacing:-.01em}
+h1{font-size:clamp(2rem,4.6vw,3.1rem); line-height:1.08}
+h2{font-size:clamp(1.35rem,2.5vw,1.75rem); line-height:1.2}
+h3{font-size:1.06rem; line-height:1.3}
+p{margin:0}
+a{color:var(--accent)}
+.eyebrow{font-family:var(--mono); font-size:.7rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-3); margin:0 0 14px}
+.lede{font-size:1.12rem; color:var(--ink-2); margin-top:18px}
+
+header .meta{display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:24px;
+  font-family:var(--mono); font-size:.76rem; color:var(--ink-3)}
+header .meta b{color:var(--ink-2); font-weight:500}
+
+.banner{display:flex; gap:14px; align-items:flex-start; background:var(--warn-bg);
+  border:1px solid color-mix(in srgb, var(--warn) 30%, transparent);
+  border-radius:3px; padding:18px 20px}
+.banner .mark{font-family:var(--mono); font-weight:700; color:var(--warn); flex:none; line-height:1.5}
+.banner p{font-size:.94rem; color:var(--ink-2)}
+.banner strong{color:var(--ink)}
+
+section{display:flex; flex-direction:column; gap:20px}
+.head{display:flex; flex-direction:column; gap:8px}
+.head .sub{color:var(--ink-2); font-size:.97rem; max-width:68ch}
+
+.tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:2px;
+  background:var(--rule); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.tile{background:var(--surface); padding:20px 22px; display:flex; flex-direction:column; gap:6px}
+.tile .k{font-family:var(--mono); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3)}
+.tile .v{font-family:var(--serif); font-size:2rem; font-variant-numeric:tabular-nums; line-height:1}
+.tile .n{font-size:.8rem; color:var(--ink-2)}
+.tile.hero{background:var(--accent-soft)}
+.tile.hero .v{color:var(--accent)}
+
+.card{background:var(--surface); border:1px solid var(--rule); border-radius:4px;
+  padding:clamp(20px,3vw,30px); box-shadow:var(--shadow)}
+
+/* diverging bar chart */
+.chart{display:flex; flex-direction:column; gap:2px; margin-top:22px}
+.crow{display:grid; grid-template-columns:64px 1fr; align-items:center; gap:14px;
+  padding:3px 0; border-radius:2px}
+.crow:hover{background:var(--surface-2)}
+.crow .lbl{font-family:var(--mono); font-size:.82rem; font-weight:600; text-align:right; color:var(--ink)}
+.track{position:relative; height:30px}
+.track::before{content:""; position:absolute; left:50%; top:-3px; bottom:-3px; width:1px; background:var(--rule)}
+.bar{position:absolute; top:5px; height:20px; min-width:3px}
+.bar.p{left:50%; background:var(--pos); border-radius:0 4px 4px 0; margin-left:1px}
+.bar.n{right:50%; background:var(--neg); border-radius:4px 0 0 4px; margin-right:1px}
+.val{position:absolute; top:50%; transform:translateY(-50%); font-family:var(--mono);
+  font-size:.78rem; font-variant-numeric:tabular-nums; color:var(--ink); white-space:nowrap}
+.axcap{display:grid; grid-template-columns:64px 1fr; gap:14px; margin-top:10px}
+.axcap .halves{display:flex; justify-content:space-between; font-family:var(--mono);
+  font-size:.68rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3)}
+figcaption{font-size:.84rem; color:var(--ink-3); margin-top:16px; max-width:68ch}
+
+/* weekly trend */
+.trendbox{display:grid; grid-template-columns:repeat(5,1fr); gap:2px; margin-top:20px; align-items:end; height:150px}
+.tcol{display:flex; flex-direction:column; justify-content:flex-end; gap:8px; height:100%}
+.tbar{background:var(--accent); border-radius:4px 4px 0 0; min-height:4px}
+.tcol.est .tbar{background:repeating-linear-gradient(135deg,var(--accent),var(--accent) 5px,transparent 5px,transparent 10px),var(--accent-soft);
+  border:1px dashed var(--accent)}
+.tmeta{display:flex; flex-direction:column; gap:2px; text-align:center}
+.tmeta .tv{font-family:var(--mono); font-size:.8rem; font-variant-numeric:tabular-nums; color:var(--ink)}
+.tmeta .tk{font-family:var(--mono); font-size:.66rem; color:var(--ink-3)}
+
+.cols{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px}
+.mini{background:var(--surface); border:1px solid var(--rule); border-radius:4px; padding:22px;
+  display:flex; flex-direction:column; gap:12px}
+.mini h3{display:flex; align-items:center; gap:9px}
+.dot{width:9px; height:9px; border-radius:50%; flex:none}
+.mini ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:9px}
+.mini li{display:flex; justify-content:space-between; gap:14px; font-size:.89rem;
+  padding-bottom:9px; border-bottom:1px solid var(--rule-2)}
+.mini li:last-child{border-bottom:0; padding-bottom:0}
+.mini li span:first-child{font-family:var(--mono); font-size:.8rem; color:var(--ink-2)}
+.mini li b{font-family:var(--mono); font-variant-numeric:tabular-nums; font-weight:600; flex:none}
+.mini .note{font-size:.84rem; color:var(--ink-3)}
+
+.scroll{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--surface)}
+table{border-collapse:collapse; width:100%; font-size:.83rem}
+caption{text-align:left; padding:16px 18px; font-size:.84rem; color:var(--ink-3); border-bottom:1px solid var(--rule)}
+th,td{padding:8px 12px; text-align:left; white-space:nowrap; border-bottom:1px solid var(--rule-2)}
+thead th{position:sticky; top:0; background:var(--surface-2); font-family:var(--mono);
+  font-size:.66rem; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-2);
+  font-weight:600; border-bottom:1px solid var(--rule); z-index:1}
+tbody tr:hover{background:var(--surface-2)}
+td.n,th.n{text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums}
+td.strong{font-weight:600}
+td.pend{color:var(--ink-3)}
+td.prod{color:var(--ink-2); white-space:normal; min-width:230px}
+.sku{font-family:var(--mono); font-size:.78rem; font-weight:600}
+.conf{display:inline-block; margin-left:6px; width:14px; height:14px; line-height:14px;
+  text-align:center; border-radius:50%; background:var(--warn-bg); color:var(--warn);
+  font-family:var(--mono); font-size:.62rem; font-weight:700; cursor:help}
+.chip{display:inline-block; padding:2px 8px; border-radius:2px; font-family:var(--mono);
+  font-size:.68rem; letter-spacing:.03em}
+.chip.up{background:color-mix(in srgb,var(--pos) 15%,transparent); color:var(--pos)}
+.chip.down{background:color-mix(in srgb,var(--neg) 15%,transparent); color:var(--neg)}
+.chip.flat{background:var(--rule-2); color:var(--ink-2)}
+.chip.vol{background:var(--warn-bg); color:var(--warn)}
+
+.checks{display:flex; flex-direction:column; gap:2px; background:var(--rule);
+  border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.check{display:grid; grid-template-columns:112px 1fr; gap:18px; background:var(--surface); padding:14px 18px}
+.check .st{font-family:var(--mono); font-size:.66rem; letter-spacing:.07em; text-transform:uppercase;
+  padding:3px 8px; border-radius:2px; align-self:start; text-align:center}
+.st.pass{background:var(--ok-bg); color:var(--ok)}
+.st.warn{background:var(--warn-bg); color:var(--warn)}
+.st.miss{background:var(--crit-bg); color:var(--crit)}
+.check .cb{display:flex; flex-direction:column; gap:3px}
+.check b{font-size:.9rem; font-weight:600}
+.check p{font-size:.86rem; color:var(--ink-2)}
+
+.method{width:100%; border-collapse:collapse; font-size:.89rem}
+.method th{width:190px; vertical-align:top; color:var(--ink); font-weight:600;
+  font-family:var(--sans); font-size:.89rem; white-space:normal; letter-spacing:0; text-transform:none}
+.method td{white-space:normal; color:var(--ink-2)}
+.method code{font-family:var(--mono); font-size:.82em; background:var(--surface-2);
+  padding:1px 5px; border-radius:2px; color:var(--ink)}
+
+footer{border-top:1px solid var(--rule); padding-top:24px; font-size:.84rem; color:var(--ink-3)}
+@media (max-width:640px){
+  .check{grid-template-columns:1fr; gap:8px}
+  .crow{grid-template-columns:48px 1fr}
+  .axcap{grid-template-columns:48px 1fr}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+
+td.neg{color:var(--neg); font-weight:600}
+td.order{font-weight:700; color:var(--ink)}
+.chip.crit{background:var(--crit-bg); color:var(--crit)}
+.chip.high{background:var(--warn-bg); color:var(--warn)}
+.chip.ok{background:var(--ok-bg); color:var(--ok)}
+.chip.over{background:color-mix(in srgb,var(--pos) 15%,transparent); color:var(--pos)}
+.bigstat{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:2px;
+  background:var(--rule); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.split{display:grid; gap:2px; background:var(--rule); border:1px solid var(--rule);
+  border-radius:4px; overflow:hidden; grid-template-columns:1fr}
+@media(min-width:720px){.split{grid-template-columns:1fr 1fr}}
+.half{background:var(--surface); padding:22px 24px; display:flex; flex-direction:column; gap:10px}
+.half .k{font-family:var(--mono); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3)}
+.half .v{font-family:var(--serif); font-size:1.85rem; line-height:1}
+.half p{font-size:.88rem; color:var(--ink-2)}
+.vshort .v{color:var(--crit)} .vlong .v{color:var(--pos)}
+</style>
+
+<div class="wrap">
+<header class="prose">
+  <p class="eyebrow">Purchase order · run 13 August 2026 · off-cycle</p>
+  <h1>Order 16,484 units. All of it in XL and up.</h1>
+  <p class="lede">Your stock file closes the loop. Every unit in this order goes to a size that is
+  already oversold; nothing goes to S, M or L, which between them hold six weeks of cover and 32,689 more units still in production.</p>
+  <div class="meta">
+    <span>Source <b>Order issue tracker for tanks.xlsx</b></span><span>SKUs <b>48 · QL1058 only</b></span>
+    <span>Lead time <b>7 days (assumed)</b></span><span>Marketing multiplier <b>1.00 — none provided</b></span>
+  </div>
+</header>
+
+<div class="banner">
+  <span class="mark">!</span>
+  <p><strong>One assumption carries this whole order: that the 96,385 units in production actually
+  land inside the next two weeks.</strong> Your file has an "Estimated Warehouse Arrival Date" column
+  and it is empty on all 48 rows. If those goods are further out than two weeks, this order is far
+  too small — the gap is 91,277 units, not 16,484.</p>
+</div>
+
+<section>
+  <div class="bigstat">
+    <div class="tile"><span class="k">Order now</span><span class="v">16,484</span><span class="n">18 SKUs, all XL / 2XL / 3XL</span></div>
+    <div class="tile"><span class="k">Owed to customers</span><span class="v">15,446</span><span class="n">21 SKUs already oversold</span></div>
+    <div class="tile"><span class="k">Weekly demand</span><span class="v">29,461</span><span class="n">Recency-weighted from 7-day actuals</span></div>
+    <div class="tile hero"><span class="k">Add for 4XL</span><span class="v">10,398</span><span class="n">New size — see below</span></div>
+  </div>
+</section>
+
+<section>
+  <div class="head">
+    <h2>You are not short of stock. You are short of the right stock.</h2>
+    <p class="sub">Net available inventory across all 48 SKUs is 167 units. That number hides two
+    opposite problems that cancel each other out on paper and do not cancel out in the warehouse.</p>
+  </div>
+  <div class="split">
+    <div class="half vshort">
+      <span class="k">XL · 2XL · 3XL</span>
+      <span class="v">2.2 weeks of cover</span>
+      <p>Position 49,659 units against 22,172/week of demand. All three sizes are net negative on
+      available inventory — 14,037 units already sold and owed. Against target, these sizes are
+      <b>15,389 units short</b>. This is where the entire order goes.</p>
+    </div>
+    <div class="half vlong">
+      <span class="k">S · M · L</span>
+      <span class="v">6.4 weeks of cover</span>
+      <p>Position 46,893 units against 7,289/week of falling demand — and 32,689 of those units are
+      still in production. Against target these sizes are <b>23,902 units overstocked</b>, before a
+      single one of the in-production units lands.</p>
+    </div>
+  </div>
+  <figcaption style="max-width:68ch">S sits on twelve weeks of cover and 3,881 more units in
+  production. Its sales fell 68% against the four-week average — and S is <em>not</em> stocked out,
+  so that fall is real customer demand, not lost availability. The same test run the other way says
+  the XL and 3XL growth is understated, because those sizes have been selling from negative stock.</figcaption>
+</section>
+
+<section>
+  <div class="head">
+    <h2>The thing to fix today is the production mix, not the order</h2>
+  </div>
+  <div class="card">
+    <p style="font-size:.97rem; color:var(--ink-2)">There are <b>32,689 units of S, M and L still in
+    production</b> against demand of 7,289/week that has been falling for three straight weeks — and
+    <b>63,696 units of XL, 2XL and 3XL</b> in production against 22,172/week that is rising and
+    already backordered. Placing this order fixes two weeks. Re-cutting that production mix fixes the
+    quarter. If any of the S/M/L run can still be changed to XL, 3XL or the new 4XL, that is worth
+    more than the 16,484 units below.</p>
+  </div>
+</section>
+
+<section>
+  <div class="head">
+    <h2>4XL — the size you are not selling</h2>
+    <p class="sub">There is no 4XL anywhere in the current range. There was in the retired 134821
+    range, where it ran at <b>9.9% of all units</b> — bigger than M, bigger than S, and nearly as big
+    as 3XL.</p>
+  </div>
+  <div class="card">
+    <p style="font-size:.97rem; color:var(--ink-2); margin-bottom:18px">In the old range 4XL sold at
+    <b>0.833× the 3XL rate</b> when both were on the shelf. Your 3XL is currently doing 5,305/week —
+    but part of that is 4XL customers sizing down, so the raw ratio overstates the opportunity. Taking
+    the central case that half of them substitute, true 4XL demand is about
+    <b>3,119 units a week</b> and 3XL should fall by 1,560 once 4XL is live. The full range across
+    substitution assumptions is 2,411 to 4,419 a week.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th scope="col">SKU</th><th scope="col" class="n">Est. weekly demand</th>
+          <th scope="col" class="n">Cycle</th><th scope="col" class="n">Safety</th>
+          <th scope="col" class="n">Ideal order</th><th scope="col" class="n">Staged first buy</th>
+          <th scope="col" class="n">Cut 3XL by</th>
+        </tr></thead>
+        <tbody><tr><th scope="row"><span class="sku">QL1058-nude-4XL</span></th><td class="n">1,209</td><td class="n">2,418</td><td class="n">1,585</td><td class="n order">4,003</td><td class="n">2,400</td><td class="n neg">−605</td></tr>
+<tr><th scope="row"><span class="sku">QL1058-black-4XL</span></th><td class="n">663</td><td class="n">1,326</td><td class="n">896</td><td class="n order">2,222</td><td class="n">1,330</td><td class="n neg">−331</td></tr>
+<tr><th scope="row"><span class="sku">QL1058-white-4XL</span></th><td class="n">515</td><td class="n">1,029</td><td class="n">664</td><td class="n order">1,693</td><td class="n">1,020</td><td class="n neg">−257</td></tr>
+<tr><th scope="row"><span class="sku">QL1058-coffee-4XL</span></th><td class="n">187</td><td class="n">375</td><td class="n">303</td><td class="n order">678</td><td class="n">410</td><td class="n neg">−94</td></tr>
+<tr><th scope="row"><span class="sku">QL1058-red-4XL</span></th><td class="n">177</td><td class="n">354</td><td class="n">253</td><td class="n order">607</td><td class="n">360</td><td class="n neg">−88</td></tr>
+<tr><th scope="row"><span class="sku">QL1058-grey-4XL</span></th><td class="n">173</td><td class="n">347</td><td class="n">207</td><td class="n order">554</td><td class="n">330</td><td class="n neg">−87</td></tr>
+<tr><th scope="row"><span class="sku">QL1058-green-4XL</span></th><td class="n">126</td><td class="n">252</td><td class="n">156</td><td class="n order">408</td><td class="n">240</td><td class="n neg">−63</td></tr>
+<tr><th scope="row"><span class="sku">QL1058-beanpaste-4XL</span></th><td class="n">70</td><td class="n">139</td><td class="n">94</td><td class="n order">233</td><td class="n">140</td><td class="n neg">−35</td></tr>
+        <tr style="border-top:2px solid var(--rule)"><th scope="row">Total</th><td class="n">3,119</td>
+        <td class="n">6,240</td><td class="n">4,158</td><td class="n order">10,398</td>
+        <td class="n">6,230</td><td class="n neg">−1,560</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <figcaption>Safety stock carries a 25% uncertainty premium because there is no 4XL sales history
+    to measure volatility against. <b>I would place the staged first buy, not the ideal order</b> —
+    60% of target, which proves the size across all eight colours without committing 10,398 units to
+    a ratio borrowed from a discontinued range. Nude, black and white are 76% of it; if you want to
+    narrow the trial further, run those three.</figcaption>
+  </div>
+</section>
+
+<section>
+  <div class="head">
+    <h2>Order by SKU</h2>
+    <p class="sub">Sorted by order quantity. Negative available inventory is stock already sold and
+    owed to customers. Order quantity assumes in-production units arrive within two weeks.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr>
+        <th scope="col">SKU</th><th scope="col" class="n">7-day</th><th scope="col" class="n">4-wk avg</th>
+        <th scope="col">Trend</th><th scope="col" class="n">Forecast/wk</th><th scope="col" class="n">Available</th>
+        <th scope="col" class="n">In production</th><th scope="col" class="n">Cycle</th>
+        <th scope="col" class="n">Safety</th><th scope="col" class="n">Target</th>
+        <th scope="col" class="n">Order now</th><th scope="col" class="n">Cover wks</th><th scope="col">Risk</th>
+      </tr></thead>
+      <tbody><tr><th scope="row"><span class="sku">QL1058-nude-XL</span></th><td class="n">4,076</td><td class="n">3,512</td><td><span class="chip up">Increasing</span></td><td class="n">3,991</td><td class="n neg">-4,016</td><td class="n">11,199</td><td class="n">7,983</td><td class="n">3,589</td><td class="n">11,572</td><td class="n order">4,389</td><td class="n">1.8</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-nude-3XL</span></th><td class="n">2,143</td><td class="n">1,564</td><td><span class="chip up">Increasing</span></td><td class="n">2,056</td><td class="n neg">-2,453</td><td class="n">6,336</td><td class="n">4,112</td><td class="n">2,265</td><td class="n">6,377</td><td class="n order">2,494</td><td class="n">1.9</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-black-XL</span></th><td class="n">2,367</td><td class="n">2,003</td><td><span class="chip up">Increasing</span></td><td class="n">2,312</td><td class="n neg">-2,223</td><td class="n">7,130</td><td class="n">4,625</td><td class="n">2,235</td><td class="n">6,860</td><td class="n order">1,953</td><td class="n">2.1</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-white-XL</span></th><td class="n">2,138</td><td class="n">1,783</td><td><span class="chip up">Increasing</span></td><td class="n">2,085</td><td class="n neg">-728</td><td class="n">5,609</td><td class="n">4,170</td><td class="n">2,073</td><td class="n">6,243</td><td class="n order">1,362</td><td class="n">2.3</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-red-XL</span></th><td class="n">587</td><td class="n">488</td><td><span class="chip up">Increasing</span></td><td class="n">572</td><td class="n neg">-600</td><td class="n">1,251</td><td class="n">1,144</td><td class="n">534</td><td class="n">1,678</td><td class="n order">1,027</td><td class="n">1.1</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-nude-2XL</span></th><td class="n">2,084</td><td class="n">2,030</td><td><span class="chip flat">Stable</span></td><td class="n">2,062</td><td class="n neg">-2,138</td><td class="n">6,978</td><td class="n">4,124</td><td class="n">1,739</td><td class="n">5,863</td><td class="n order">1,023</td><td class="n">2.3</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-grey-XL</span></th><td class="n">651</td><td class="n">537</td><td><span class="chip up">Increasing</span></td><td class="n">634</td><td class="n neg">-194</td><td class="n">1,350</td><td class="n">1,268</td><td class="n">644</td><td class="n">1,912</td><td class="n order">756</td><td class="n">1.8</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-black-3XL</span></th><td class="n">1,177</td><td class="n">844</td><td><span class="chip up">Increasing</span></td><td class="n">1,127</td><td class="n neg">-823</td><td class="n">3,670</td><td class="n">2,254</td><td class="n">1,276</td><td class="n">3,530</td><td class="n order">683</td><td class="n">2.5</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-coffee-XL</span></th><td class="n">728</td><td class="n">621</td><td><span class="chip up">Increasing</span></td><td class="n">712</td><td class="n neg">-724</td><td class="n">2,190</td><td class="n">1,424</td><td class="n">688</td><td class="n">2,112</td><td class="n order">646</td><td class="n">2.1</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-red-2XL</span></th><td class="n">311</td><td class="n">294</td><td><span class="chip flat">Stable</span></td><td class="n">304</td><td class="n neg">-261</td><td class="n">590</td><td class="n">608</td><td class="n">228</td><td class="n">836</td><td class="n order">507</td><td class="n">1.1</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-white-3XL</span></th><td class="n">913</td><td class="n">659</td><td><span class="chip up">Increasing</span></td><td class="n">875</td><td class="n neg">-117</td><td class="n">2,357</td><td class="n">1,750</td><td class="n">949</td><td class="n">2,699</td><td class="n order">459</td><td class="n">2.6</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-beanpaste-XL</span></th><td class="n">279</td><td class="n">232</td><td><span class="chip up">Increasing</span></td><td class="n">272</td><td class="n neg">-150</td><td class="n">490</td><td class="n">544</td><td class="n">220</td><td class="n">764</td><td class="n order">424</td><td class="n">1.2</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-black-2XL</span></th><td class="n">1,301</td><td class="n">1,212</td><td><span class="chip flat">Stable</span></td><td class="n">1,265</td><td class="n neg">-483</td><td class="n">3,740</td><td class="n">2,531</td><td class="n">1,136</td><td class="n">3,667</td><td class="n order">410</td><td class="n">2.6</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-red-3XL</span></th><td class="n">315</td><td class="n">220</td><td><span class="chip up">Increasing</span></td><td class="n">301</td><td class="n neg">-80</td><td class="n">750</td><td class="n">602</td><td class="n">234</td><td class="n">836</td><td class="n order">166</td><td class="n">2.2</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-green-XL</span></th><td class="n">527</td><td class="n">447</td><td><span class="chip up">Increasing</span></td><td class="n">515</td><td class="n neg">-98</td><td class="n">1,520</td><td class="n">1,030</td><td class="n">458</td><td class="n">1,488</td><td class="n order">66</td><td class="n">2.8</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-coffee-3XL</span></th><td class="n">336</td><td class="n">219</td><td><span class="chip up">Increasing</span></td><td class="n">318</td><td class="n neg">-171</td><td class="n">1,030</td><td class="n">637</td><td class="n">278</td><td class="n">915</td><td class="n order">56</td><td class="n">2.7</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-grey-2XL</span></th><td class="n">340</td><td class="n">324</td><td><span class="chip flat">Stable</span></td><td class="n">334</td><td class="n">220</td><td class="n">645</td><td class="n">667</td><td class="n">245</td><td class="n">912</td><td class="n order">47</td><td class="n">2.6</td><td><span class="chip high">High Risk</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-grey-3XL</span></th><td class="n">306</td><td class="n">230</td><td><span class="chip up">Increasing</span></td><td class="n">295</td><td class="n neg">-82</td><td class="n">850</td><td class="n">589</td><td class="n">195</td><td class="n">784</td><td class="n order">16</td><td class="n">2.6</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-nude-L</span></th><td class="n">1,229</td><td class="n">2,217</td><td><span class="chip down">Decreasing</span></td><td class="n">1,377</td><td class="n">1,267</td><td class="n">5,889</td><td class="n">2,754</td><td class="n">1,498</td><td class="n">4,252</td><td class="n order">0</td><td class="n">5.2</td><td><span class="chip ok">Healthy</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-nude-M</span></th><td class="n">746</td><td class="n">1,741</td><td><span class="chip down">Decreasing</span></td><td class="n">895</td><td class="n">841</td><td class="n">4,096</td><td class="n">1,790</td><td class="n">1,182</td><td class="n">2,972</td><td class="n order">0</td><td class="n">5.5</td><td><span class="chip ok">Healthy</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-black-L</span></th><td class="n">786</td><td class="n">1,323</td><td><span class="chip down">Decreasing</span></td><td class="n">867</td><td class="n">45</td><td class="n">3,615</td><td class="n">1,733</td><td class="n">931</td><td class="n">2,664</td><td class="n order">0</td><td class="n">4.2</td><td><span class="chip ok">Healthy</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-white-L</span></th><td class="n">660</td><td class="n">1,172</td><td><span class="chip down">Decreasing</span></td><td class="n">737</td><td class="n">720</td><td class="n">3,171</td><td class="n">1,473</td><td class="n">889</td><td class="n">2,362</td><td class="n order">0</td><td class="n">5.3</td><td><span class="chip ok">Healthy</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-black-M</span></th><td class="n">441</td><td class="n">1,054</td><td><span class="chip down">Decreasing</span></td><td class="n">533</td><td class="n">1,091</td><td class="n">3,185</td><td class="n">1,066</td><td class="n">738</td><td class="n">1,804</td><td class="n order">0</td><td class="n">8.0</td><td><span class="chip over">Overstock</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-white-M</span></th><td class="n">409</td><td class="n">992</td><td><span class="chip down">Decreasing</span></td><td class="n">496</td><td class="n">2,142</td><td class="n">2,189</td><td class="n">993</td><td class="n">691</td><td class="n">1,684</td><td class="n order">0</td><td class="n">8.7</td><td><span class="chip over">Overstock</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-white-2XL</span></th><td class="n">1,005</td><td class="n">963</td><td><span class="chip flat">Stable</span></td><td class="n">988</td><td class="n">815</td><td class="n">2,508</td><td class="n">1,976</td><td class="n">913</td><td class="n">2,889</td><td class="n order">0</td><td class="n">3.4</td><td><span class="chip ok">Healthy</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-nude-S</span></th><td class="n">193</td><td class="n">572</td><td><span class="chip down">Decreasing</span></td><td class="n">250</td><td class="n">1,311</td><td class="n">1,080</td><td class="n">500</td><td class="n">327</td><td class="n">827</td><td class="n order">0</td><td class="n">9.6</td><td><span class="chip over">Overstock</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-coffee-L</span></th><td class="n">251</td><td class="n">414</td><td><span class="chip down">Decreasing</span></td><td class="n">275</td><td class="n">775</td><td class="n">1,220</td><td class="n">551</td><td class="n">265</td><td class="n">816</td><td class="n order">0</td><td class="n">7.2</td><td><span class="chip ok">Healthy</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-coffee-2XL</span></th><td class="n">411</td><td class="n">375</td><td><span class="chip flat">Stable</span></td><td class="n">397</td><td class="n">95</td><td class="n">1,030</td><td class="n">793</td><td class="n">308</td><td class="n">1,101</td><td class="n order">0</td><td class="n">2.8</td><td><span class="chip ok">Healthy</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-black-S</span></th><td class="n">113</td><td class="n">373</td><td><span class="chip down">Decreasing</span></td><td class="n">152</td><td class="n">1,296</td><td class="n">980</td><td class="n">304</td><td class="n">175</td><td class="n">479</td><td class="n order">0</td><td class="n">15.0</td><td><span class="chip over">Overstock</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-white-S</span></th><td class="n">115</td><td class="n">367</td><td><span class="chip down">Decreasing</span></td><td class="n">153</td><td class="n">829</td><td class="n">840</td><td class="n">306</td><td class="n">192</td><td class="n">498</td><td class="n order">0</td><td class="n">10.9</td><td><span class="chip over">Overstock</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-coffee-M</span></th><td class="n">141</td><td class="n">341</td><td><span class="chip down">Decreasing</span></td><td class="n">171</td><td class="n">410</td><td class="n">543</td><td class="n">342</td><td class="n">188</td><td class="n">530</td><td class="n order">0</td><td class="n">5.6</td><td><span class="chip ok">Healthy</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-grey-L</span></th><td class="n">202</td><td class="n">339</td><td><span class="chip down">Decreasing</span></td><td class="n">223</td><td class="n">347</td><td class="n">530</td><td class="n">445</td><td class="n">198</td><td class="n">643</td><td class="n order">0</td><td class="n">3.9</td><td><span class="chip ok">Healthy</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-red-L</span></th><td class="n">198</td><td class="n">321</td><td><span class="chip down">Decreasing</span></td><td class="n">216</td><td class="n">44</td><td class="n">750</td><td class="n">433</td><td class="n">198</td><td class="n">631</td><td class="n order">0</td><td class="n">3.7</td><td><span class="chip ok">Healthy</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-green-L</span></th><td class="n">205</td><td class="n">320</td><td><span class="chip down">Decreasing</span></td><td class="n">222</td><td class="n">262</td><td class="n">800</td><td class="n">444</td><td class="n">211</td><td class="n">655</td><td class="n order">0</td><td class="n">4.8</td><td><span class="chip ok">Healthy</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-green-2XL</span></th><td class="n">288</td><td class="n">257</td><td><span class="chip flat">Stable</span></td><td class="n">276</td><td class="n">152</td><td class="n">890</td><td class="n">551</td><td class="n">175</td><td class="n">726</td><td class="n order">0</td><td class="n">3.8</td><td><span class="chip ok">Healthy</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-grey-M</span></th><td class="n">95</td><td class="n">252</td><td><span class="chip down">Decreasing</span></td><td class="n">119</td><td class="n">670</td><td class="n">620</td><td class="n">237</td><td class="n">149</td><td class="n">386</td><td class="n order">0</td><td class="n">10.9</td><td><span class="chip over">Overstock</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-green-M</span></th><td class="n">102</td><td class="n">248</td><td><span class="chip down">Decreasing</span></td><td class="n">124</td><td class="n">405</td><td class="n">770</td><td class="n">248</td><td class="n">138</td><td class="n">386</td><td class="n order">0</td><td class="n">9.5</td><td><span class="chip over">Overstock</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-red-M</span></th><td class="n">103</td><td class="n">246</td><td><span class="chip down">Decreasing</span></td><td class="n">125</td><td class="n neg">-19</td><td class="n">790</td><td class="n">249</td><td class="n">133</td><td class="n">382</td><td class="n order">0</td><td class="n">6.2</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-green-3XL</span></th><td class="n">221</td><td class="n">175</td><td><span class="chip up">Increasing</span></td><td class="n">214</td><td class="n">54</td><td class="n">683</td><td class="n">428</td><td class="n">146</td><td class="n">574</td><td class="n order">0</td><td class="n">3.4</td><td><span class="chip ok">Healthy</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-beanpaste-L</span></th><td class="n">87</td><td class="n">148</td><td><span class="chip down">Decreasing</span></td><td class="n">96</td><td class="n">261</td><td class="n">320</td><td class="n">192</td><td class="n">69</td><td class="n">261</td><td class="n order">0</td><td class="n">6.0</td><td><span class="chip ok">Healthy</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-beanpaste-2XL</span></th><td class="n">154</td><td class="n">141</td><td><span class="chip flat">Stable</span></td><td class="n">149</td><td class="n neg">-5</td><td class="n">470</td><td class="n">298</td><td class="n">87</td><td class="n">385</td><td class="n order">0</td><td class="n">3.1</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-beanpaste-M</span></th><td class="n">64</td><td class="n">125</td><td><span class="chip down">Decreasing</span></td><td class="n">73</td><td class="n">68</td><td class="n">320</td><td class="n">146</td><td class="n">72</td><td class="n">218</td><td class="n order">0</td><td class="n">5.3</td><td><span class="chip ok">Healthy</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-coffee-S</span></th><td class="n">39</td><td class="n">123</td><td><span class="chip down">Decreasing</span></td><td class="n">52</td><td class="n">204</td><td class="n">271</td><td class="n">103</td><td class="n">46</td><td class="n">149</td><td class="n order">0</td><td class="n">9.2</td><td><span class="chip over">Overstock</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-beanpaste-3XL</span></th><td class="n">123</td><td class="n">93</td><td><span class="chip up">Increasing</span></td><td class="n">118</td><td class="n neg">-27</td><td class="n">430</td><td class="n">237</td><td class="n">88</td><td class="n">325</td><td class="n order">0</td><td class="n">3.4</td><td><span class="chip crit">Critical</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-green-S</span></th><td class="n">33</td><td class="n">92</td><td><span class="chip down">Decreasing</span></td><td class="n">42</td><td class="n">496</td><td class="n">90</td><td class="n">84</td><td class="n">39</td><td class="n">123</td><td class="n order">0</td><td class="n">14.0</td><td><span class="chip over">Overstock</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-grey-S</span></th><td class="n">28</td><td class="n">88</td><td><span class="chip down">Decreasing</span></td><td class="n">37</td><td class="n">368</td><td class="n">150</td><td class="n">74</td><td class="n">35</td><td class="n">109</td><td class="n order">0</td><td class="n">14.0</td><td><span class="chip over">Overstock</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-red-S</span></th><td class="n">25</td><td class="n">85</td><td><span class="chip down">Decreasing</span></td><td class="n">34</td><td class="n">425</td><td class="n">270</td><td class="n">68</td><td class="n">32</td><td class="n">100</td><td class="n order">0</td><td class="n">20.4</td><td><span class="chip over">Overstock</span></td></tr>
+<tr><th scope="row"><span class="sku">QL1058-beanpaste-S</span></th><td class="n">17</td><td class="n">48</td><td><span class="chip down">Decreasing</span></td><td class="n">22</td><td class="n neg">-54</td><td class="n">200</td><td class="n">43</td><td class="n">17</td><td class="n">60</td><td class="n order">0</td><td class="n">6.8</td><td><span class="chip crit">Critical</span></td></tr></tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="head"><h2>Before you send it</h2></div>
+  <div class="checks">
+    <div class="check"><span class="st miss">Blocking</span><div class="cb"><b>No arrival dates</b>
+      <p>Both date columns are empty on all 48 rows. The entire order is sized on the assumption that
+      96,385 in-production units land within two weeks. Get the dates and I will re-run — if they slip,
+      the order grows by up to 74,793 units.</p></div></div>
+    <div class="check"><span class="st miss">Blocking</span><div class="cb"><b>15,446 units already owed</b>
+      <p>21 SKUs are selling from negative stock, led by nude XL at −4,016. Those are paid orders you
+      cannot currently ship. They are netted into this order, but they are also a customer-service
+      problem running right now.</p></div></div>
+    <div class="check"><span class="st warn">Warning</span><div class="cb"><b>Growth is understated</b>
+      <p>XL and 3XL have been selling from negative inventory, so their +18% and +38% are floors, not
+      ceilings. Where a listing was switched off during a stockout, the true demand is higher than
+      anything in this table.</p></div></div>
+    <div class="check"><span class="st warn">Warning</span><div class="cb"><b>File covers QL1058 only</b>
+      <p>QA1114 and QL1047 are not in the workbook, so no order is calculated for them. Their combined
+      demand is about 494 units a week — small, but not zero.</p></div></div>
+    <div class="check"><span class="st warn">Warning</span><div class="cb"><b>Lead time is still an assumption</b>
+      <p>7 days sets the two-week protection interval that sizes every line here. Goods described as
+      "in production" suggest a manufacturing lead time well beyond that. If it is really 14 days,
+      every target rises by roughly 50%.</p></div></div>
+    <div class="check"><span class="st pass">Confirmed</span><div class="cb"><b>The S/M/L decline is real demand</b>
+      <p>S, M and L hold 14,204 units of available stock and still fell 68%, 58% and 42% against their
+      four-week averages. They were not stocked out. Earlier I flagged this as possibly a stockout
+      artefact — your file rules that out. Cut them with confidence.</p></div></div>
+    <div class="check"><span class="st warn">Note</span><div class="cb"><b>No MOQ or carton multiples supplied</b>
+      <p>Quantities are unrounded. Send the supplier's carton sizes and I will round each line up.</p></div></div>
+  </div>
+</section>
+
+<footer>
+  <p>Recency-weighted forecast from 7-day and 28-day actuals; clear trends weighted 85% to the most
+  recent week. Safety stock is SKU-specific, scaled by each SKU's own volatility and its ABC service
+  level. Reproduces from <code style="font-family:var(--mono)">inventory_planning.py</code> on branch
+  <code style="font-family:var(--mono)">claude/inventory-supply-chain-analysis-elvbwn</code>.</p>
+</footer>
+</div>
