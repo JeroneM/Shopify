@@ -244,6 +244,14 @@
   .empty { padding: 34px 16px; text-align: center; color: var(--ink-3); font-size: 13px; }
 
   .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 2px; flex: none; vertical-align: baseline; }
+  .money-stack { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+  .money-stack > span + span { font-size: 11.5px; color: var(--ink-3); }
+  .curmore {
+    display: inline-block; margin-left: 5px; padding: 0 4px;
+    font-size: 11px; font-weight: 600; color: var(--ink-3);
+    border: 1px solid var(--rule-strong); border-radius: 3px;
+    cursor: help;
+  }
   .store-cell { display: inline-flex; align-items: center; gap: 7px; }
 
   .pill {
@@ -614,6 +622,33 @@
       rest: sums.slice(1).map(function (s) { return money(s.amount, s.currency); }).join(" · ")
     };
   }
+
+  /* Stores bill in different currencies and there is no FX rate here, so a
+     single figure would silently drop every other currency. Every money
+     aggregate therefore reports each currency it actually contains: stacked
+     where the layout has room, otherwise a "+N" the reader can hover. */
+  function moneyNode(rows, stack) {
+    var sums = sumByCurrency(rows);
+    var node = el("span");
+    if (!sums.length) {
+      node.textContent = money(0, (DATA.currencies || [])[0]);
+      return node;
+    }
+    if (sums.length === 1) {
+      node.textContent = money(sums[0].amount, sums[0].currency);
+      return node;
+    }
+    var full = sums.map(function (s) { return money(s.amount, s.currency); });
+    if (stack) {
+      node.className = "money-stack";
+      full.forEach(function (text) { node.appendChild(el("span", null, text)); });
+    } else {
+      node.appendChild(document.createTextNode(full[0]));
+      node.appendChild(el("span", "curmore", "+" + (sums.length - 1)));
+    }
+    node.title = full.join(" · ") + " (not summed - different currencies)";
+    return node;
+  }
   function pct(n, d) { return d ? Math.round((1000 * n) / d) / 10 : null; }
   function pctText(v) { return v === null || v === undefined ? "—" : v.toFixed(1) + "%"; }
   function fmtDate(s) {
@@ -771,7 +806,9 @@
       lbl.appendChild(el("span", "dot " + part.tone));
       lbl.appendChild(el("span", null, part.label + " · " + part.n + " case" + (part.n === 1 ? "" : "s")));
       row.appendChild(lbl);
-      row.appendChild(el("span", "amt", moneyParts(part.rows).main));
+      var amt = el("span", "amt");
+      amt.appendChild(moneyNode(part.rows, false));
+      row.appendChild(amt);
       split.appendChild(row);
     });
 
@@ -870,8 +907,11 @@
       [s.won, s.lost, s.closedOther].forEach(function (v) { tr.appendChild(el("td", "n num", v)); });
       tr.appendChild(el("td", "n num", pctText(s.winRate)));
       tr.appendChild(el("td", "n num", pctText(s.lossRate)));
-      tr.appendChild(el("td", "n num", moneyParts(s.openRows).main));
-      tr.appendChild(el("td", "n num", moneyParts(subset).main));
+      [s.openRows, subset].forEach(function (set) {
+        var td = el("td", "n num");
+        td.appendChild(moneyNode(set, true));
+        tr.appendChild(td);
+      });
       tbody.appendChild(tr);
     }
 
@@ -909,7 +949,9 @@
 
     row.appendChild(el("div", "n", opts.count));
     row.appendChild(el("div", "n muted", pctText(opts.pct)));
-    row.appendChild(el("div", "n muted", opts.trailing || ""));
+    var trail = el("div", "n muted");
+    if (opts.trailing) trail.appendChild(opts.trailing);
+    row.appendChild(trail);
     if (opts.why) row.appendChild(el("div", "why", opts.why));
     return row;
   }
@@ -935,7 +977,7 @@
         count: counts[status],
         pct: pct(counts[status], rows.length),
         max: max,
-        trailing: moneyParts(subset).main
+        trailing: moneyNode(subset, false)
       }));
     });
   }
@@ -958,8 +1000,10 @@
       if (bv === null || bv === undefined) return -1;
       return av - bv;
     });
-    document.getElementById("queue-count").textContent =
-      queue.length + " case" + (queue.length === 1 ? "" : "s") + " · " + moneyParts(queue).main;
+    var qc = document.getElementById("queue-count");
+    clear(qc);
+    qc.appendChild(document.createTextNode(queue.length + " case" + (queue.length === 1 ? "" : "s") + " · "));
+    qc.appendChild(moneyNode(queue, false));
 
     if (!queue.length) {
       var openCount = rows.filter(function (r) { return r.outcome === "open"; }).length;
@@ -1034,7 +1078,7 @@
         count: g.rows.length,
         pct: pct(g.rows.length, rows.length),
         max: max,
-        trailing: moneyParts(g.rows).main,
+        trailing: moneyNode(g.rows, false),
         why: g.category + " · win rate " + pctText(pct(wins, decided.length)) +
              (decided.length ? " on " + decided.length + " decided" : " (none decided yet)") +
              " · " + (REASON_ACTIONS[key] || "Review the individual cases for a common root cause.")
