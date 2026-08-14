@@ -8,5 +8,9 @@ venv/
 .env.*
 !.env.example
 
-# Local data exports - business/customer data, not source code
+# Local data exports - business/customer data, not source code.
+# The fetched payload and the rendered dashboard both embed customer names,
+# emails and order numbers, so neither belongs in git.
 *.csv
+data/
+dist/

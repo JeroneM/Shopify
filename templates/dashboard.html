@@ -1,0 +1,1784 @@
+<title>Chargeback Control Room</title>
+<style>
+  /* ---------- Tokens -------------------------------------------------- */
+  :root {
+    color-scheme: light;
+    --page: #f4f5f4;
+    --surface: #fcfcfc;
+    --surface-2: #eff1f0;
+    --ink: #101211;
+    --ink-2: #4e5250;
+    --ink-3: #6b716f;
+    --rule: #e2e5e3;
+    --rule-strong: #c9cecc;
+    --accent: #2a78d6;
+    --accent-soft: rgba(42, 120, 214, 0.10);
+    --good: #0ca30c;
+    --good-text: #006300;
+    --warn: #fab219;
+    --serious: #ec835a;
+    --critical: #d03b3b;
+    --neutral-mark: #a9afad;
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+    --s5: #e87ba4; --s6: #008300; --s7: #4a3aa7; --s8: #e34948;
+    --shadow: 0 1px 2px rgba(16, 18, 17, 0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0e100f;
+      --surface: #191b1a;
+      --surface-2: #212422;
+      --ink: #f4f6f5;
+      --ink-2: #a9b0ad;
+      --ink-3: #8d9491;
+      --rule: #272b29;
+      --rule-strong: #383c3a;
+      --accent: #3987e5;
+      --accent-soft: rgba(57, 135, 229, 0.16);
+      --good: #0ca30c;
+      --good-text: #0ca30c;
+      --warn: #fab219;
+      --serious: #ec835a;
+      --critical: #d03b3b;
+      --neutral-mark: #5c625f;
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+      --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0e100f;
+    --surface: #191b1a;
+    --surface-2: #212422;
+    --ink: #f4f6f5;
+    --ink-2: #a9b0ad;
+    --ink-3: #8d9491;
+    --rule: #272b29;
+    --rule-strong: #383c3a;
+    --accent: #3987e5;
+    --accent-soft: rgba(57, 135, 229, 0.16);
+    --good: #0ca30c;
+    --good-text: #0ca30c;
+    --warn: #fab219;
+    --serious: #ec835a;
+    --critical: #d03b3b;
+    --neutral-mark: #5c625f;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  /* ---------- Base ---------------------------------------------------- */
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 1380px;
+    margin: 0 auto;
+    padding: 28px 24px 72px;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+  }
+  h1, h2, h3 { margin: 0; text-wrap: balance; font-weight: 600; letter-spacing: -0.015em; }
+  h1 { font-size: 25px; }
+  h2 { font-size: 17px; }
+  h3 { font-size: 14px; }
+  p { margin: 0; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .mono {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12.5px;
+  }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* ---------- Masthead ------------------------------------------------ */
+  .masthead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .masthead .sub { color: var(--ink-2); font-size: 13px; margin-top: 4px; }
+  .stamp { text-align: right; font-size: 12px; color: var(--ink-3); }
+
+  .banner {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 13px 16px;
+    border: 1px solid var(--rule-strong);
+    border-left: 3px solid var(--warn);
+    border-radius: 4px;
+    background: var(--surface);
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .banner strong { color: var(--ink); }
+  .banner.is-error { border-left-color: var(--critical); }
+
+  /* ---------- Cards --------------------------------------------------- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+  }
+  section.block { display: flex; flex-direction: column; gap: 14px; }
+  .block-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .note { font-size: 12.5px; color: var(--ink-3); max-width: 82ch; }
+  .block-head .note { max-width: 62ch; }
+
+  /* ---------- Management summary -------------------------------------- */
+  .situation { display: grid; grid-template-columns: minmax(260px, 1fr) 2.15fr; gap: 14px; }
+  @media (max-width: 900px) { .situation { grid-template-columns: 1fr; } }
+
+  .hero { padding: 20px 22px; display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+  .hero .value { font-size: 46px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; }
+  .hero .extra { font-size: 12.5px; color: var(--ink-3); }
+  .hero .split { display: flex; flex-direction: column; gap: 7px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--rule); }
+  .hero .split-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: 12.5px; }
+  .hero .split-row .lbl { color: var(--ink-2); display: inline-flex; align-items: center; gap: 7px; }
+  .hero .split-row .amt { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(178px, 1fr)); gap: 14px; }
+  .tile { padding: 15px 16px; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .tile .value { font-size: 27px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
+  .tile .value.sm { font-size: 18px; letter-spacing: -0.01em; }
+  .tile .meta { font-size: 12.5px; color: var(--ink-2); }
+
+  .flag { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .dot.good { background: var(--good); }
+  .dot.warn { background: var(--warn); }
+  .dot.serious { background: var(--serious); }
+  .dot.critical { background: var(--critical); }
+  .dot.neutral { background: var(--neutral-mark); }
+  .txt-critical { color: var(--critical); }
+  .txt-good { color: var(--good-text); }
+
+  /* ---------- Filter bar ---------------------------------------------- */
+  .filters {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+    padding: 11px 14px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+  }
+  .fgroup { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .fgroup > .eyebrow { margin-right: 1px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 100px;
+    background: transparent;
+    font-size: 12.5px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .chip:hover { background: var(--surface-2); }
+  .chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); font-weight: 500; }
+  select, input[type="date"], input[type="search"] {
+    font: inherit; font-size: 12.5px;
+    padding: 4px 8px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--rule-strong);
+    border-radius: 4px;
+    max-width: 100%;
+  }
+  input[type="search"] { min-width: 244px; }
+  .fspacer { flex: 1 1 auto; }
+  .scope { font-size: 12.5px; color: var(--ink-3); white-space: nowrap; }
+  .linkish {
+    background: none; border: none; padding: 0;
+    color: var(--accent); font-size: 12.5px; cursor: pointer; text-decoration: underline;
+  }
+
+  /* ---------- Tables -------------------------------------------------- */
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+  thead th {
+    position: sticky; top: 0;
+    background: var(--surface-2);
+    font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--ink-3);
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  tbody tr:hover { background: var(--surface-2); }
+  tbody tr.total-row td { font-weight: 600; background: var(--surface-2); border-top: 1px solid var(--rule-strong); }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: var(--ink); }
+  th .arrow { color: var(--accent); }
+  .empty { padding: 34px 16px; text-align: center; color: var(--ink-3); font-size: 13px; }
+
+  .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 2px; flex: none; vertical-align: baseline; }
+  .store-cell { display: inline-flex; align-items: center; gap: 7px; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 8px; border-radius: 100px;
+    font-size: 12px; white-space: nowrap;
+    border: 1px solid var(--rule-strong);
+  }
+
+  /* ---------- Labelled bar rows (status + reasons) --------------------- */
+  .barlist { display: flex; flex-direction: column; }
+  .barrow {
+    display: grid;
+    grid-template-columns: minmax(180px, 310px) minmax(90px, 1fr) 58px 56px 90px;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .barrow:last-child { border-bottom: none; }
+  .barrow:hover { background: var(--surface-2); }
+  .barrow .name { font-size: 13px; display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .barrow .name span.t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .track { height: 10px; background: var(--surface-2); border-radius: 0 4px 4px 0; }
+  .fill { height: 10px; border-radius: 0 4px 4px 0; min-width: 2px; }
+  .barrow .n { text-align: right; font-variant-numeric: tabular-nums; font-size: 13px; }
+  .barrow .muted { color: var(--ink-2); }
+  .barrow .why { grid-column: 1 / -1; font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+  .grouphead {
+    padding: 10px 16px 6px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface-2);
+  }
+  @media (max-width: 720px) {
+    .barrow { grid-template-columns: 1fr 52px 50px; }
+    .barrow .track-cell { grid-column: 1 / -1; }
+  }
+
+  /* ---------- Action queue -------------------------------------------- */
+  .queue { display: flex; flex-direction: column; max-height: 460px; overflow-y: auto; }
+  .qrow {
+    display: grid;
+    grid-template-columns: 4px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 16px 10px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .qrow:last-child { border-bottom: none; }
+  .qrow:hover { background: var(--surface-2); }
+  .stripe { align-self: stretch; border-radius: 0 2px 2px 0; }
+  .qmain { min-width: 0; }
+  .qtitle { font-size: 13px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .qmeta { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+  .qright { text-align: right; }
+  .qright .amt { font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .qright .due { font-size: 11.5px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 2px; }
+
+  /* ---------- Chart --------------------------------------------------- */
+  .chartcard { padding: 16px 18px 14px; display: flex; flex-direction: column; gap: 12px; }
+  .chartbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+  .seg { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 4px; overflow: hidden; }
+  .seg button {
+    background: transparent; border: none; padding: 4px 11px; font-size: 12.5px; cursor: pointer;
+    border-right: 1px solid var(--rule-strong);
+  }
+  .seg button:last-child { border-right: none; }
+  .seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--ink); font-weight: 500; }
+  .plot { position: relative; }
+  .plot svg { display: block; width: 100%; }
+  .gridline { stroke: var(--rule); stroke-width: 1; }
+  .axisline { stroke: var(--rule-strong); stroke-width: 1; }
+  .axistext { fill: var(--ink-3); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .endlabel { fill: var(--ink-2); font-size: 11.5px; }
+  .crosshair { stroke: var(--rule-strong); stroke-width: 1; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+  .legend button {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: none; border: none; padding: 2px 4px; cursor: pointer; font-size: 12.5px; color: var(--ink-2);
+    border-radius: 3px;
+  }
+  .legend button[aria-pressed="false"] { opacity: 0.4; }
+  .legend button:hover { background: var(--surface-2); }
+  .legend .key { width: 14px; height: 2px; border-radius: 2px; flex: none; }
+  .facets { display: grid; gap: 18px 22px; }
+  .facet { min-width: 0; padding-top: 6px; }
+  .facet .fhead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 12.5px; }
+  .facet .fname { display: inline-flex; align-items: center; gap: 7px; min-width: 0; }
+  .facet .fname span.t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .facet .ftotal { color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tooltip {
+    position: absolute; pointer-events: none; z-index: 5;
+    background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 5px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.13);
+    padding: 8px 10px; font-size: 12.5px; min-width: 132px;
+    opacity: 0; transition: opacity 0.1s;
+  }
+  .tooltip.on { opacity: 1; }
+  .tooltip .tt-head { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 5px; }
+  .tt-row { display: flex; align-items: center; gap: 7px; padding: 1.5px 0; }
+  .tt-row .key { width: 12px; height: 2px; border-radius: 2px; flex: none; }
+  .tt-row .val { font-weight: 600; font-variant-numeric: tabular-nums; min-width: 22px; text-align: right; }
+  .tt-row .nm { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+  @media (max-width: 1020px) { .twocol { grid-template-columns: 1fr; } }
+
+  .foot { font-size: 12px; color: var(--ink-3); border-top: 1px solid var(--rule); padding-top: 16px; }
+  .foot code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; }
+
+  /* Stacked on a phone the filter row is tall enough that pinning it would
+     cover the content it scopes. */
+  @media (max-width: 860px) {
+    .filters { position: static; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div>
+      <h1>Chargeback Control Room</h1>
+      <p class="sub" id="sub-line">Shopify Payments disputes consolidated across every connected store.</p>
+    </div>
+    <div class="stamp">
+      <div class="eyebrow">Data refreshed</div>
+      <div id="stamp-time">—</div>
+    </div>
+  </header>
+
+  <div id="banners"></div>
+
+  <!-- Management summary ------------------------------------------------>
+  <section class="block" id="summary-block">
+    <div class="block-head">
+      <h2>Where we stand</h2>
+      <p class="note">Live against the filters below. Money at risk is the value of disputes not yet decided.</p>
+    </div>
+    <div class="situation">
+      <div class="card hero">
+        <div class="eyebrow">Chargeback value at risk</div>
+        <div class="value" id="hero-value">—</div>
+        <div class="extra" id="hero-extra"></div>
+        <div class="split" id="hero-split"></div>
+      </div>
+      <div class="tiles" id="summary-tiles"></div>
+    </div>
+  </section>
+
+  <!-- Filters ------------------------------------------------------------>
+  <div class="filters" id="filters" role="group" aria-label="Dashboard filters">
+    <div class="fgroup">
+      <span class="eyebrow">Period</span>
+      <div class="seg" id="range-seg"></div>
+      <input type="date" id="date-from" aria-label="From date" />
+      <span class="scope">to</span>
+      <input type="date" id="date-to" aria-label="To date" />
+    </div>
+    <div class="fgroup">
+      <span class="eyebrow">Stores</span>
+      <span id="store-chips" class="fgroup"></span>
+    </div>
+    <div class="fgroup">
+      <span class="eyebrow">Status</span>
+      <select id="status-select" aria-label="Filter by status"></select>
+    </div>
+    <div class="fgroup">
+      <span class="eyebrow">Reason</span>
+      <select id="reason-select" aria-label="Filter by reason"></select>
+    </div>
+    <div class="fgroup">
+      <input type="search" id="search" placeholder="Order, customer or dispute ID" aria-label="Search disputes" />
+    </div>
+    <div class="fspacer"></div>
+    <span class="scope" id="scope-line">—</span>
+    <button class="linkish" id="reset-filters" type="button">Reset</button>
+  </div>
+
+  <!-- Per-store overview ------------------------------------------------->
+  <section class="block">
+    <div class="block-head">
+      <h2>Store scorecard</h2>
+      <p class="note">Win rate is decided cases only — won ÷ (won + lost). Cases refunded, prevented or closed without a verdict sit in “Other closed”.</p>
+    </div>
+    <div class="card tablewrap">
+      <table id="store-table">
+        <thead>
+          <tr>
+            <th>Store</th>
+            <th class="n">Total</th>
+            <th class="n">Open</th>
+            <th class="n">Needs action</th>
+            <th class="n">Overdue</th>
+            <th class="n">Won</th>
+            <th class="n">Lost</th>
+            <th class="n">Other closed</th>
+            <th class="n">Win rate</th>
+            <th class="n">Loss rate</th>
+            <th class="n">At risk</th>
+            <th class="n">Total value</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Status + action queue ---------------------------------------------->
+  <section class="block">
+    <div class="block-head">
+      <h2>Status &amp; the action queue</h2>
+      <p class="note">Left: every status Shopify reports. Right: the open cases that still need evidence from us, most urgent first.</p>
+    </div>
+    <div class="twocol">
+      <div class="card">
+        <div class="grouphead"><span class="eyebrow">Breakdown by status</span></div>
+        <div class="barlist" id="status-list"></div>
+      </div>
+      <div class="card">
+        <div class="grouphead" style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">
+          <span class="eyebrow">Needs a response</span>
+          <span class="scope" id="queue-count"></span>
+        </div>
+        <div class="queue" id="action-queue"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trend --------------------------------------------------------------->
+  <section class="block">
+    <div class="block-head">
+      <h2>Chargebacks over time</h2>
+      <p class="note">Counted by the date the dispute was opened. Switch to “All stores” for the group total, or compare stores side by side.</p>
+    </div>
+    <div class="card chartcard">
+      <div class="chartbar">
+        <div class="seg" id="gran-seg">
+          <button type="button" data-gran="day">Daily</button>
+          <button type="button" data-gran="week">Weekly</button>
+          <button type="button" data-gran="month">Monthly</button>
+        </div>
+        <div class="seg" id="mode-seg">
+          <button type="button" data-mode="all">All stores</button>
+          <button type="button" data-mode="facet">Side by side</button>
+          <button type="button" data-mode="store">Overlaid</button>
+        </div>
+        <div class="fspacer"></div>
+        <div class="seg" id="trendview-seg">
+          <button type="button" data-view="chart">Chart</button>
+          <button type="button" data-view="table">Table</button>
+        </div>
+      </div>
+      <div class="plot" id="trend-plot">
+        <div class="tooltip" id="trend-tooltip" role="status" aria-live="polite"></div>
+      </div>
+      <div class="legend" id="trend-legend"></div>
+      <p class="note" id="trend-caption" hidden></p>
+      <div class="tablewrap" id="trend-table" hidden></div>
+    </div>
+  </section>
+
+  <!-- Reasons -------------------------------------------------------------->
+  <section class="block">
+    <div class="block-head">
+      <h2>Why customers are disputing</h2>
+      <p class="note">Grouped by the reason code the card network sent back. Hover a row for the operational fix that usually moves it.</p>
+    </div>
+    <div class="card">
+      <div class="barlist" id="reason-list"></div>
+    </div>
+  </section>
+
+  <!-- Detail --------------------------------------------------------------->
+  <section class="block">
+    <div class="block-head">
+      <h2>Every dispute</h2>
+      <p class="note" id="detail-note"></p>
+    </div>
+    <div class="card tablewrap">
+      <table id="detail-table">
+        <thead><tr id="detail-head"></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div><button class="linkish" id="load-more" type="button" hidden>Show more</button></div>
+  </section>
+
+  <footer class="foot" id="page-foot"></footer>
+</div>
+
+<script type="application/json" id="cb-data">__DASHBOARD_DATA__</script>
+<script>
+(function () {
+  "use strict";
+
+  var DATA = JSON.parse(document.getElementById("cb-data").textContent);
+  var ROWS = DATA.disputes || [];
+  var STORES = DATA.stores || [];
+  var SERIES_SLOTS = ["--s1", "--s2", "--s3", "--s4", "--s5", "--s6", "--s7", "--s8"];
+
+  /* Colour follows the entity: a store keeps its slot no matter what is
+     filtered out, so toggling never repaints the survivors. */
+  var STORE_COLOR = {};
+  STORES.forEach(function (s, i) {
+    STORE_COLOR[s.key] = "var(" + SERIES_SLOTS[i % SERIES_SLOTS.length] + ")";
+  });
+
+  var STATUS_TONE = {
+    needs_response: "serious", warning_needs_response: "serious",
+    under_review: "warn", warning_under_review: "warn",
+    won: "good", lost: "critical", accepted: "critical"
+  };
+  var TONE_COLOR = {
+    good: "var(--good)", warn: "var(--warn)", serious: "var(--serious)",
+    critical: "var(--critical)", neutral: "var(--neutral-mark)"
+  };
+  function toneFor(status) { return STATUS_TONE[status] || "neutral"; }
+
+  var STATUS_GROUPS = [
+    { id: "needs_action", label: "Needs a response", test: function (r) { return r.needs_action; } },
+    { id: "under_review", label: "Under review", test: function (r) { return r.outcome === "open" && !r.needs_action; } },
+    { id: "open", label: "All open", test: function (r) { return r.outcome === "open"; } },
+    { id: "won", label: "Won", test: function (r) { return r.outcome === "won"; } },
+    { id: "lost", label: "Lost", test: function (r) { return r.outcome === "lost"; } },
+    { id: "closed_other", label: "Other closed", test: function (r) { return r.outcome === "closed_other"; } }
+  ];
+
+  /* ---------- helpers ------------------------------------------------- */
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = String(text);
+    return n;
+  }
+  function svgEl(tag, attrs) {
+    var n = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (var k in attrs) { if (attrs[k] !== undefined && attrs[k] !== null) n.setAttribute(k, attrs[k]); }
+    return n;
+  }
+  function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+  function parseDay(s) { return s ? new Date(s + "T00:00:00Z") : null; }
+  function isoDay(d) { return d.toISOString().slice(0, 10); }
+  function addDays(d, n) { var c = new Date(d.getTime()); c.setUTCDate(c.getUTCDate() + n); return c; }
+
+  function money(v, cur, decimals) {
+    var opts = { style: "currency", currency: cur || "USD" };
+    opts.minimumFractionDigits = decimals === undefined ? 0 : decimals;
+    opts.maximumFractionDigits = decimals === undefined ? 0 : decimals;
+    try { return new Intl.NumberFormat(undefined, opts).format(v); }
+    catch (e) { return (cur ? cur + " " : "") + v.toFixed(decimals === undefined ? 0 : decimals); }
+  }
+  /* Amounts are never summed across currencies - each one keeps its own total. */
+  function sumByCurrency(rows) {
+    var by = {};
+    rows.forEach(function (r) { var c = r.currency || "USD"; by[c] = (by[c] || 0) + (r.amount || 0); });
+    return Object.keys(by).map(function (c) { return { currency: c, amount: by[c] }; })
+      .sort(function (a, b) { return b.amount - a.amount; });
+  }
+  function moneyParts(rows) {
+    var sums = sumByCurrency(rows);
+    if (!sums.length) return { main: money(0, DATA.currencies && DATA.currencies[0]), rest: "" };
+    return {
+      main: money(sums[0].amount, sums[0].currency),
+      rest: sums.slice(1).map(function (s) { return money(s.amount, s.currency); }).join(" · ")
+    };
+  }
+  function pct(n, d) { return d ? Math.round((1000 * n) / d) / 10 : null; }
+  function pctText(v) { return v === null || v === undefined ? "—" : v.toFixed(1) + "%"; }
+  function fmtDate(s) {
+    if (!s) return "—";
+    var d = parseDay(s);
+    if (!d || isNaN(d)) return s;
+    return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
+  }
+
+  /* ---------- state ---------------------------------------------------- */
+  var allDates = ROWS.map(function (r) { return r.chargeback_date; }).filter(Boolean).sort();
+  var DATA_MIN = allDates[0] || isoDay(new Date());
+  var DATA_MAX = allDates[allDates.length - 1] || isoDay(new Date());
+
+  var state = {
+    from: DATA_MIN,
+    to: DATA_MAX,
+    preset: "all",
+    stores: new Set(STORES.map(function (s) { return s.key; })),
+    status: "",
+    reason: "",
+    q: "",
+    gran: "week",
+    mode: "all",
+    trendView: "chart",
+    hiddenSeries: new Set(),
+    sort: { key: "chargeback_date", dir: -1 },
+    limit: 100
+  };
+
+  function filtered() {
+    var q = state.q.trim().toLowerCase();
+    var group = state.status ? STATUS_GROUPS.filter(function (g) { return g.id === state.status; })[0] : null;
+    return ROWS.filter(function (r) {
+      if (!state.stores.has(r.store)) return false;
+      var d = r.chargeback_date;
+      if (d) { if (d < state.from || d > state.to) return false; }
+      if (group && !group.test(r)) return false;
+      if (state.reason && (r.reason || "") !== state.reason) return false;
+      if (q) {
+        var hay = [r.order_number, r.order_name, r.customer, r.customer_email, r.dispute_id, r.store_label]
+          .filter(Boolean).join(" ").toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+  }
+
+  function summarize(rows) {
+    var s = {
+      total: rows.length, open: 0, needsAction: 0, overdue: 0, underReview: 0,
+      won: 0, lost: 0, closedOther: 0, openRows: [], actionRows: []
+    };
+    rows.forEach(function (r) {
+      if (r.outcome === "open") {
+        s.open++; s.openRows.push(r);
+        if (r.needs_action) { s.needsAction++; s.actionRows.push(r); if (r.overdue) s.overdue++; }
+        else s.underReview++;
+      } else if (r.outcome === "won") s.won++;
+      else if (r.outcome === "lost") s.lost++;
+      else s.closedOther++;
+    });
+    s.decided = s.won + s.lost;
+    s.closed = s.total - s.open;
+    s.winRate = pct(s.won, s.decided);
+    s.lossRate = pct(s.lost, s.decided);
+    return s;
+  }
+
+  function trendDirection(rows) {
+    var end = parseDay(state.to) || new Date();
+    var recentStart = addDays(end, -30), priorStart = addDays(end, -60);
+    var recent = 0, prior = 0;
+    rows.forEach(function (r) {
+      var d = parseDay(r.chargeback_date);
+      if (!d) return;
+      if (d > recentStart && d <= end) recent++;
+      else if (d > priorStart && d <= recentStart) prior++;
+    });
+    if (recent + prior < 6) return { dir: "not enough data", change: null, recent: recent, prior: prior };
+    if (prior === 0) return { dir: recent ? "increasing" : "stable", change: null, recent: recent, prior: prior };
+    var change = Math.round((1000 * (recent - prior)) / prior) / 10;
+    return {
+      dir: change > 15 ? "increasing" : change < -15 ? "decreasing" : "stable",
+      change: change, recent: recent, prior: prior
+    };
+  }
+
+  /* ---------- banners --------------------------------------------------- */
+  function renderBanners() {
+    var host = document.getElementById("banners");
+    clear(host);
+    var meta = DATA.meta || {};
+    if (meta.sample) {
+      var b = el("div", "banner");
+      var body = el("div");
+      body.appendChild(el("strong", null, "This dashboard is showing sample data, not your real chargebacks. "));
+      body.appendChild(document.createTextNode(
+        "It was generated so the layout and calculations could be reviewed before the Shopify Admin API credentials were in place. " +
+        "Add each store's domain and access token to .env, then run fetch_chargebacks.py followed by build_dashboard.py to replace every number here with live data."
+      ));
+      b.appendChild(body);
+      host.appendChild(b);
+    }
+    var failed = STORES.filter(function (s) { return s.fetch_error; });
+    if (failed.length) {
+      var e = el("div", "banner is-error");
+      var eb = el("div");
+      eb.appendChild(el("strong", null, failed.length + " store" + (failed.length > 1 ? "s" : "") + " could not be reached. "));
+      eb.appendChild(document.createTextNode(
+        "Their disputes are missing from every figure below: " +
+        failed.map(function (s) { return s.label + " (" + s.fetch_error + ")"; }).join("; ")
+      ));
+      e.appendChild(eb);
+      host.appendChild(e);
+    }
+  }
+
+  /* ---------- management summary ---------------------------------------- */
+  function tile(label, valueText, opts) {
+    opts = opts || {};
+    var card = el("div", "card tile");
+    card.appendChild(el("div", "eyebrow", label));
+    card.appendChild(el("div", "value" + (opts.small ? " sm" : "") + (opts.tabular ? " num" : ""), valueText));
+    if (opts.meta) {
+      var m = el("div", "meta");
+      if (opts.tone) {
+        var flag = el("span", "flag");
+        flag.appendChild(el("span", "dot " + opts.tone));
+        flag.appendChild(el("span", null, opts.meta));
+        m.appendChild(flag);
+      } else {
+        m.textContent = opts.meta;
+      }
+      card.appendChild(m);
+    }
+    return card;
+  }
+
+  function renderSummary(rows, s) {
+    var risk = moneyParts(s.openRows);
+    document.getElementById("hero-value").textContent = risk.main;
+    document.getElementById("hero-extra").textContent = risk.rest
+      ? "plus " + risk.rest + " in other currencies"
+      : s.open + " open case" + (s.open === 1 ? "" : "s") + " still undecided";
+
+    var split = document.getElementById("hero-split");
+    clear(split);
+    [
+      { label: "Waiting on us", tone: s.overdue ? "critical" : "serious", rows: s.actionRows, n: s.needsAction },
+      { label: "With the bank", tone: "warn", rows: s.openRows.filter(function (r) { return !r.needs_action; }), n: s.underReview }
+    ].forEach(function (part) {
+      var row = el("div", "split-row");
+      var lbl = el("span", "lbl");
+      lbl.appendChild(el("span", "dot " + part.tone));
+      lbl.appendChild(el("span", null, part.label + " · " + part.n + " case" + (part.n === 1 ? "" : "s")));
+      row.appendChild(lbl);
+      row.appendChild(el("span", "amt", moneyParts(part.rows).main));
+      split.appendChild(row);
+    });
+
+    var host = document.getElementById("summary-tiles");
+    clear(host);
+
+    host.appendChild(tile("Open chargebacks", String(s.open), {
+      meta: s.underReview + " awaiting the bank, " + s.needsAction + " on us"
+    }));
+
+    host.appendChild(tile("Need action now", String(s.needsAction), {
+      tone: s.overdue > 0 ? "critical" : s.needsAction > 0 ? "serious" : "good",
+      meta: s.overdue > 0
+        ? s.overdue + " past the evidence deadline"
+        : s.needsAction > 0 ? "all still inside the deadline" : "nothing waiting on us"
+    }));
+
+    host.appendChild(tile("Win rate", pctText(s.winRate), {
+      tone: s.winRate === null ? "neutral" : s.winRate >= 50 ? "good" : s.winRate >= 30 ? "warn" : "critical",
+      meta: s.decided ? s.won + " won of " + s.decided + " decided" : "no decided cases yet"
+    }));
+
+    var byStore = {};
+    rows.forEach(function (r) { byStore[r.store] = (byStore[r.store] || 0) + 1; });
+    var topStoreKey = Object.keys(byStore).sort(function (a, b) { return byStore[b] - byStore[a]; })[0];
+    var topStore = STORES.filter(function (st) { return st.key === topStoreKey; })[0];
+    var topStoreTile = tile("Most chargebacks", topStore ? topStore.label : "—", {
+      small: true,
+      meta: topStoreKey ? byStore[topStoreKey] + " of " + rows.length + " (" + pctText(pct(byStore[topStoreKey], rows.length)) + ")" : "—"
+    });
+    if (topStore) {
+      var sw = el("span", "swatch");
+      sw.style.background = STORE_COLOR[topStore.key];
+      sw.style.marginRight = "7px";
+      topStoreTile.querySelector(".meta").prepend(sw);
+    }
+    host.appendChild(topStoreTile);
+
+    var byReason = {};
+    rows.forEach(function (r) {
+      var k = r.reason_label || "Not specified";
+      byReason[k] = (byReason[k] || 0) + 1;
+    });
+    var topReason = Object.keys(byReason).sort(function (a, b) { return byReason[b] - byReason[a]; })[0];
+    host.appendChild(tile("Top reason", topReason || "—", {
+      small: true,
+      meta: topReason ? byReason[topReason] + " cases (" + pctText(pct(byReason[topReason], rows.length)) + ")" : "—"
+    }));
+
+    var t = trendDirection(rows);
+    var trendMeta = t.change === null
+      ? t.recent + " in the last 30 days"
+      : t.recent + " vs " + t.prior + " the 30 days before (" + (t.change > 0 ? "+" : "") + t.change + "%)";
+    host.appendChild(tile("30-day trend", t.dir.charAt(0).toUpperCase() + t.dir.slice(1), {
+      small: true,
+      tone: t.dir === "increasing" ? "critical" : t.dir === "decreasing" ? "good" : "neutral",
+      meta: trendMeta
+    }));
+  }
+
+  /* ---------- store scorecard -------------------------------------------- */
+  function renderStoreTable(rows) {
+    var tbody = document.querySelector("#store-table tbody");
+    clear(tbody);
+    var visible = STORES.filter(function (st) { return state.stores.has(st.key); });
+
+    function addRow(label, colorKey, subset, isTotal) {
+      var s = summarize(subset);
+      var tr = el("tr", isTotal ? "total-row" : null);
+      var tdName = el("td");
+      var cell = el("span", "store-cell");
+      if (colorKey) {
+        var sw = el("span", "swatch");
+        sw.style.background = STORE_COLOR[colorKey];
+        cell.appendChild(sw);
+      }
+      cell.appendChild(el("span", null, label));
+      tdName.appendChild(cell);
+      tr.appendChild(tdName);
+
+      [s.total, s.open].forEach(function (v) { tr.appendChild(el("td", "n num", v)); });
+
+      tr.appendChild(el("td", "n num", s.needsAction));
+
+      var tdOverdue = el("td", "n num");
+      if (s.overdue > 0) {
+        var od = el("span", "pill");
+        od.appendChild(el("span", "dot critical"));
+        od.appendChild(el("span", null, String(s.overdue)));
+        tdOverdue.appendChild(od);
+      } else {
+        tdOverdue.textContent = "—";
+      }
+      tr.appendChild(tdOverdue);
+
+      [s.won, s.lost, s.closedOther].forEach(function (v) { tr.appendChild(el("td", "n num", v)); });
+      tr.appendChild(el("td", "n num", pctText(s.winRate)));
+      tr.appendChild(el("td", "n num", pctText(s.lossRate)));
+      tr.appendChild(el("td", "n num", moneyParts(s.openRows).main));
+      tr.appendChild(el("td", "n num", moneyParts(subset).main));
+      tbody.appendChild(tr);
+    }
+
+    visible.forEach(function (st) {
+      addRow(st.label, st.key, rows.filter(function (r) { return r.store === st.key; }), false);
+    });
+    if (visible.length > 1) addRow("All stores", null, rows, true);
+    if (!visible.length) {
+      var tr = el("tr");
+      var td = el("td", "empty", "No stores selected.");
+      td.colSpan = 12;
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    }
+  }
+
+  /* ---------- status breakdown -------------------------------------------- */
+  function barRow(opts) {
+    var row = el("div", "barrow");
+    var name = el("div", "name");
+    var sw = el("span", "swatch");
+    sw.style.background = opts.color;
+    name.appendChild(sw);
+    name.appendChild(el("span", "t", opts.label));
+    row.appendChild(name);
+
+    var trackCell = el("div", "track-cell");
+    var track = el("div", "track");
+    var fill = el("div", "fill");
+    fill.style.width = Math.max(opts.max ? (100 * opts.count) / opts.max : 0, 0.8) + "%";
+    fill.style.background = opts.color;
+    track.appendChild(fill);
+    trackCell.appendChild(track);
+    row.appendChild(trackCell);
+
+    row.appendChild(el("div", "n", opts.count));
+    row.appendChild(el("div", "n muted", pctText(opts.pct)));
+    row.appendChild(el("div", "n muted", opts.trailing || ""));
+    if (opts.why) row.appendChild(el("div", "why", opts.why));
+    return row;
+  }
+
+  function renderStatus(rows) {
+    var host = document.getElementById("status-list");
+    clear(host);
+    if (!rows.length) { host.appendChild(el("div", "empty", "No disputes match the current filters.")); return; }
+
+    var counts = {}, labels = {};
+    rows.forEach(function (r) {
+      counts[r.status] = (counts[r.status] || 0) + 1;
+      labels[r.status] = r.status_label;
+    });
+    var order = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
+    var max = Math.max.apply(null, order.map(function (k) { return counts[k]; }));
+
+    order.forEach(function (status) {
+      var subset = rows.filter(function (r) { return r.status === status; });
+      host.appendChild(barRow({
+        label: labels[status] || status,
+        color: TONE_COLOR[toneFor(status)],
+        count: counts[status],
+        pct: pct(counts[status], rows.length),
+        max: max,
+        trailing: moneyParts(subset).main
+      }));
+    });
+  }
+
+  /* ---------- action queue ------------------------------------------------ */
+  function dueSeverity(days) {
+    if (days === null || days === undefined) return { tone: "neutral", text: "No deadline given" };
+    if (days < 0) return { tone: "critical", text: Math.abs(days) + "d overdue" };
+    if (days <= 3) return { tone: "critical", text: days + "d left" };
+    if (days <= 7) return { tone: "serious", text: days + "d left" };
+    return { tone: "warn", text: days + "d left" };
+  }
+
+  function renderQueue(rows) {
+    var host = document.getElementById("action-queue");
+    clear(host);
+    var queue = rows.filter(function (r) { return r.needs_action; }).sort(function (a, b) {
+      var av = a.days_to_due, bv = b.days_to_due;
+      if (av === null || av === undefined) return 1;
+      if (bv === null || bv === undefined) return -1;
+      return av - bv;
+    });
+    document.getElementById("queue-count").textContent =
+      queue.length + " case" + (queue.length === 1 ? "" : "s") + " · " + moneyParts(queue).main;
+
+    if (!queue.length) {
+      var openCount = rows.filter(function (r) { return r.outcome === "open"; }).length;
+      host.appendChild(el("div", "empty", openCount
+        ? "Nothing is waiting on us — all " + openCount + " open disputes have had their evidence submitted."
+        : "No open disputes in this view."));
+      return;
+    }
+
+    queue.forEach(function (r) {
+      var sev = dueSeverity(r.days_to_due);
+      var row = el("div", "qrow");
+      var stripe = el("div", "stripe");
+      stripe.style.background = TONE_COLOR[sev.tone];
+      row.appendChild(stripe);
+
+      var main = el("div", "qmain");
+      var title = el("div", "qtitle");
+      var storeCell = el("span", "store-cell");
+      var sw = el("span", "swatch");
+      sw.style.background = STORE_COLOR[r.store] || "var(--neutral-mark)";
+      storeCell.appendChild(sw);
+      storeCell.appendChild(el("span", null, r.store_label));
+      title.appendChild(storeCell);
+      title.appendChild(el("span", "muted", r.order_name || (r.order_number ? "#" + r.order_number : "no order")));
+      if (r.customer) title.appendChild(el("span", "muted", r.customer));
+      main.appendChild(title);
+
+      var meta = el("div", "qmeta");
+      meta.textContent = r.reason_label + " · " + r.status_label +
+        " · opened " + fmtDate(r.chargeback_date) +
+        " · due " + fmtDate(r.evidence_due_date);
+      main.appendChild(meta);
+      row.appendChild(main);
+
+      var right = el("div", "qright");
+      right.appendChild(el("div", "amt", money(r.amount, r.currency, 2)));
+      var due = el("div", "due");
+      due.style.color = TONE_COLOR[sev.tone];
+      due.textContent = sev.text;
+      right.appendChild(due);
+      row.appendChild(right);
+
+      host.appendChild(row);
+    });
+  }
+
+  /* ---------- reasons ------------------------------------------------------ */
+  function renderReasons(rows) {
+    var host = document.getElementById("reason-list");
+    clear(host);
+    if (!rows.length) { host.appendChild(el("div", "empty", "No disputes match the current filters.")); return; }
+
+    var groups = {};
+    rows.forEach(function (r) {
+      var key = r.reason || "";
+      if (!groups[key]) groups[key] = { label: r.reason_label, category: r.reason_category, rows: [] };
+      groups[key].rows.push(r);
+    });
+    var keys = Object.keys(groups).sort(function (a, b) { return groups[b].rows.length - groups[a].rows.length; });
+    var max = groups[keys[0]].rows.length;
+
+    keys.forEach(function (key) {
+      var g = groups[key];
+      var decided = g.rows.filter(function (r) { return r.outcome === "won" || r.outcome === "lost"; });
+      var wins = decided.filter(function (r) { return r.outcome === "won"; }).length;
+      /* One series, so every bar takes categorical slot 1 - bar length already
+         encodes the magnitude and a colour ramp would double-encode it. */
+      var row = barRow({
+        label: g.label,
+        color: "var(--s1)",
+        count: g.rows.length,
+        pct: pct(g.rows.length, rows.length),
+        max: max,
+        trailing: moneyParts(g.rows).main,
+        why: g.category + " · win rate " + pctText(pct(wins, decided.length)) +
+             (decided.length ? " on " + decided.length + " decided" : " (none decided yet)") +
+             " · " + (REASON_ACTIONS[key] || "Review the individual cases for a common root cause.")
+      });
+      host.appendChild(row);
+    });
+  }
+
+  var REASON_ACTIONS = __REASON_ACTIONS__;
+
+  /* ---------- trend chart --------------------------------------------------- */
+  function bucketKey(dateStr, gran) {
+    if (gran === "month") return dateStr.slice(0, 7);
+    if (gran === "week") {
+      var d = parseDay(dateStr);
+      var dow = (d.getUTCDay() + 6) % 7; /* Monday = 0 */
+      return isoDay(addDays(d, -dow));
+    }
+    return dateStr;
+  }
+  function bucketRange(fromStr, toStr, gran) {
+    var out = [];
+    if (gran === "month") {
+      var d = parseDay(fromStr.slice(0, 7) + "-01");
+      var end = parseDay(toStr.slice(0, 7) + "-01");
+      while (d <= end) {
+        out.push(isoDay(d).slice(0, 7));
+        d = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1));
+      }
+      return out;
+    }
+    var step = gran === "week" ? 7 : 1;
+    var cur = parseDay(bucketKey(fromStr, gran));
+    var last = parseDay(bucketKey(toStr, gran));
+    while (cur <= last) { out.push(isoDay(cur)); cur = addDays(cur, step); }
+    return out;
+  }
+  function bucketLabel(key, gran) {
+    if (gran === "month") {
+      var d = parseDay(key + "-01");
+      /* Full year, not "Feb 26" - that reads as a day beside the daily labels. */
+      return d.toLocaleDateString(undefined, { month: "short", year: "numeric", timeZone: "UTC" });
+    }
+    var dd = parseDay(key);
+    return dd.toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });
+  }
+  function niceTicks(max) {
+    if (max <= 0) return [0, 1];
+    var raw = max / 4;
+    var mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    var norm = raw / mag;
+    var step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag;
+    var ticks = [];
+    for (var v = 0; v <= Math.ceil(max / step) * step + 1e-9; v += step) ticks.push(Math.round(v * 100) / 100);
+    return ticks;
+  }
+
+  function trendSeries(rows) {
+    var buckets = bucketRange(state.from, state.to, state.gran);
+    var index = {};
+    buckets.forEach(function (b, i) { index[b] = i; });
+
+    var series;
+    if (state.mode === "all") {
+      series = [{ key: "__all__", label: "All stores", color: "var(--s1)", values: buckets.map(function () { return 0; }) }];
+      rows.forEach(function (r) {
+        if (!r.chargeback_date) return;
+        var i = index[bucketKey(r.chargeback_date, state.gran)];
+        if (i !== undefined) series[0].values[i]++;
+      });
+    } else {
+      series = STORES.filter(function (s) { return state.stores.has(s.key); }).map(function (s) {
+        return { key: s.key, label: s.label, color: STORE_COLOR[s.key], values: buckets.map(function () { return 0; }) };
+      });
+      var byKey = {};
+      series.forEach(function (s) { byKey[s.key] = s; });
+      rows.forEach(function (r) {
+        if (!r.chargeback_date) return;
+        var s = byKey[r.store];
+        var i = index[bucketKey(r.chargeback_date, state.gran)];
+        if (s && i !== undefined) s.values[i]++;
+      });
+    }
+    return { buckets: buckets, series: series };
+  }
+
+  /* The last bucket is usually cut short by the end of the filter window, so
+     its dip is calendar arithmetic rather than a real fall in chargebacks.
+     Say so instead of letting the chart imply a drop. */
+  function partialPeriodNote(buckets) {
+    if (!buckets.length || state.gran === "day") return null;
+    var last = buckets[buckets.length - 1];
+    var start, end, unit;
+    if (state.gran === "month") {
+      start = parseDay(last + "-01");
+      end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 0));
+      unit = "month";
+    } else {
+      start = parseDay(last);
+      end = addDays(start, 6);
+      unit = "week";
+    }
+    var to = parseDay(state.to);
+    if (!to || to >= end) return null;
+    var covered = Math.round((to - start) / 86400000) + 1;
+    var total = Math.round((end - start) / 86400000) + 1;
+    return "The final " + unit + " (" + bucketLabel(last, state.gran) + ") is still in progress — it covers " +
+      covered + " of " + total + " days, so its lower value is the calendar, not a real drop.";
+  }
+
+  var trendCache = null;
+
+  function renderTrend(rows) {
+    trendCache = trendSeries(rows);
+    renderLegend(trendCache);
+
+    var caption = document.getElementById("trend-caption");
+    var note = partialPeriodNote(trendCache.buckets);
+    caption.textContent = note || "";
+    caption.hidden = !note;
+    if (state.trendView === "table") {
+      document.getElementById("trend-plot").hidden = true;
+      document.getElementById("trend-legend").hidden = true;
+      document.getElementById("trend-table").hidden = false;
+      renderTrendTable(trendCache);
+    } else {
+      document.getElementById("trend-plot").hidden = false;
+      /* One series needs no legend, and every small multiple is titled - a
+         legend there would just restate the panel headings. */
+      document.getElementById("trend-legend").hidden =
+        trendCache.series.length < 2 || state.mode === "facet";
+      document.getElementById("trend-table").hidden = true;
+      if (state.mode === "facet") drawFacets(trendCache);
+      else drawTrend(trendCache);
+    }
+  }
+
+  function visibleSeries(model) {
+    return model.series.filter(function (s) { return !state.hiddenSeries.has(s.key); });
+  }
+
+  function renderLegend(model) {
+    var host = document.getElementById("trend-legend");
+    clear(host);
+    if (model.series.length < 2) return;
+    model.series.forEach(function (s) {
+      var b = el("button", null);
+      b.type = "button";
+      b.setAttribute("aria-pressed", state.hiddenSeries.has(s.key) ? "false" : "true");
+      var key = el("span", "key");
+      key.style.background = s.color;
+      b.appendChild(key);
+      b.appendChild(el("span", null, s.label));
+      b.addEventListener("click", function () {
+        if (state.hiddenSeries.has(s.key)) state.hiddenSeries.delete(s.key);
+        else state.hiddenSeries.add(s.key);
+        renderTrend(filtered());
+      });
+      host.appendChild(b);
+    });
+  }
+
+  function renderTrendTable(model) {
+    var host = document.getElementById("trend-table");
+    clear(host);
+    var series = visibleSeries(model);
+    var table = el("table");
+    var thead = el("thead");
+    var hr = el("tr");
+    hr.appendChild(el("th", null, "Period"));
+    series.forEach(function (s) { hr.appendChild(el("th", "n", s.label)); });
+    if (series.length > 1) hr.appendChild(el("th", "n", "Total"));
+    thead.appendChild(hr);
+    table.appendChild(thead);
+
+    var tbody = el("tbody");
+    model.buckets.forEach(function (b, i) {
+      var tr = el("tr");
+      tr.appendChild(el("td", null, bucketLabel(b, state.gran)));
+      var total = 0;
+      series.forEach(function (s) { total += s.values[i]; tr.appendChild(el("td", "n num", s.values[i])); });
+      if (series.length > 1) tr.appendChild(el("td", "n num", total));
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    host.appendChild(table);
+  }
+
+  /* The tooltip lives inside .plot and must survive every redraw. */
+  function clearPlot(plot, tooltip) {
+    Array.prototype.slice.call(plot.children).forEach(function (n) {
+      if (n !== tooltip) n.remove();
+    });
+    tooltip.classList.remove("on");
+  }
+
+  /* Small multiples: one panel per store on a shared y-scale, so a spike in
+     any store is measured against the same ruler. Each panel is titled, so
+     colour here is redundant reinforcement of the store's identity rather
+     than the channel carrying it. */
+  function drawFacets(model) {
+    var plot = document.getElementById("trend-plot");
+    var tooltip = document.getElementById("trend-tooltip");
+    clearPlot(plot, tooltip);
+
+    var series = visibleSeries(model);
+    var buckets = model.buckets;
+    if (!series.length) { plot.appendChild(el("div", "empty", "No stores selected.")); return; }
+
+    var plotW = Math.max(plot.clientWidth || 720, 300);
+    var cols = plotW < 640 ? 1 : plotW < 1000 ? 2 : 3;
+    var grid = el("div", "facets");
+    grid.style.gridTemplateColumns = "repeat(" + cols + ", minmax(0, 1fr))";
+
+    var maxV = 1;
+    series.forEach(function (s) { s.values.forEach(function (v) { if (v > maxV) maxV = v; }); });
+    var ticks = niceTicks(maxV);
+    var top = ticks[ticks.length - 1];
+
+    var cellW = Math.max(Math.floor((plotW - (cols - 1) * 22) / cols), 180);
+    var H = 116;
+    var m = { t: 12, r: 10, b: 16, l: 30 };
+    var iw = cellW - m.l - m.r;
+    var ih = H - m.t - m.b;
+
+    series.forEach(function (s) {
+      var total = s.values.reduce(function (a, b) { return a + b; }, 0);
+      var cell = el("div", "facet");
+
+      var head = el("div", "fhead");
+      var name = el("span", "fname");
+      var sw = el("span", "swatch");
+      sw.style.background = s.color;
+      name.appendChild(sw);
+      name.appendChild(el("span", "t", s.label));
+      head.appendChild(name);
+      head.appendChild(el("span", "ftotal", total + " total"));
+      cell.appendChild(head);
+
+      var xAt = function (i) { return buckets.length < 2 ? m.l + iw / 2 : m.l + (iw * i) / (buckets.length - 1); };
+      var yAt = function (v) { return m.t + ih - (ih * v) / top; };
+
+      var svg = svgEl("svg", { viewBox: "0 0 " + cellW + " " + H, height: H, role: "img" });
+      svg.setAttribute("aria-label", s.label + ": " + total + " chargebacks over the period");
+
+      [top, 0].forEach(function (t) {
+        svg.appendChild(svgEl("line", {
+          class: t === 0 ? "axisline" : "gridline", x1: m.l, x2: m.l + iw, y1: yAt(t), y2: yAt(t)
+        }));
+        var lb = svgEl("text", { class: "axistext", x: m.l - 7, y: yAt(t) + 4, "text-anchor": "end" });
+        lb.textContent = String(t);
+        svg.appendChild(lb);
+      });
+
+      var pts = s.values.map(function (v, i) { return xAt(i) + "," + yAt(v); }).join(" ");
+      svg.appendChild(svgEl("polygon", {
+        points: m.l + "," + yAt(0) + " " + pts + " " + (m.l + iw) + "," + yAt(0),
+        fill: s.color, "fill-opacity": "0.1"
+      }));
+      svg.appendChild(svgEl("polyline", {
+        points: pts, fill: "none", stroke: s.color, "stroke-width": "2",
+        "stroke-linejoin": "round", "stroke-linecap": "round"
+      }));
+
+      var lastI = buckets.length - 1;
+      svg.appendChild(svgEl("circle", {
+        cx: xAt(lastI), cy: yAt(s.values[lastI]), r: 4,
+        fill: s.color, stroke: "var(--surface)", "stroke-width": "2"
+      }));
+
+      [0, lastI].forEach(function (i, k) {
+        if (lastI === 0 && k === 1) return;
+        var t = svgEl("text", {
+          class: "axistext", x: k === 0 ? m.l : m.l + iw, y: H - 4,
+          "text-anchor": k === 0 ? "start" : "end"
+        });
+        t.textContent = bucketLabel(buckets[i], state.gran);
+        svg.appendChild(t);
+      });
+
+      var hair = svgEl("line", { class: "crosshair", y1: m.t, y2: m.t + ih, x1: -99, x2: -99, opacity: "0" });
+      svg.appendChild(hair);
+      var hits = svgEl("rect", { x: m.l, y: m.t, width: iw, height: ih, fill: "transparent" });
+      hits.setAttribute("tabindex", "0");
+      svg.appendChild(hits);
+
+      var focusIndex = lastI;
+      function showAt(i) {
+        focusIndex = i;
+        hair.setAttribute("x1", xAt(i));
+        hair.setAttribute("x2", xAt(i));
+        hair.setAttribute("opacity", "1");
+        clear(tooltip);
+        tooltip.appendChild(el("div", "tt-head", bucketLabel(buckets[i], state.gran)));
+        var r = el("div", "tt-row");
+        var k = el("span", "key");
+        k.style.background = s.color;
+        r.appendChild(k);
+        r.appendChild(el("span", "val", s.values[i]));
+        r.appendChild(el("span", "nm", s.label));
+        tooltip.appendChild(r);
+        tooltip.classList.add("on");
+
+        var pr = plot.getBoundingClientRect(), sr = svg.getBoundingClientRect();
+        var scale = sr.width / cellW;
+        var tw = tooltip.offsetWidth || 140;
+        var left = sr.left - pr.left + xAt(i) * scale + 12;
+        tooltip.style.left = Math.min(Math.max(left, 0), Math.max(pr.width - tw, 0)) + "px";
+        tooltip.style.top = (sr.top - pr.top + m.t * scale) + "px";
+      }
+      function hide() { tooltip.classList.remove("on"); hair.setAttribute("opacity", "0"); }
+
+      hits.addEventListener("pointermove", function (e) {
+        var sr = svg.getBoundingClientRect();
+        var x = (e.clientX - sr.left) * (cellW / sr.width);
+        var i = buckets.length < 2 ? 0 : Math.round(((x - m.l) / iw) * (buckets.length - 1));
+        showAt(Math.min(Math.max(i, 0), buckets.length - 1));
+      });
+      hits.addEventListener("pointerleave", hide);
+      hits.addEventListener("focus", function () { showAt(focusIndex); });
+      hits.addEventListener("blur", hide);
+      hits.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowRight") { showAt(Math.min(focusIndex + 1, buckets.length - 1)); e.preventDefault(); }
+        if (e.key === "ArrowLeft") { showAt(Math.max(focusIndex - 1, 0)); e.preventDefault(); }
+      });
+
+      cell.appendChild(svg);
+      grid.appendChild(cell);
+    });
+
+    plot.appendChild(grid);
+  }
+
+  function drawTrend(model) {
+    var plot = document.getElementById("trend-plot");
+    var tooltip = document.getElementById("trend-tooltip");
+    clearPlot(plot, tooltip);
+
+    var series = visibleSeries(model);
+    var buckets = model.buckets;
+    if (!series.length) { plot.appendChild(el("div", "empty", "Every series is hidden — turn one back on in the legend.")); return; }
+    var W = Math.max(plot.clientWidth || 720, 320);
+    var H = 320;
+    var m = { t: 14, r: 20, b: 34, l: 46 };
+    var ih = H - m.t - m.b;
+
+    var maxV = 1;
+    series.forEach(function (s) { s.values.forEach(function (v) { if (v > maxV) maxV = v; }); });
+    var ticks = niceTicks(maxV);
+    var top = ticks[ticks.length - 1];
+
+    var yAt = function (v) { return m.t + ih - (ih * v) / top; };
+
+    /* End labels only earn their gutter when the lines separate at the right
+       edge. Decide first (yAt needs no horizontal margin), then reserve the
+       space - otherwise a suppressed label leaves 100px of dead plot. */
+    var lastI = buckets.length - 1;
+    var endYs = series.map(function (s) { return yAt(s.values[lastI]); }).sort(function (a, b) { return a - b; });
+    var gutter = 26 + 6.4 * Math.max.apply(null, series.map(function (s) {
+      return (s.label + " " + s.values[lastI]).length;
+    }));
+    var canLabel = series.length <= 4 &&
+      endYs.every(function (y, i) { return i === 0 || y - endYs[i - 1] >= 15; }) &&
+      W - m.l - gutter >= 240;
+    if (canLabel) m.r = Math.ceil(gutter);
+
+    var iw = Math.max(W - m.l - m.r, 60);
+    var xAt = function (i) { return buckets.length < 2 ? m.l + iw / 2 : m.l + (iw * i) / (buckets.length - 1); };
+
+    var svg = svgEl("svg", { viewBox: "0 0 " + W + " " + H, height: H, role: "img" });
+    svg.setAttribute("aria-label",
+      "Chargebacks per " + state.gran + " for " + series.map(function (s) { return s.label; }).join(", "));
+
+    ticks.forEach(function (t) {
+      svg.appendChild(svgEl("line", { class: "gridline", x1: m.l, x2: m.l + iw, y1: yAt(t), y2: yAt(t) }));
+      var lbl = svgEl("text", { class: "axistext", x: m.l - 9, y: yAt(t) + 4, "text-anchor": "end" });
+      lbl.textContent = t.toLocaleString();
+      svg.appendChild(lbl);
+    });
+    svg.appendChild(svgEl("line", { class: "axisline", x1: m.l, x2: m.l + iw, y1: yAt(0), y2: yAt(0) }));
+
+    var tickEvery = Math.max(1, Math.ceil(buckets.length / Math.max(2, Math.floor(iw / 78))));
+    buckets.forEach(function (b, i) {
+      if (i % tickEvery !== 0 && i !== buckets.length - 1) return;
+      /* The end ticks sit on the plot edges - centring them there pushes half
+         the label outside the viewBox. */
+      var anchor = i === 0 ? "start" : i === buckets.length - 1 ? "end" : "middle";
+      var t = svgEl("text", { class: "axistext", x: xAt(i), y: H - 12, "text-anchor": anchor });
+      t.textContent = bucketLabel(b, state.gran);
+      svg.appendChild(t);
+    });
+
+    if (state.mode === "all" && series.length === 1) {
+      var areaPts = series[0].values.map(function (v, i) { return xAt(i) + "," + yAt(v); }).join(" ");
+      svg.appendChild(svgEl("polygon", {
+        points: m.l + "," + yAt(0) + " " + areaPts + " " + (m.l + iw) + "," + yAt(0),
+        fill: series[0].color, "fill-opacity": "0.1"
+      }));
+    }
+
+    series.forEach(function (s) {
+      svg.appendChild(svgEl("polyline", {
+        points: s.values.map(function (v, i) { return xAt(i) + "," + yAt(v); }).join(" "),
+        fill: "none", stroke: s.color, "stroke-width": "2",
+        "stroke-linejoin": "round", "stroke-linecap": "round"
+      }));
+    });
+
+    series.forEach(function (s) {
+      var cx = xAt(lastI), cy = yAt(s.values[lastI]);
+      svg.appendChild(svgEl("circle", {
+        cx: cx, cy: cy, r: 4, fill: s.color, stroke: "var(--surface)", "stroke-width": "2"
+      }));
+      if (canLabel) {
+        var t = svgEl("text", { class: "endlabel", x: cx + 10, y: cy + 4 });
+        t.textContent = s.label + " " + s.values[lastI];
+        svg.appendChild(t);
+      }
+    });
+
+    var hair = svgEl("line", { class: "crosshair", y1: m.t, y2: m.t + ih, x1: -99, x2: -99, opacity: "0" });
+    svg.appendChild(hair);
+    var hits = svgEl("rect", { x: m.l, y: m.t, width: iw, height: ih, fill: "transparent" });
+    hits.setAttribute("tabindex", "0");
+    svg.appendChild(hits);
+
+    var focusIndex = 0;
+    function showAt(i) {
+      focusIndex = i;
+      hair.setAttribute("x1", xAt(i));
+      hair.setAttribute("x2", xAt(i));
+      hair.setAttribute("opacity", "1");
+      clear(tooltip);
+      tooltip.appendChild(el("div", "tt-head", bucketLabel(buckets[i], state.gran)));
+      series.slice().sort(function (a, b) { return b.values[i] - a.values[i]; }).forEach(function (s) {
+        var r = el("div", "tt-row");
+        var k = el("span", "key");
+        k.style.background = s.color;
+        r.appendChild(k);
+        r.appendChild(el("span", "val", s.values[i]));
+        r.appendChild(el("span", "nm", s.label));
+        tooltip.appendChild(r);
+      });
+      tooltip.classList.add("on");
+      var tw = tooltip.offsetWidth || 150;
+      var left = Math.min(Math.max(xAt(i) + 14, 4), Math.max(W - tw - 4, 4));
+      tooltip.style.left = left + "px";
+      tooltip.style.top = m.t + "px";
+    }
+    function hide() { tooltip.classList.remove("on"); hair.setAttribute("opacity", "0"); }
+    function nearest(evt) {
+      var rect = svg.getBoundingClientRect();
+      var scale = W / rect.width;
+      var x = (evt.clientX - rect.left) * scale;
+      if (buckets.length < 2) return 0;
+      var i = Math.round(((x - m.l) / iw) * (buckets.length - 1));
+      return Math.min(Math.max(i, 0), buckets.length - 1);
+    }
+    hits.addEventListener("pointermove", function (e) { showAt(nearest(e)); });
+    hits.addEventListener("pointerleave", hide);
+    hits.addEventListener("focus", function () { showAt(focusIndex); });
+    hits.addEventListener("blur", hide);
+    hits.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowRight") { showAt(Math.min(focusIndex + 1, buckets.length - 1)); e.preventDefault(); }
+      if (e.key === "ArrowLeft") { showAt(Math.max(focusIndex - 1, 0)); e.preventDefault(); }
+    });
+
+    plot.appendChild(svg);
+  }
+
+  /* ---------- detail table --------------------------------------------------- */
+  var COLUMNS = [
+    { key: "store_label", label: "Store" },
+    { key: "order_number", label: "Order", mono: true },
+    { key: "dispute_id", label: "Dispute ID", mono: true },
+    { key: "customer", label: "Customer" },
+    { key: "chargeback_date", label: "Opened" },
+    { key: "amount", label: "Amount", num: true },
+    { key: "currency", label: "Cur." },
+    { key: "reason_label", label: "Reason" },
+    { key: "status_label", label: "Status" },
+    { key: "evidence_due_date", label: "Evidence due" },
+    { key: "final_result", label: "Result" },
+    { key: "resolution_date", label: "Resolved" }
+  ];
+
+  function renderDetailHead() {
+    var hr = document.getElementById("detail-head");
+    clear(hr);
+    COLUMNS.forEach(function (c) {
+      var th = el("th", "sortable" + (c.num ? " n" : ""));
+      th.appendChild(document.createTextNode(c.label));
+      if (state.sort.key === c.key) {
+        th.appendChild(el("span", "arrow", state.sort.dir === 1 ? " ↑" : " ↓"));
+      }
+      th.setAttribute("tabindex", "0");
+      th.setAttribute("role", "button");
+      var activate = function () {
+        if (state.sort.key === c.key) state.sort.dir *= -1;
+        else state.sort = { key: c.key, dir: c.num ? -1 : 1 };
+        render();
+      };
+      th.addEventListener("click", activate);
+      th.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(); }
+      });
+      hr.appendChild(th);
+    });
+  }
+
+  function renderDetail(rows) {
+    var tbody = document.querySelector("#detail-table tbody");
+    clear(tbody);
+    var sorted = rows.slice().sort(function (a, b) {
+      var av = a[state.sort.key], bv = b[state.sort.key];
+      if (av === null || av === undefined || av === "") return 1;
+      if (bv === null || bv === undefined || bv === "") return -1;
+      if (typeof av === "number" && typeof bv === "number") return (av - bv) * state.sort.dir;
+      return String(av).localeCompare(String(bv)) * state.sort.dir;
+    });
+
+    var shown = sorted.slice(0, state.limit);
+    shown.forEach(function (r) {
+      var tr = el("tr");
+      COLUMNS.forEach(function (c) {
+        var td = el("td", (c.num ? "n " : "") + (c.mono ? "mono" : ""));
+        if (c.key === "store_label") {
+          var cell = el("span", "store-cell");
+          var sw = el("span", "swatch");
+          sw.style.background = STORE_COLOR[r.store] || "var(--neutral-mark)";
+          cell.appendChild(sw);
+          cell.appendChild(el("span", null, r.store_label));
+          td.appendChild(cell);
+        } else if (c.key === "status_label") {
+          var pill = el("span", "pill");
+          pill.appendChild(el("span", "dot " + toneFor(r.status)));
+          pill.appendChild(el("span", null, r.status_label));
+          td.appendChild(pill);
+        } else if (c.key === "amount") {
+          td.classList.add("num");
+          td.textContent = r.amount.toFixed(2);
+        } else if (c.key === "order_number") {
+          td.textContent = r.order_name || (r.order_number ? "#" + r.order_number : "—");
+        } else if (c.key === "chargeback_date" || c.key === "evidence_due_date" || c.key === "resolution_date") {
+          td.textContent = fmtDate(r[c.key]);
+          if (c.key === "evidence_due_date" && r.overdue) td.classList.add("txt-critical");
+        } else if (c.key === "final_result") {
+          td.textContent = r.final_result || "—";
+          if (r.outcome === "won") td.classList.add("txt-good");
+          if (r.outcome === "lost") td.classList.add("txt-critical");
+        } else {
+          td.textContent = r[c.key] === null || r[c.key] === undefined || r[c.key] === "" ? "—" : r[c.key];
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+
+    if (!sorted.length) {
+      var tr2 = el("tr");
+      var td2 = el("td", "empty", "No disputes match the current filters.");
+      td2.colSpan = COLUMNS.length;
+      tr2.appendChild(td2);
+      tbody.appendChild(tr2);
+    }
+
+    var more = document.getElementById("load-more");
+    more.hidden = sorted.length <= state.limit;
+    more.textContent = "Show more (" + (sorted.length - shown.length) + " remaining)";
+    document.getElementById("detail-note").textContent =
+      "Showing " + shown.length + " of " + sorted.length +
+      " disputes. Click any column heading to sort; the filter bar above scopes this table too.";
+  }
+
+  /* ---------- filter controls -------------------------------------------------- */
+  var PRESETS = [
+    { id: "30", label: "30d", days: 30 },
+    { id: "90", label: "90d", days: 90 },
+    { id: "180", label: "6m", days: 180 },
+    { id: "365", label: "12m", days: 365 },
+    { id: "all", label: "All", days: null }
+  ];
+
+  function applyPreset(preset) {
+    state.preset = preset.id;
+    state.to = DATA_MAX;
+    state.from = preset.days === null ? DATA_MIN : isoDay(addDays(parseDay(DATA_MAX), -preset.days + 1));
+    if (state.from < DATA_MIN) state.from = DATA_MIN;
+    document.getElementById("date-from").value = state.from;
+    document.getElementById("date-to").value = state.to;
+    syncPresetButtons();
+  }
+  function syncPresetButtons() {
+    Array.prototype.slice.call(document.querySelectorAll("#range-seg button")).forEach(function (b) {
+      b.setAttribute("aria-pressed", b.dataset.preset === state.preset ? "true" : "false");
+    });
+  }
+
+  function buildControls() {
+    var seg = document.getElementById("range-seg");
+    PRESETS.forEach(function (p) {
+      var b = el("button", null, p.label);
+      b.type = "button";
+      b.dataset.preset = p.id;
+      b.addEventListener("click", function () { applyPreset(p); render(); });
+      seg.appendChild(b);
+    });
+
+    var chips = document.getElementById("store-chips");
+    STORES.forEach(function (s) {
+      var b = el("button", "chip");
+      b.type = "button";
+      b.setAttribute("aria-pressed", "true");
+      var sw = el("span", "swatch");
+      sw.style.background = STORE_COLOR[s.key];
+      b.appendChild(sw);
+      b.appendChild(el("span", null, s.label));
+      b.addEventListener("click", function () {
+        if (state.stores.has(s.key)) state.stores.delete(s.key);
+        else state.stores.add(s.key);
+        if (!state.stores.size) state.stores.add(s.key);
+        Array.prototype.slice.call(chips.querySelectorAll(".chip")).forEach(function (c, i) {
+          c.setAttribute("aria-pressed", state.stores.has(STORES[i].key) ? "true" : "false");
+        });
+        render();
+      });
+      chips.appendChild(b);
+    });
+
+    var statusSel = document.getElementById("status-select");
+    statusSel.appendChild(new Option("All statuses", ""));
+    STATUS_GROUPS.forEach(function (g) { statusSel.appendChild(new Option(g.label, g.id)); });
+    statusSel.addEventListener("change", function () { state.status = statusSel.value; render(); });
+
+    var reasonSel = document.getElementById("reason-select");
+    reasonSel.appendChild(new Option("All reasons", ""));
+    var seen = {};
+    ROWS.forEach(function (r) { if (!(r.reason in seen)) seen[r.reason] = r.reason_label; });
+    Object.keys(seen)
+      .sort(function (a, b) { return seen[a].localeCompare(seen[b]); })
+      .forEach(function (k) { reasonSel.appendChild(new Option(seen[k], k)); });
+    reasonSel.addEventListener("change", function () { state.reason = reasonSel.value; render(); });
+
+    var search = document.getElementById("search");
+    search.addEventListener("input", function () { state.q = search.value; state.limit = 100; render(); });
+
+    document.getElementById("date-from").addEventListener("change", function (e) {
+      state.from = e.target.value || DATA_MIN; state.preset = "custom"; syncPresetButtons(); render();
+    });
+    document.getElementById("date-to").addEventListener("change", function (e) {
+      state.to = e.target.value || DATA_MAX; state.preset = "custom"; syncPresetButtons(); render();
+    });
+
+    document.getElementById("reset-filters").addEventListener("click", function () {
+      state.stores = new Set(STORES.map(function (s) { return s.key; }));
+      state.status = ""; state.reason = ""; state.q = ""; state.limit = 100;
+      state.hiddenSeries = new Set();
+      statusSel.value = ""; reasonSel.value = ""; search.value = "";
+      Array.prototype.slice.call(chips.querySelectorAll(".chip")).forEach(function (c) {
+        c.setAttribute("aria-pressed", "true");
+      });
+      applyPreset(PRESETS[PRESETS.length - 1]);
+      render();
+    });
+
+    document.getElementById("load-more").addEventListener("click", function () {
+      state.limit += 200; renderDetail(filtered());
+    });
+
+    function segHandler(id, key, prop) {
+      var host = document.getElementById(id);
+      Array.prototype.slice.call(host.querySelectorAll("button")).forEach(function (b) {
+        b.addEventListener("click", function () {
+          state[prop] = b.dataset[key];
+          Array.prototype.slice.call(host.querySelectorAll("button")).forEach(function (o) {
+            o.setAttribute("aria-pressed", o === b ? "true" : "false");
+          });
+          renderTrend(filtered());
+        });
+        if (b.dataset[key] === state[prop]) b.setAttribute("aria-pressed", "true");
+        else b.setAttribute("aria-pressed", "false");
+      });
+    }
+    segHandler("gran-seg", "gran", "gran");
+    segHandler("mode-seg", "mode", "mode");
+    segHandler("trendview-seg", "view", "trendView");
+
+    applyPreset(PRESETS[PRESETS.length - 1]);
+  }
+
+  /* ---------- render ------------------------------------------------------------ */
+  function render() {
+    var rows = filtered();
+    var s = summarize(rows);
+
+    document.getElementById("scope-line").textContent =
+      rows.length + " of " + ROWS.length + " disputes · " + fmtDate(state.from) + " – " + fmtDate(state.to);
+
+    renderSummary(rows, s);
+    renderStoreTable(rows);
+    renderStatus(rows);
+    renderQueue(rows);
+    renderTrend(rows);
+    renderReasons(rows);
+    renderDetailHead();
+    renderDetail(rows);
+  }
+
+  function init() {
+    var meta = DATA.meta || {};
+    var when = DATA.generated_at ? new Date(DATA.generated_at) : null;
+    document.getElementById("stamp-time").textContent = when && !isNaN(when)
+      ? when.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
+      : "unknown";
+    document.getElementById("sub-line").textContent =
+      "Shopify Payments disputes across " + STORES.length + " store" + (STORES.length === 1 ? "" : "s") +
+      ", covering " + fmtDate(DATA_MIN) + " to " + fmtDate(DATA_MAX) + ".";
+
+    var foot = document.getElementById("page-foot");
+    clear(foot);
+    foot.appendChild(document.createTextNode(
+      "Source: Shopify Admin API " + (meta.api_version || "2024-01") + " shopify_payments/disputes" +
+      (meta.sample ? " (schema only — the figures on this page are generated sample data)" : "") +
+      ". Win rate counts decided cases only. “Accepted” is treated as a loss because the funds are gone. " +
+      "“Prevented” cases were blocked by Shopify before becoming chargebacks and need no action. " +
+      "Amounts are never added across currencies — each currency is totalled separately."
+    ));
+
+    renderBanners();
+    buildControls();
+    renderDetailHead();
+    render();
+
+    var resizeTimer = null;
+    window.addEventListener("resize", function () {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () {
+        if (state.trendView !== "chart" || !trendCache) return;
+        if (state.mode === "facet") drawFacets(trendCache);
+        else drawTrend(trendCache);
+      }, 120);
+    });
+  }
+
+  init();
+})();
+</script>
