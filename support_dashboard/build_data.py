@@ -394,6 +394,19 @@ def roll_mt(period):
 DAILY_DATES = [f"2026-{m:02d}-{d:02d}" for m, d in
                [(7, d) for d in range(17, 32)] + [(8, d) for d in range(1, 16)]]
 
+# Full 84-day daily history, 2026-05-24 .. 2026-08-15. The dashboard's date
+# picker slices these arrays, so any range inside them is exact rather than
+# interpolated.
+HISTORY = json.loads((HERE / "data" / "history.json").read_text())
+CHANNELS = json.loads((HERE / "data" / "channels.json").read_text())
+
+
+def hist_dates():
+    import datetime
+    d0 = datetime.date(2026, 5, 24)
+    return [(d0 + datetime.timedelta(days=i)).isoformat()
+            for i in range(HISTORY["days"])]
+
 STORES = {
     "maggies": {
         "name": "Maggies Tanks",
@@ -646,6 +659,14 @@ OUT = {
     "generated": "2026-08-15",
     "period": {"cur": CUR, "prev": PREV},
     "daily_dates": DAILY_DATES,
+    "history": {
+        "dates": hist_dates(),
+        "from": HISTORY["from"],
+        "to": HISTORY["to"],
+        "launched": HISTORY["launched"],
+        "stores": HISTORY["stores"],
+    },
+    "channels": CHANNELS,
     "categories": CATEGORIES,
     "stores": STORES,
     "group_issues_cur": group_issues_cur,

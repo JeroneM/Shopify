@@ -80,6 +80,16 @@ header.mast{background:var(--surface); border-bottom:1px solid var(--rule-strong
 .pill[aria-pressed="true"]{background:var(--surface); color:var(--ink); font-weight:600;
   box-shadow:0 0 0 1px var(--rule)}
 .pill:focus-visible{outline:2px solid var(--s1); outline-offset:1px}
+.dinput{
+  font:inherit; font-size:12px; font-family:var(--mono); color:var(--ink);
+  background:var(--surface); border:1px solid var(--rule); border-radius:2px;
+  padding:3px 6px;
+}
+.dinput:focus-visible{outline:2px solid var(--s1); outline-offset:1px}
+.rangenote{font-size:11.5px; color:var(--ink-3); font-family:var(--mono)}
+.scoped{font-size:10px; font-weight:650; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--ink-3); border:1px solid var(--rule); border-radius:2px; padding:1px 6px;
+  white-space:nowrap}
 
 /* ---- summary ---- */
 .summary{background:var(--surface); border:1px solid var(--rule); border-left:3px solid var(--crit);
@@ -198,7 +208,19 @@ footer{border-top:1px solid var(--rule); padding:22px 0 46px; font-size:11.5px; 
       <div class="pills" id="store-pills"></div>
     </div>
     <div class="fgroup">
-      <span class="eyebrow">Trend interval</span>
+      <span class="eyebrow">Dates</span>
+      <div class="pills" id="range-pills"></div>
+    </div>
+    <div class="fgroup" id="custom-range">
+      <label class="eyebrow" for="d-from">From</label>
+      <input type="date" id="d-from" class="dinput">
+      <label class="eyebrow" for="d-to">To</label>
+      <input type="date" id="d-to" class="dinput">
+      <button class="tbtn" id="d-apply">Apply</button>
+      <span class="rangenote" id="range-note"></span>
+    </div>
+    <div class="fgroup">
+      <span class="eyebrow">Buckets</span>
       <div class="pills" id="period-pills"></div>
     </div>
   </div>
@@ -221,15 +243,16 @@ footer{border-top:1px solid var(--rule); padding:22px 0 46px; font-size:11.5px; 
   <section class="band">
     <div class="band-head">
       <h2>Was the problem actually fixed?</h2>
-      <p>A closed ticket is not the same as a solved problem. Two deductions are
-      measured from the data, not assumed: tickets that closed on the no-activity
-      rule without anyone replying, and tickets whose reason for
-      existing is a customer chasing an earlier one.</p>
+      <p>A closed ticket is not the same as a solved problem, so this counts down from
+      tickets that arrived rather than tickets that were closed. Two deductions, both
+      measured rather than assumed: tickets nobody ever replied to before the no-activity
+      rule closed them, and tickets whose reason for existing is a customer chasing an
+      earlier one.</p>
     </div>
     <div class="grid-3-2">
       <div class="panel">
         <div class="chart-head">
-          <h3>From closed to genuinely resolved</h3>
+          <h3>From tickets in to tickets answered</h3>
           <button class="tbtn" data-table="t-res">Show numbers</button>
         </div>
         <div id="c-res"></div>
@@ -265,14 +288,14 @@ footer{border-top:1px solid var(--rule); padding:22px 0 46px; font-size:11.5px; 
 
     <div class="panel" style="margin-bottom:16px">
       <div class="chart-head">
-        <h3 id="vol-title">Tickets created and closed</h3>
+        <h3 id="vol-title">Tickets created and closures recorded</h3>
         <span class="sub" id="vol-sub"></span>
         <button class="tbtn" data-table="t-vol">Show numbers</button>
       </div>
       <div id="c-vol"></div>
       <div class="legend">
         <span><i class="swatch" style="background:var(--s1)"></i>Created</span>
-        <span><i class="swatch" style="background:var(--s2)"></i>Closed</span>
+        <span><i class="swatch" style="background:var(--s2)"></i>Closures recorded</span>
       </div>
       <div class="tscroll hidden" id="t-vol"></div>
     </div>
@@ -329,11 +352,38 @@ footer{border-top:1px solid var(--rule); padding:22px 0 46px; font-size:11.5px; 
 
   <section class="band">
     <div class="band-head">
+      <h2>Email volume by store</h2>
+      <p id="email-scope"></p>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="tscroll" id="t-email"></div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="chart-head">
+          <h3>Inbound emails received</h3>
+          <button class="tbtn" data-table="t-emailtrend">Show numbers</button>
+        </div>
+        <div id="c-email"></div>
+        <div class="legend" id="l-email"></div>
+        <div class="tscroll hidden" id="t-emailtrend"></div>
+      </div>
+      <div class="panel">
+        <div class="chart-head">
+          <h3>Email vs Facebook</h3>
+          <span class="sub">Share of inbound messages</span>
+        </div>
+        <div id="c-channel"></div>
+        <p class="sub" style="font-size:11.5px;color:var(--ink-3);margin-top:10px"
+           id="channel-note"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="band-head">
       <h2>Store comparison</h2>
-      <p>Ticket volume, backlog and resolution speed for the same 30 days. The
-      issue rate divides tickets by Shopify orders, so it shows whether
-      complaints are growing faster than sales rather than just faster than last
-      month.</p>
+      <p id="store-scope"></p>
     </div>
     <div class="panel" style="margin-bottom:16px">
       <div class="tscroll" id="t-stores"></div>
@@ -381,6 +431,20 @@ const svgEl = (t,a) => { const n=document.createElementNS(NS,t);
   for(const k in a) n.setAttribute(k, a[k]); return n; };
 
 let STORE = 'all', INTERVAL = 'daily';
+const HIST = D.history.dates;
+const LAST = HIST.length - 1;
+// The selected window is a pair of indices into the 84-day history, so every
+// slice below is measured data, never interpolated.
+let R = { a: LAST - 29, b: LAST, preset: 'd30' };
+
+const dIdx = iso => HIST.indexOf(iso);
+const clampIdx = i => Math.max(0, Math.min(LAST, i));
+const rangeDays = () => R.b - R.a + 1;
+const prevRange = () => {
+  const n = rangeDays();
+  const b = R.a - 1;
+  return b < 0 ? null : { a: Math.max(0, b - n + 1), b };
+};
 // Compact labels for use directly on charts, where the full category name collides.
 const SHORT = {
   'Order Status & Changes':'Order status', 'Sizing & Fit':'Sizing & fit',
@@ -420,8 +484,65 @@ function hoverable(node, html){
 }
 
 /* ---------------- selection helpers ---------------- */
+const rangeLabel = () =>
+  `${shortDate(HIST[R.a])} – ${shortDate(HIST[R.b])} (${rangeDays()} days)`;
+
 const sel = () => STORE === 'all' ? null : D.stores[STORE];
 const scopeName = () => STORE === 'all' ? 'All five stores' : D.stores[STORE].name;
+
+// Email / Facebook volume only exists per 28-day bucket, so a selected range
+// resolves to whichever buckets it touches. The label always states the span
+// actually summed, which may be wider than the range the user picked.
+function bucketsInRange(){
+  const overlap = b => {
+    const a1 = dIdx(b.from), b1 = dIdx(b.to);
+    const lo = Math.max(a1, R.a), hi = Math.min(b1, R.b);
+    return {b, days: Math.max(0, hi - lo + 1), len: b1 - a1 + 1};
+  };
+  const all = D.channels.buckets.map(overlap);
+  // A bucket counts only if the selection covers at least half of it; otherwise
+  // a 7-day selection would drag in two whole 28-day buckets and treble the count.
+  const kept = all.filter(o => o.days >= o.len/2);
+  if (kept.length) return kept.map(o => o.b);
+  const best = all.reduce((x,o) => o.days > x.days ? o : x, all[0]);
+  return [best.b];
+}
+
+function channelsFor(){
+  const bs = bucketsInRange();
+  const keys = STORE === 'all' ? STORE_KEYS : [STORE];
+  const zero = () => ({tickets:0, received:0, sent:0, resNum:0, resDen:0});
+  const out = {email: zero(), fb: zero()};
+  keys.forEach(k => bs.forEach(b => {
+    ['email','fb'].forEach(ch => {
+      const v = D.channels.stores[k][b.key][ch];
+      out[ch].tickets  += v.tickets;
+      out[ch].received += v.received;
+      out[ch].sent     += v.sent;
+      if (v.res != null){ out[ch].resNum += v.res * v.tickets; out[ch].resDen += v.tickets; }
+    });
+  }));
+  ['email','fb'].forEach(ch => {
+    out[ch].res = out[ch].resDen ? out[ch].resNum / out[ch].resDen : null;
+  });
+  out.buckets = bs;
+  out.label = bs.length === 1 ? bs[0].label
+    : bs[0].label.split(' – ')[0] + ' – ' + bs[bs.length-1].label.split(' – ')[1];
+  out.exact = bs[0].from === HIST[R.a] && bs[bs.length-1].to === HIST[R.b];
+  return out;
+}
+
+function perStoreChannels(){
+  const bs = bucketsInRange();
+  return STORE_KEYS.map(k => {
+    const acc = {email:{tickets:0,received:0,sent:0}, fb:{tickets:0,received:0,sent:0}};
+    bs.forEach(b => ['email','fb'].forEach(ch => {
+      const v = D.channels.stores[k][b.key][ch];
+      acc[ch].tickets += v.tickets; acc[ch].received += v.received; acc[ch].sent += v.sent;
+    }));
+    return {key:k, name:D.stores[k].name, ...acc};
+  });
+}
 
 function issuesFor(){
   if (STORE !== 'all') return D.stores[STORE].issues_cur;
@@ -435,62 +556,96 @@ function sortedIssues(){
 /* ---------------- summary ---------------- */
 function renderSummary(){
   const t = D.totals, r = t.resolution;
-  const lf = STORE_KEYS.filter(k => D.stores[k].created_prev);
-  const lfCur = lf.reduce((a,k) => a + D.stores[k].created_cur, 0);
-  const lfPrev = lf.reduce((a,k) => a + D.stores[k].created_prev, 0);
-  const lfGrow = 100*(lfCur-lfPrev)/lfPrev;
-  // The volume leader and the complaint leader are different things: order-status
-  // traffic is people asking where something is, not people telling us it is wrong.
+  const cur = totalsFor(R.a, R.b);
+  const pr = prevRange();
+  const prTot = pr ? totalsFor(pr.a, pr.b) : null;
+  const ch = channelsFor();
+  const noReply = Math.max(0, ch.fb.tickets - ch.fb.sent);
+  const repeat = STORE === 'all' ? r.repeat_contact
+                                 : (D.stores[STORE].issues_cur['Repeat Contact (chasing us)']||0);
+  const actual = Math.max(0, cur.created - noReply - repeat);
+  const nominal = cur.created ? 100*(cur.created - repeat)/cur.created : 0;
+  const actualPct = cur.created ? 100*actual/cur.created : 0;
+
+  // Volume leader and complaint leader are different things: order-status traffic
+  // is people asking where something is, not people reporting a fault.
   const ADMIN = ['Order Status & Changes','Product Question','Other / Non-customer','Feedback'];
   const ranked = sortedIssues();
   const busiest = ranked.filter(([c]) => c!=='Other / Non-customer')[0];
   const top = ranked.filter(([c]) => !ADMIN.includes(c))[0];
-  const mag = D.stores.maggies;
-  const noReplyPct = 100*r.closed_no_reply/t.fb_created;
+  const noReplyPct = ch.fb.tickets ? 100*noReply/ch.fb.tickets : 0;
 
-  const rows = [
-    ['var(--crit)', `<b>Ticket volume has more than doubled.</b> The three stores with a
-      comparable previous month took <b class="num">${fmt(lfCur)}</b> tickets against
-      <b class="num">${fmt(lfPrev)}</b>, up <b class="num">${pct(lfGrow)}</b>.
-      Almost all of it is Maggies Tanks: <b class="num">${fmt(mag.created_cur)}</b>
-      tickets against <b class="num">${fmt(mag.created_prev)}</b> a month earlier
-      (<b class="num">${pct(100*(mag.created_cur-mag.created_prev)/mag.created_prev)}</b>).`],
-    ['var(--crit)', `<b>${fmt(r.closed_no_reply)} tickets closed without anyone replying.</b>
-      Facebook page inboxes took <b class="num">${fmt(t.fb_created)}</b> tickets and the team
-      sent <b class="num">${fmt(t.fb_replies)}</b> messages back, so
-      <b class="num">${noReplyPct.toFixed(1)}%</b> auto-closed on the no-activity rule
-      (24 to 48 hours, depending on the account).
-      That single gap is the difference between an <b class="num">${r.nominal_rate}%</b>
-      resolution rate on paper and <b class="num">${r.actual_rate}%</b> in reality.`],
-    ['var(--warn)', `<b>The biggest thing actually going wrong is ${top[0].toLowerCase()}</b>, at
-      <b class="num">${fmt(top[1])}</b> tickets — ${(100*top[1]/t.categorised).toFixed(0)}% of
-      everything customers wrote in about, and it feeds the replacement and refund queues behind
-      it. The larger bucket, ${busiest[0].toLowerCase()}
-      (<b class="num">${fmt(busiest[1])}</b>), is mostly people asking where their order is
-      rather than telling us something is wrong.`],
-    ['var(--warn)', `<b>${fmt(r.still_open + r.parked_snoozed)} tickets are unfinished right now</b>
-      — <b class="num">${fmt(r.still_open)}</b> open and <b class="num">${fmt(r.parked_snoozed)}</b>
-      snoozed, which in these accounts means parked waiting on a refund, a replacement or a
-      shipment. Of the ${D.unresolved_meta.captured} open tickets inspected in detail at
-      Mary&rsquo;s Tanks, <b class="num">${D.unresolved.filter(x=>x.action_state==='none').length}</b>
-      have no recorded action at all.`],
-    ['var(--serious)', `<b>Complaints are rising faster than sales.</b> Lyn&rsquo;s Tanks is the one
-      store with Shopify order data available: orders fell from
-      <b class="num">${fmt(D.stores.lyns.orders_prev)}</b> to
-      <b class="num">${fmt(D.stores.lyns.orders_cur)}</b>, but the issue rate went
-      <b class="num">${(100*D.stores.lyns.created_prev/D.stores.lyns.orders_prev).toFixed(1)}%</b>
-      → <b class="num">${(100*D.stores.lyns.created_cur/D.stores.lyns.orders_cur).toFixed(1)}%</b>.
-      Fewer orders, a higher share of them complaining.`],
-  ];
+  // Store growing fastest inside the selected window.
+  const keep = STORE; const growth = [];
+  STORE_KEYS.forEach(k => {
+    STORE = k;
+    const c = totalsFor(R.a, R.b), pv = pr ? totalsFor(pr.a, pr.b) : null;
+    if (pv && pv.created >= 50)
+      growth.push({name: D.stores[k].name, cur: c.created, prev: pv.created,
+                   d: 100*(c.created-pv.created)/pv.created});
+  });
+  STORE = keep;
+  growth.sort((a,b) => b.d - a.d);
+  const fastest = growth[0];
+
+  const rows = [];
+
+  if (prTot && prTot.created){
+    const d = 100*(cur.created-prTot.created)/prTot.created;
+    rows.push([d > 15 ? 'var(--crit)' : d < -15 ? 'var(--good)' : 'var(--warn)',
+      `<b>Volume is ${d>0?'up':'down'} ${Math.abs(d).toFixed(1)}%.</b> ${scopeName()} took
+       <b class="num">${fmt(cur.created)}</b> tickets over ${rangeLabel()}, against
+       <b class="num">${fmt(prTot.created)}</b> in the ${pr.b-pr.a+1} days before.` +
+      (fastest && STORE==='all'
+        ? ` The steepest mover is ${esc(fastest.name)}:
+            <b class="num">${fmt(fastest.prev)}</b> → <b class="num">${fmt(fastest.cur)}</b>
+            (<b class="num">${pct(fastest.d)}</b>).` : '')]);
+  }
+
+  if (ch.fb.tickets){
+    rows.push(['var(--crit)',
+      `<b>${fmt(noReply)} tickets closed without anyone replying.</b> Facebook page inboxes
+       took <b class="num">${fmt(ch.fb.tickets)}</b> tickets over ${esc(ch.label)} and the team
+       sent <b class="num">${fmt(ch.fb.sent)}</b> messages back, so
+       <b class="num">${noReplyPct.toFixed(1)}%</b> of them were closed by the no-activity
+       rule without a single reply. Those customers were never served at all, whatever the
+       ticket status says.`]);
+  }
+
+  rows.push(['var(--warn)',
+    `<b>The biggest thing actually going wrong is ${top[0].toLowerCase()}</b>, at
+     <b class="num">${fmt(top[1])}</b> tickets — ${(100*top[1]/ranked.reduce((a,[,v])=>a+v,0)).toFixed(0)}%
+     of everything customers wrote in about, and it feeds the replacement and refund queues
+     behind it. The larger bucket, ${busiest[0].toLowerCase()}
+     (<b class="num">${fmt(busiest[1])}</b>), is mostly people asking where their order is.
+     <span class="scoped">30 days to Aug 15</span>`]);
+
+  rows.push(['var(--warn)',
+    `<b>${fmt(r.still_open + r.parked_snoozed)} tickets are unfinished right now</b> —
+     <b class="num">${fmt(r.still_open)}</b> open and <b class="num">${fmt(r.parked_snoozed)}</b>
+     snoozed, which in these accounts means parked waiting on a refund, a replacement or a
+     shipment. Of the ${D.unresolved_meta.captured} open tickets inspected in detail at
+     Mary&rsquo;s Tanks, <b class="num">${D.unresolved.filter(x=>x.action_state==='none').length}</b>
+     have no recorded action at all. <span class="scoped">live count</span>`]);
+
+  rows.push(['var(--serious)',
+    `<b>Complaints are rising faster than sales.</b> Lyn&rsquo;s Tanks is the one store with
+     Shopify order data available: orders fell from
+     <b class="num">${fmt(D.stores.lyns.orders_prev)}</b> to
+     <b class="num">${fmt(D.stores.lyns.orders_cur)}</b>, but the issue rate went
+     <b class="num">${(100*D.stores.lyns.created_prev/D.stores.lyns.orders_prev).toFixed(1)}%</b>
+     → <b class="num">${(100*D.stores.lyns.created_cur/D.stores.lyns.orders_cur).toFixed(1)}%</b>.
+     Fewer orders, a higher share of them complaining.
+     <span class="scoped">30 days to Aug 15</span>`]);
 
   $('#summary').innerHTML = '';
   $('#summary').append(
-    el('p','lede', `We took <b class="num">${fmt(t.created_cur)}</b> tickets across five stores
-      in the 30 days to ${shortDate(D.period.cur[1])}. On paper
-      <b class="num">${fmt(t.closed_cur)}</b> were closed. Applying the tests below,
-      roughly <b class="num">${fmt(r.genuinely_resolved)}</b> were genuinely settled —
-      an actual resolution rate of <b class="num">${r.actual_rate}%</b>, not
-      <b class="num">${r.nominal_rate}%</b>.`)
+    el('p','lede', `${scopeName()} took <b class="num">${fmt(cur.created)}</b> tickets over
+      ${rangeLabel()}. Of those, <b class="num">${fmt(noReply)}</b> were never answered and
+      <b class="num">${fmt(repeat)}</b> brought the customer back to chase us, leaving roughly
+      <b class="num">${fmt(actual)}</b> — <b class="num">${actualPct.toFixed(1)}%</b> — that were
+      answered once and stayed answered. A further <b class="num">${fmt(r.still_open + r.parked_snoozed)}</b>
+      tickets are open or parked right now.`)
   );
   const ul = el('ul');
   rows.forEach(([c,h]) => {
@@ -505,34 +660,35 @@ function renderSummary(){
 /* ---------------- KPIs ---------------- */
 function renderKPIs(){
   const s = sel(), t = D.totals, r = t.resolution;
-  const created = s ? s.created_cur : t.created_cur;
-  const closed  = s ? s.closed_cur  : t.closed_cur;
+  const cur     = totalsFor(R.a, R.b);
+  const pr      = prevRange();
+  const prTot   = pr ? totalsFor(pr.a, pr.b) : null;
+  const created = cur.created;
+  const closed  = cur.closed;
+  const resS    = cur.rt;
   const open    = s ? s.open + s.pending : r.still_open;
   const parked  = s ? s.snoozed : r.parked_snoozed;
-  const resS    = s ? s.res_time_s : t.res_time_s;
-  // Only three stores have a comparable previous period, so the group-level change
-  // is measured on those three alone rather than against a partial base.
-  const lfKeys  = STORE_KEYS.filter(k => D.stores[k].created_prev);
-  const prev    = s ? s.created_prev : t.created_prev;
-  const base    = s ? s.created_cur
-                    : lfKeys.reduce((a,k) => a + D.stores[k].created_cur, 0);
-  const lfNote  = s ? 'vs previous 30 days'
-                    : `vs previous 30 days, like for like across ${lfKeys.length} stores`;
-  const noReply = s ? Math.max(0, s.fb_created - s.fb_replies) : r.closed_no_reply;
+  const prev    = prTot && prTot.created ? prTot.created : null;
+  const base    = created;
+  const lfNote  = pr
+    ? `vs the ${pr.b - pr.a + 1} days before (${shortDate(HIST[pr.a])}–${shortDate(HIST[pr.b])})`
+    : 'no earlier window inside the retrieved history';
+  const ch      = channelsFor();
+  const noReply = Math.max(0, ch.fb.tickets - ch.fb.sent);
   const repeat  = s ? (s.issues_cur['Repeat Contact (chasing us)']||0) : r.repeat_contact;
-  const actual  = closed - noReply - repeat;
+  const actual  = Math.max(0, created - noReply - repeat);
 
   const d = prev ? 100*(base-prev)/prev : null;
   const items = [
     ['Tickets created', fmt(created),
-      d==null ? 'no comparable previous period'
+      d==null ? 'no earlier window in the retrieved history'
               : `<span class="delta ${d>0?'up':'down'}">${pct(d)}</span> ${lfNote}`],
-    ['Open now', fmt(open), 'awaiting a reply or an action'],
+    ['Emails received', fmt(ch.email.received),
+      `${fmt(ch.email.tickets)} email tickets over ${esc(ch.label)}`],
+    ['Open now', fmt(open), 'awaiting a reply or an action, as of today'],
     ['Parked / snoozed', fmt(parked), 'waiting on refund, replacement or shipment'],
-    ['Genuinely resolved', fmt(actual),
-      `${fmt(closed)} closed, less ${fmt(noReply)} unanswered and ${fmt(repeat)} chased`],
-    ['Actual resolution rate', (100*actual/created).toFixed(1)+'%',
-      `<span class="delta">${(100*closed/created).toFixed(1)}%</span> on paper`],
+    ['Answered and not chased', created ? (100*actual/created).toFixed(1)+'%' : '—',
+      `${fmt(noReply)} never answered, ${fmt(repeat)} chased us again`],
     ['Avg resolution time', hrs(resS), 'created to closed, all channels'],
   ];
   const k = $('#kpis'); k.innerHTML = '';
@@ -541,29 +697,36 @@ function renderKPIs(){
     n.append(el('span','k',kk), el('span','v',v), el('span','s',ss));
     k.append(n);
   });
-  $('#kpi-scope').innerHTML = `${scopeName()} &middot; ${shortDate(D.period.cur[0])} to ${shortDate(D.period.cur[1])}`;
+  $('#kpi-scope').innerHTML = `${scopeName()} &middot; ${rangeLabel()} &middot;
+    open and parked counts are live, not date-scoped`;
 }
 
 /* ---------------- resolution waterfall ---------------- */
 function renderResolution(){
   const s = sel(), t = D.totals, r = t.resolution;
-  const created = s ? s.created_cur : t.created_cur;
-  const closed  = s ? s.closed_cur  : t.closed_cur;
-  const noReply = s ? Math.max(0, s.fb_created - s.fb_replies) : r.closed_no_reply;
+  const cur     = totalsFor(R.a, R.b);
+  const ch      = channelsFor();
+  const created = cur.created;
+  const closed  = cur.closed;
+  const noReply = Math.max(0, ch.fb.tickets - ch.fb.sent);
   const repeat  = s ? (s.issues_cur['Repeat Contact (chasing us)']||0) : r.repeat_contact;
-  const actual  = closed - noReply - repeat;
+  const actual  = Math.max(0, created - noReply - repeat);
 
   const steps = [
-    ['Tickets created', created, 'var(--ink-3)', 'Everything that arrived in the period.'],
-    ['Marked closed', closed, 'var(--s1)', 'The platform&rsquo;s own closed count.'],
-    ['Closed with no reply', -noReply, 'var(--crit)',
-      'Facebook page tickets that hit the no-activity auto-close before anyone answered.'],
+    ['Tickets created', created, 'var(--s1)', 'Everything that arrived in the selected range.'],
+    ['Never answered', -noReply, 'var(--crit)',
+      'Facebook page tickets that hit the no-activity auto-close before anyone answered. '
+      + 'Measured over ' + esc(ch.label) + ', the nearest per-inbox reporting buckets.'],
     ['Customer chased us again', -repeat, 'var(--serious)',
-      'Tickets whose own contact reason is following up an earlier unanswered request.'],
-    ['Genuinely resolved', actual, 'var(--good)', 'What is left once both deductions are applied.'],
+      'Tickets whose own contact reason is following up an earlier unanswered request. '
+      + 'Measured over the 30 days to Aug 15 — issue breakdowns are only available '
+      + 'for that fixed window.'],
+    ['Answered and not chased', actual, 'var(--good)',
+      'What is left once both deductions are applied. Not proof the customer is happy, '
+      + 'but the closest the data gets to a ticket that was actually served.'],
   ];
   const W = 600, rowH = 40, H = steps.length*rowH + 8;
-  const max = Math.max(created, closed);
+  const max = created;
   const labelW = 200, barW = W - labelW - 82;
   const svg = svgEl('svg', {viewBox:`0 0 ${W} ${H}`, role:'img',
     'aria-label':'Closed tickets stepped down to genuinely resolved'});
@@ -655,50 +818,71 @@ function renderIssues(){
 }
 
 /* ---------------- interval bucketing ---------------- */
-function series(){
-  const keys = STORE==='all'
-    ? STORE_KEYS.filter(k => D.stores[k].created_daily)
-    : (D.stores[STORE].created_daily ? [STORE] : []);
-  if (!keys.length) return null;
-  const n = D.daily_dates.length;
+// Every store has an 84-day daily array; the ones that launched mid-window
+// carry real zeros before their launch date, so summing is safe.
+function rawDaily(a, b){
+  const keys = STORE === 'all' ? STORE_KEYS : [STORE];
+  const n = b - a + 1;
   const created = Array(n).fill(0), closed = Array(n).fill(0);
   const rtNum = Array(n).fill(0), rtDen = Array(n).fill(0);
   keys.forEach(k => {
-    const s = D.stores[k];
-    for (let i=0;i<n;i++){
-      created[i] += s.created_daily[i];
-      closed[i]  += s.closed_daily[i];
-      rtNum[i]   += s.res_daily[i]*s.closed_daily[i];
-      rtDen[i]   += s.closed_daily[i];
+    const h = D.history.stores[k];
+    for (let i = 0; i < n; i++){
+      created[i] += h.created[a+i];
+      closed[i]  += h.closed[a+i];
+      rtNum[i]   += h.res[a+i] * h.closed[a+i];
+      rtDen[i]   += h.closed[a+i];
     }
   });
-  const rt = rtNum.map((v,i) => rtDen[i] ? v/rtDen[i] : null);
-  const pts = D.daily_dates.map((d,i) => ({label:shortDate(d), date:d,
-    created:created[i], closed:closed[i], rt:rt[i], partial:i===n-1}));
+  return D.history.dates.slice(a, b+1).map((d, i) => ({
+    date: d, label: shortDate(d),
+    created: created[i], closed: closed[i],
+    rt: rtDen[i] ? rtNum[i]/rtDen[i] : null,
+    partial: (a+i) === LAST,
+  }));
+}
 
-  if (INTERVAL === 'daily') return {pts, keys, note:
-    'Daily. The final day is a part-day — data was pulled mid-morning on ' + shortDate(D.daily_dates[n-1]) + '.'};
+function totalsFor(a, b){
+  const pts = rawDaily(a, b);
+  const created = pts.reduce((x,p) => x+p.created, 0);
+  const closed  = pts.reduce((x,p) => x+p.closed, 0);
+  const num     = pts.reduce((x,p) => x + (p.rt||0)*p.closed, 0);
+  return { created, closed, rt: closed ? num/closed : null, days: pts.length };
+}
 
-  const size = INTERVAL === 'weekly' ? 7 : 15;
+function series(){
+  const pts = rawDaily(R.a, R.b);
+  const n = pts.length;
+  const partialNote = R.b === LAST
+    ? ' The final day is a part-day — data was pulled mid-morning on ' + shortDate(HIST[LAST]) + '.'
+    : '';
+
+  if (INTERVAL === 'daily')
+    return {pts, note: `Daily, ${n} days.` + partialNote};
+
+  const size = INTERVAL === 'weekly' ? 7 : 28;
   const out = [];
-  for (let i=0;i<n;i+=size){
-    const chunk = pts.slice(i, i+size);
+  // Bucket from the end so the most recent bucket is always whole.
+  for (let end = n; end > 0; end -= size){
+    const chunk = pts.slice(Math.max(0, end - size), end);
     const c = chunk.reduce((a,p) => a+p.created, 0);
     const cl = chunk.reduce((a,p) => a+p.closed, 0);
     const num = chunk.reduce((a,p) => a + (p.rt||0)*p.closed, 0);
-    out.push({label: chunk[0].label + ' – ' + chunk[chunk.length-1].label,
+    out.unshift({label: chunk[0].label + ' – ' + chunk[chunk.length-1].label,
       created:c, closed:cl, rt: cl ? num/cl : null,
       partial: chunk.some(p => p.partial), days: chunk.length});
   }
-  return {pts:out, keys, note: INTERVAL==='weekly'
-    ? 'Weekly buckets of 7 days from ' + shortDate(D.daily_dates[0]) + '. The last bucket is short by a part-day.'
-    : 'Half-month buckets — 30 days of history supports two full months of comparison, no more.'};
+  const word = INTERVAL === 'weekly' ? '7-day' : '28-day';
+  const short = out.length && out[0].days < size
+    ? ` The oldest bucket is short (${out[0].days} days).` : '';
+  return {pts: out, note: `${word} buckets, newest first from the end of the range.`
+    + short + partialNote};
 }
 
 function renderVolume(){
   const S = series();
   const host = $('#c-vol'); host.innerHTML = '';
-  $('#vol-title').textContent = 'Tickets created and closed — ' + scopeName();
+  $('#vol-title').textContent = 'Tickets created and closures recorded — ' + scopeName();
   if (!S){
     host.append(el('p','', `<span style="color:var(--ink-2);font-size:12.5px">
       Day-by-day figures were not retrieved for ${scopeName()}; the period totals in the
@@ -744,7 +928,7 @@ function renderVolume(){
     svg.append(g);
     hoverable(g, `<b>${esc(p.label)}</b>${p.partial?' <span style="color:var(--ink-3)">(part period)</span>':''}
       <div class="r"><span>Created</span><b>${fmt(p.created)}</b></div>
-      <div class="r"><span>Closed</span><b>${fmt(p.closed)}</b></div>
+      <div class="r"><span>Closures</span><b>${fmt(p.closed)}</b></div>
       <div class="r"><span>Avg resolution</span><b>${hrs(p.rt)}</b></div>`);
     if (i % labelEvery === 0 || i === pts.length-1){
       const t = svgEl('text', {x:x0+bw/2, y:H-padB+18, 'text-anchor':'middle',
@@ -754,7 +938,7 @@ function renderVolume(){
     }
   });
   host.append(svg);
-  $('#t-vol').innerHTML = tableHTML(['Interval','Created','Closed','Net','Avg resolution'],
+  $('#t-vol').innerHTML = tableHTML(['Interval','Created','Closures','Net','Avg resolution'],
     pts.map(p => [p.label + (p.partial?' (part)':''), fmt(p.created), fmt(p.closed),
       fmt(p.created-p.closed), hrs(p.rt)]), [1,2,3,4]);
 
@@ -815,7 +999,7 @@ function renderResTime(pts){
   $('#rt-note').classList.remove('hidden');
   const s = sel();
   $('#rt-email').textContent = hrs(s ? s.email_res_s : D.totals.res_time_email_s);
-  $('#t-rt').innerHTML = tableHTML(['Interval','Avg resolution','Tickets closed'],
+  $('#t-rt').innerHTML = tableHTML(['Interval','Avg resolution','Closures'],
     pts.map(p => [p.label, hrs(p.rt), fmt(p.closed)]), [1,2]);
 }
 
@@ -1018,29 +1202,50 @@ function renderUnresolved(){
 
 /* ---------------- stores ---------------- */
 function renderStores(){
-  const maxV = Math.max(...STORE_KEYS.map(k => D.stores[k].created_cur));
+  const pr = prevRange();
+  const per = {}, perPrev = {};
+  const keep = STORE;
+  STORE_KEYS.forEach(k => {
+    STORE = k;
+    per[k] = totalsFor(R.a, R.b);
+    perPrev[k] = pr ? totalsFor(pr.a, pr.b) : null;
+  });
+  STORE = keep;
+  const chRows = {}; perStoreChannels().forEach(r => chRows[r.key] = r);
+  const maxV = Math.max(...STORE_KEYS.map(k => per[k].created), 1);
   const rows = STORE_KEYS.map(k => {
     const s = D.stores[k];
-    const d = s.created_prev ? 100*(s.created_cur-s.created_prev)/s.created_prev : null;
-    const noReply = Math.max(0, s.fb_created - s.fb_replies);
+    const c = per[k], pv = perPrev[k];
+    // A percentage off a handful of tickets is noise; say "new" instead.
+    const d = pv && pv.created >= 50 ? 100*(c.created-pv.created)/pv.created : null;
+    const tiny = pv && pv.created > 0 && pv.created < 50;
+    const noReply = Math.max(0, chRows[k].fb.tickets - chRows[k].fb.sent);
     return [
       `<b>${esc(s.name)}</b><br><span style="color:var(--ink-3);font-size:11px">${s.region}</span>`,
       `<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
-         <span>${fmt(s.created_cur)}</span>
-         <span class="microbar" style="width:${Math.max(3, s.created_cur/maxV*90)}px"></span></div>`,
-      d==null ? '<span style="color:var(--ink-3)">n/a</span>'
+         <span>${fmt(c.created)}</span>
+         <span class="microbar" style="width:${Math.max(3, c.created/maxV*90)}px"></span></div>`,
+      d==null ? `<span style="color:var(--ink-3)">${tiny ? 'new' : 'n/a'}</span>`
               : `<span class="delta ${d>0?'up':'down'}">${pct(d)}</span>`,
+      fmt(chRows[k].email.received),
       fmt(s.open + s.pending),
       fmt(s.snoozed),
-      hrs(s.res_time_s),
+      hrs(c.rt),
       noReply ? `<span class="delta up">${fmt(noReply)}</span>` : '0',
       s.orders_cur ? (100*s.created_cur/s.orders_cur).toFixed(1)+'%'
                    : '<span style="color:var(--ink-3)">—</span>',
     ];
   });
   $('#t-stores').innerHTML = tableHTML(
-    ['Store','Tickets (30d)','vs prev','Open','Parked','Avg resolution','Closed unanswered','Issue rate'],
-    rows, [1,2,3,4,5,6,7]);
+    ['Store','Tickets','vs prev','Emails in','Open','Parked','Avg resolution',
+     'Closed unanswered','Issue rate'],
+    rows, [1,2,3,4,5,6,7,8]);
+
+  $('#store-scope').innerHTML = `Ticket volume and resolution speed over ${rangeLabel()};
+    open and parked counts are live. Emails in follows the 28-day email buckets. The issue
+    rate divides tickets by Shopify orders, so it shows whether complaints are growing faster
+    than sales rather than just faster than last month — it is fixed to the 30 days to Aug 15,
+    the window order counts were pulled for.`;
 
   const si = STORE_KEYS.map(k => {
     const s = D.stores[k];
@@ -1088,6 +1293,136 @@ function renderStores(){
   $('#c-rate').innerHTML = ''; $('#c-rate').append(svg);
 }
 
+/* ---------------- email volume ---------------- */
+function renderEmail(){
+  const rows = perStoreChannels();
+  const ch = channelsFor();
+  const totE = rows.reduce((a,r) => a + r.email.received, 0);
+  const maxE = Math.max(...rows.map(r => r.email.received), 1);
+
+  $('#email-scope').innerHTML = `Inbound customer emails, the messages themselves rather
+    than the tickets they open. Email figures come from Commslayer&rsquo;s per-inbox report,
+    which is only available per 28-day bucket, so this section covers
+    <b class="num">${esc(ch.label)}</b>${ch.exact ? '' :
+    ' — the nearest reporting bucket to the dates you picked, which will not line up with them exactly'}.`;
+
+  const body = rows.map(r => [
+    `<b>${esc(r.name)}</b>`,
+    `<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+       <span>${fmt(r.email.received)}</span>
+       <span class="microbar" style="width:${Math.max(3, r.email.received/maxE*90)}px"></span></div>`,
+    fmt(r.email.tickets),
+    r.email.tickets ? (r.email.received/r.email.tickets).toFixed(1) : '—',
+    fmt(r.email.sent),
+    fmt(r.fb.received),
+    r.fb.tickets ? `<span class="delta up">${fmt(Math.max(0, r.fb.tickets - r.fb.sent))}</span>` : '0',
+  ]);
+  body.push([
+    '<b>Total</b>',
+    '<b>' + fmt(totE) + '</b>',
+    '<b>' + fmt(rows.reduce((a,r) => a + r.email.tickets, 0)) + '</b>',
+    '', '<b>' + fmt(rows.reduce((a,r) => a + r.email.sent, 0)) + '</b>',
+    '<b>' + fmt(rows.reduce((a,r) => a + r.fb.received, 0)) + '</b>',
+    '<b>' + fmt(rows.reduce((a,r) => a + Math.max(0, r.fb.tickets - r.fb.sent), 0)) + '</b>',
+  ]);
+  $('#t-email').innerHTML = tableHTML(
+    ['Store','Emails received','Email tickets','Emails per ticket','Emails sent',
+     'Facebook messages','FB closed unanswered'],
+    body, [1,2,3,4,5,6]);
+
+  /* grouped bars: emails received per store across the three buckets */
+  const bks = D.channels.buckets;
+  const W = 560, H = 250, padL = 52, padB = 46, padT = 10;
+  const plotH = H - padB - padT, plotW = W - padL - 8;
+  const vals = bks.map(b => STORE_KEYS.reduce((a,k) =>
+    a + D.channels.stores[k][b.key].email.received, 0));
+  const max = Math.max(...vals, 1);
+  const mag = Math.pow(10, Math.floor(Math.log10(max)));
+  const step = [1,2,2.5,5,10].map(m => m*mag).find(s => max/s <= 4) || mag*10;
+  const top = Math.ceil(max/step)*step;
+  const svg = svgEl('svg', {viewBox:`0 0 ${W} ${H}`, role:'img',
+    'aria-label':'Inbound emails received per 28-day bucket'});
+  for (let v=0; v<=top; v+=step){
+    const y = padT + plotH - v/top*plotH;
+    svg.append(svgEl('line', {x1:padL, x2:W-8, y1:y, y2:y,
+      stroke: v===0?'var(--rule-strong)':'var(--rule)', 'stroke-width':1}));
+    const tx = svgEl('text', {x:padL-8, y:y+4, 'text-anchor':'end', fill:'var(--ink-3)',
+      'font-size':'10.5', 'font-family':'var(--mono)'});
+    tx.textContent = v>=1000 ? (v/1000)+'k' : v; svg.append(tx);
+  }
+  const bw = plotW/bks.length;
+  const inRange = new Set(bucketsInRange().map(b => b.key));
+  bks.forEach((b,i) => {
+    const x0 = padL + i*bw, h = vals[i]/top*plotH;
+    const g = svgEl('g', {});
+    g.append(svgEl('rect', {x:x0+bw*0.18, y:padT+plotH-h, width:bw*0.64,
+      height:Math.max(1,h), rx:4, fill:'var(--s1)',
+      opacity: inRange.has(b.key) ? 1 : 0.32}));
+    g.append(svgEl('rect', {x:x0, y:padT, width:bw, height:plotH, fill:'transparent'}));
+    svg.append(g);
+    const lab = svgEl('text', {x:x0+bw/2, y:padT+plotH-h-8, 'text-anchor':'middle',
+      fill:'var(--ink)', 'font-size':'11.5', 'font-family':'var(--mono)', 'font-weight':'600'});
+    lab.textContent = fmt(vals[i]); svg.append(lab);
+    const tx = svgEl('text', {x:x0+bw/2, y:H-padB+18, 'text-anchor':'middle',
+      fill:'var(--ink-3)', 'font-size':'10.5'});
+    tx.textContent = b.label; svg.append(tx);
+    const perStore = STORE_KEYS.map(k =>
+      `<div class="r"><span>${esc(D.stores[k].name)}</span><b>${
+        fmt(D.channels.stores[k][b.key].email.received)}</b></div>`).join('');
+    hoverable(g, `<b>${esc(b.label)}</b>${inRange.has(b.key) ? '' :
+      ' <span style="color:var(--ink-3)">(outside selection)</span>'}
+      <div class="r"><span>Emails received</span><b>${fmt(vals[i])}</b></div>${perStore}`);
+  });
+  $('#c-email').innerHTML = ''; $('#c-email').append(svg);
+  $('#l-email').innerHTML = `<span><i class="swatch" style="background:var(--s1)"></i>
+    All five stores &middot; solid bars are inside your selected range</span>`;
+  $('#t-emailtrend').innerHTML = tableHTML(
+    ['Bucket', ...STORE_KEYS.map(k => D.stores[k].name), 'Total'],
+    bks.map((b,i) => [b.label,
+      ...STORE_KEYS.map(k => fmt(D.channels.stores[k][b.key].email.received)),
+      fmt(vals[i])]),
+    STORE_KEYS.map((_,i) => i+1).concat([STORE_KEYS.length+1]));
+
+  /* email vs facebook share */
+  const eR = ch.email.received, fR = ch.fb.received, tot = eR + fR || 1;
+  const W2 = 460, barH = 34;
+  const svg2 = svgEl('svg', {viewBox:`0 0 ${W2} 110`, role:'img',
+    'aria-label':'Share of inbound messages by channel'});
+  let x = 0;
+  [['Email', eR, 'var(--s1)'], ['Facebook', fR, 'var(--s2)']].forEach(([n,v,c]) => {
+    const w = v/tot*W2;
+    if (w <= 0) return;
+    const g = svgEl('g', {});
+    g.append(svgEl('rect', {x, y:8, width:Math.max(1, w-2), height:barH, rx:4, fill:c}));
+    svg2.append(g);
+    hoverable(g, `<b>${n}</b><div class="r"><span>Inbound messages</span><b>${fmt(v)}</b></div>
+      <div class="r"><span>Share</span><b>${(100*v/tot).toFixed(1)}%</b></div>`);
+    // Anchor to the right when the segment sits near the edge, so the caption
+    // stays inside the viewBox instead of running off it.
+    const nearEnd = x > W2 * 0.5;
+    const lx = nearEnd ? W2 : x + 4;
+    const anchor = nearEnd ? 'end' : 'start';
+    const tx = svgEl('text', {x:lx, y:barH+30, 'text-anchor':anchor,
+      fill:'var(--ink)', 'font-size':'12'});
+    tx.textContent = n; svg2.append(tx);
+    const tv = svgEl('text', {x:lx, y:barH+48, 'text-anchor':anchor, fill:'var(--ink-2)',
+      'font-size':'13', 'font-family':'var(--mono)', 'font-weight':'600'});
+    tv.textContent = fmt(v) + '  ' + (100*v/tot).toFixed(1) + '%'; svg2.append(tv);
+    x += w;
+  });
+  $('#c-channel').innerHTML = ''; $('#c-channel').append(svg2);
+  const unans = Math.max(0, ch.fb.tickets - ch.fb.sent);
+  $('#channel-note').innerHTML = ch.fb.tickets
+    ? `Facebook is ${(100*fR/tot).toFixed(1)}% of inbound messages but takes almost none of the
+       replies: <b class="num">${fmt(ch.fb.tickets)}</b> tickets against
+       <b class="num">${fmt(ch.fb.sent)}</b> messages sent, so about
+       <b class="num">${fmt(unans)}</b> closed unanswered. Email gets
+       <b class="num">${fmt(ch.email.sent)}</b> replies to
+       <b class="num">${fmt(ch.email.tickets)}</b> tickets.`
+    : `No Facebook page inboxes were connected during ${esc(ch.label)} — every inbound
+       message came by email.`;
+}
+
 /* ---------------- method ---------------- */
 function renderMethod(){
   const t = D.totals;
@@ -1102,16 +1437,31 @@ function renderMethod(){
      (${(100*t.categorised/t.created_cur).toFixed(0)}% coverage); the rest are uncategorised at
      source and are excluded from the issue charts but not from the volume figures.`,
 
+    `<b>Two different "closed" numbers, and why this counts from created instead.</b>
+     Commslayer reports a period total for closed tickets and a separate day-by-day series,
+     and the series sums higher than the total on every store — it appears to count each
+     close event, so a ticket reopened and closed again is counted twice. The day-by-day
+     series is also blind to when a ticket was opened, so closures in a window include
+     tickets raised long before it. Rather than divide two measures that do not match, the
+     resolution figures here count down from tickets <em>created</em> in the selected range,
+     which reconciles exactly with the period total on every store. The volume chart still
+     plots the daily series, labelled "closures recorded" rather than "tickets closed".
+     Average resolution time has the same split: the figure here is the closure-weighted mean
+     of Commslayer's own daily values across whatever range you pick, which runs higher than
+     the single period figure the platform reports for a fixed window (5 hours for the 30 days
+     to Aug 15) because that one aggregates differently. Both are the platform's numbers; the
+     daily-derived one is used so the headline and the chart agree with each other.`,
+
     `<b>How "actually resolved" is decided.</b> A ticket only counts as genuinely resolved if
      somebody replied to it and the customer did not write back chasing the same thing. Two
      deductions are made off the closed count, both measured:
      <b class="num">${fmt(t.resolution.closed_no_reply)}</b> Facebook-page tickets that reached
-     the no-activity auto-close before any message was sent back
-     (${fmt(t.fb_created)} created against ${fmt(t.fb_replies)} replies), and
-     <b class="num">${fmt(t.resolution.repeat_contact)}</b> tickets whose own contact reason is
-     the customer following up an earlier request. Snoozed tickets are never counted as
-     resolved — in these accounts snooze means parked awaiting a refund, a replacement or a
-     shipment.`,
+     the no-activity auto-close before any message was sent back, and tickets whose own
+     contact reason is the customer following up an earlier request. Both move with the
+     store filter and, as far as their source data allows, with the date range. Snoozed
+     tickets are never counted as settled — in these accounts snooze means parked awaiting
+     a refund, a replacement or a shipment, and they are reported separately as a live count
+     rather than folded into a rate.`,
 
     `<b>What is not here, and why.</b> Order numbers, agent notes and the free-text action
      recorded on each ticket live inside message bodies. The Commslayer message endpoint
@@ -1122,6 +1472,24 @@ function renderMethod(){
      said. Re-running this build tomorrow, when the message quota resets, would fill those two
      columns in.`,
 
+    `<b>What the date picker actually re-slices.</b> Tickets created, tickets closed and
+     average resolution time are stored as day-by-day arrays covering
+     ${D.history.from} to ${D.history.to}, so any range inside those 84 days is summed
+     exactly — nothing is interpolated. The comparison window is always the same number of
+     days immediately before your selection. Three things do <em>not</em> move with the
+     dates, and say so where they appear: open and parked counts are live totals as of the
+     pull, the issue breakdown exists only for the fixed 30-day windows Commslayer was
+     queried for, and email volume comes in 28-day reporting buckets. Dates before
+     ${D.history.from} are outside the retrieved history and the picker will not accept them.`,
+
+    `<b>Email figures.</b> "Emails received" counts inbound customer messages, not tickets —
+     one ticket usually carries two or more emails. The numbers come from Commslayer's
+     per-inbox report, which has no daily series, so they are pulled per 28-day bucket. A
+     selected range picks up a bucket when it covers at least half of it; if it covers less
+     than half of any bucket, the single closest bucket is shown and the heading names the
+     span used. Maggies Tanks and Mary's Tanks each run one email inbox; Lyn's Tanks runs two
+     (a current and a legacy address) and both are counted.`,
+
     `<b>Sampling.</b> Volume, resolution time and issue counts are complete population figures
      from Commslayer's reporting API — no sampling. The unresolved ticket table is the one
      sampled view: the conversation list API caps at 500 rows over a 30-day window, so
@@ -1129,11 +1497,16 @@ function renderMethod(){
      open tickets are listed, chosen as the most recently active page plus the two least
      recently active pages so the whole stale tail is present.`,
 
+    `<b>Facebook page inboxes are new.</b> They were connected part-way through this window —
+     nothing came through them before mid-July on any store. Pick a range that ends before
+     then and the Facebook figures legitimately read zero; that is the channel not existing
+     yet, not a data gap.`,
+
     `<b>Shopify order volume.</b> Only Lyn's Tanks has API credentials available in this
      environment, so the customer issue rate is calculated for that store alone. Adding the
      other four stores' Shopify tokens would extend it across the group.`,
 
-    `<b>Period edges.</b> The reporting window is ${D.period.cur[0]} to ${D.period.cur[1]},
+    `<b>Period edges.</b> The issue breakdown covers ${D.period.cur[0]} to ${D.period.cur[1]},
      compared with ${D.period.prev[0]} to ${D.period.prev[1]}. The last day is a part-day —
      data was pulled mid-morning — so the final bar in any daily view is short by design.
      Simply Elsie launched on 14 July and Mary and James had no previous-period pull, so
@@ -1145,7 +1518,23 @@ function renderMethod(){
 function renderAll(){
   renderSummary(); renderKPIs(); renderResolution(); renderIssues();
   renderVolume(); renderLines(); renderDelta(); renderUnresolved();
-  renderStores(); renderMethod();
+  renderEmail(); renderStores(); renderMethod();
+  $('#d-from').value = HIST[R.a];
+  $('#d-to').value = HIST[R.b];
+  const pr = prevRange();
+  $('#range-note').textContent = pr
+    ? `compared with ${shortDate(HIST[pr.a])} – ${shortDate(HIST[pr.b])}`
+    : 'no earlier window available';
+  [...$('#range-pills').children].forEach(b =>
+    b.setAttribute('aria-pressed', b.dataset.k === R.preset));
+}
+
+const PRESETS = [['d7','Last 7 days',7], ['d14','Last 14 days',14],
+                 ['d30','Last 30 days',30], ['all','All 84 days',null]];
+
+function setRange(a, b, preset){
+  R = {a: clampIdx(Math.min(a,b)), b: clampIdx(Math.max(a,b)), preset: preset || 'custom'};
+  renderAll();
 }
 
 function buildPills(){
@@ -1173,6 +1562,29 @@ function buildPills(){
     };
     pp.append(b);
   });
+
+  const rp = $('#range-pills');
+  PRESETS.forEach(([k,label,n]) => {
+    const b = el('button','pill', label);
+    b.dataset.k = k;
+    b.setAttribute('aria-pressed', R.preset===k);
+    b.onclick = () => setRange(n == null ? 0 : LAST-n+1, LAST, k);
+    rp.append(b);
+  });
+
+  const from = $('#d-from'), to = $('#d-to');
+  [from, to].forEach(inp => { inp.min = HIST[0]; inp.max = HIST[LAST]; });
+  const apply = () => {
+    const a = dIdx(from.value), b = dIdx(to.value);
+    if (a < 0 || b < 0){
+      $('#range-note').textContent =
+        `pick dates between ${HIST[0]} and ${HIST[LAST]} — that is the history retrieved`;
+      return;
+    }
+    setRange(a, b, 'custom');
+  };
+  $('#d-apply').onclick = apply;
+  [from, to].forEach(inp => inp.addEventListener('change', apply));
 }
 
 document.addEventListener('click', e => {

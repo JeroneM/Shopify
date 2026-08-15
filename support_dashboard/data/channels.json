@@ -1,0 +1,245 @@
+{
+ "_comment": "Email vs Facebook volume per store, in three consecutive 28-day buckets, from Commslayer reports_inboxes. 'tickets' = conversations opened in that inbox; 'received' = inbound customer messages; 'sent' = messages the team (or AI) sent back; 'res' = average resolution seconds. Facebook page inboxes were only connected part-way through the window, so earlier buckets are legitimately zero.",
+ "buckets": [
+  {
+   "key": "b1",
+   "from": "2026-05-24",
+   "to": "2026-06-20",
+   "label": "May 24 \u2013 Jun 20"
+  },
+  {
+   "key": "b2",
+   "from": "2026-06-21",
+   "to": "2026-07-18",
+   "label": "Jun 21 \u2013 Jul 18"
+  },
+  {
+   "key": "b3",
+   "from": "2026-07-19",
+   "to": "2026-08-15",
+   "label": "Jul 19 \u2013 Aug 15"
+  }
+ ],
+ "stores": {
+  "maggies": {
+   "b1": {
+    "email": {
+     "tickets": 612,
+     "received": 1337,
+     "sent": 1325,
+     "res": 33965
+    },
+    "fb": {
+     "tickets": 0,
+     "received": 0,
+     "sent": 0,
+     "res": null
+    }
+   },
+   "b2": {
+    "email": {
+     "tickets": 4288,
+     "received": 10765,
+     "sent": 10839,
+     "res": 15334
+    },
+    "fb": {
+     "tickets": 0,
+     "received": 0,
+     "sent": 0,
+     "res": null
+    }
+   },
+   "b3": {
+    "email": {
+     "tickets": 21625,
+     "received": 41314,
+     "sent": 46295,
+     "res": 8918
+    },
+    "fb": {
+     "tickets": 3813,
+     "received": 4480,
+     "sent": 344,
+     "res": 168000
+    }
+   }
+  },
+  "marys": {
+   "b1": {
+    "email": {
+     "tickets": 6190,
+     "received": 13861,
+     "sent": 13360,
+     "res": 194409
+    },
+    "fb": {
+     "tickets": 0,
+     "received": 0,
+     "sent": 0,
+     "res": null
+    }
+   },
+   "b2": {
+    "email": {
+     "tickets": 5918,
+     "received": 14728,
+     "sent": 14839,
+     "res": 28619
+    },
+    "fb": {
+     "tickets": 0,
+     "received": 0,
+     "sent": 0,
+     "res": null
+    }
+   },
+   "b3": {
+    "email": {
+     "tickets": 8291,
+     "received": 17985,
+     "sent": 19420,
+     "res": 11609
+    },
+    "fb": {
+     "tickets": 702,
+     "received": 739,
+     "sent": 121,
+     "res": 166000
+    }
+   }
+  },
+  "mj": {
+   "b1": {
+    "email": {
+     "tickets": 533,
+     "received": 917,
+     "sent": 674,
+     "res": 27958
+    },
+    "fb": {
+     "tickets": 0,
+     "received": 0,
+     "sent": 0,
+     "res": null
+    }
+   },
+   "b2": {
+    "email": {
+     "tickets": 1582,
+     "received": 2731,
+     "sent": 2504,
+     "res": 3281
+    },
+    "fb": {
+     "tickets": 0,
+     "received": 0,
+     "sent": 0,
+     "res": null
+    }
+   },
+   "b3": {
+    "email": {
+     "tickets": 1652,
+     "received": 3035,
+     "sent": 3079,
+     "res": 11259
+    },
+    "fb": {
+     "tickets": 452,
+     "received": 458,
+     "sent": 11,
+     "res": 86500
+    }
+   }
+  },
+  "lyns": {
+   "b1": {
+    "email": {
+     "tickets": 3037,
+     "received": 7848,
+     "sent": 7878,
+     "res": 124375
+    },
+    "fb": {
+     "tickets": 0,
+     "received": 0,
+     "sent": 0,
+     "res": null
+    }
+   },
+   "b2": {
+    "email": {
+     "tickets": 2804,
+     "received": 8084,
+     "sent": 7851,
+     "res": 29639
+    },
+    "fb": {
+     "tickets": 0,
+     "received": 0,
+     "sent": 0,
+     "res": null
+    }
+   },
+   "b3": {
+    "email": {
+     "tickets": 1146,
+     "received": 2421,
+     "sent": 2553,
+     "res": 49972
+    },
+    "fb": {
+     "tickets": 41,
+     "received": 61,
+     "sent": 2,
+     "res": 172900
+    }
+   }
+  },
+  "elsie": {
+   "b1": {
+    "email": {
+     "tickets": 0,
+     "received": 0,
+     "sent": 0,
+     "res": null
+    },
+    "fb": {
+     "tickets": 0,
+     "received": 0,
+     "sent": 0,
+     "res": null
+    }
+   },
+   "b2": {
+    "email": {
+     "tickets": 34,
+     "received": 84,
+     "sent": 57,
+     "res": 3405
+    },
+    "fb": {
+     "tickets": 0,
+     "received": 0,
+     "sent": 0,
+     "res": null
+    }
+   },
+   "b3": {
+    "email": {
+     "tickets": 779,
+     "received": 1769,
+     "sent": 1863,
+     "res": 7298
+    },
+    "fb": {
+     "tickets": 189,
+     "received": 223,
+     "sent": 34,
+     "res": 290000
+    }
+   }
+  }
+ }
+}
