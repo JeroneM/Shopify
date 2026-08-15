@@ -17,12 +17,14 @@ import sys
 IN_PATH = "replacement_orders_export.csv"
 OUT_PATH = "replacement_orders_by_fulfillment.csv"
 
-# Unfulfilled first, then partially-handled states, then done.
-GROUP_ORDER = ["unfulfilled", "partial", "restocked", "fulfilled"]
+# Outstanding work first, then partially-handled states, then everything
+# needing no action - cancelled orders last, since they never ship.
+GROUP_ORDER = ["unfulfilled", "partial", "restocked", "fulfilled", "cancelled"]
 
 SPLIT_PATHS = {
     "unfulfilled": "replacement_orders_not_fulfilled.csv",
     "fulfilled": "replacement_orders_fulfilled.csv",
+    "cancelled": "replacement_orders_cancelled.csv",
 }
 
 

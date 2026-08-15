@@ -39,7 +39,7 @@ COLUMNS = [
 # Ask Shopify for only the fields we export, so the payload stays small.
 ORDER_FIELDS = (
     "id,order_number,name,email,customer,created_at,total_price,currency,"
-    "financial_status,fulfillment_status,tags,note"
+    "financial_status,fulfillment_status,cancelled_at,tags,note"
 )
 
 OUT_PATH = "replacement_orders_export.csv"
@@ -70,11 +70,19 @@ def customer_email(order: dict) -> str:
 
 
 def fulfillment_status(order: dict) -> str:
-    """Shopify leaves fulfillment_status null for a wholly unfulfilled order.
+    """What still needs fulfilling, from Shopify's point of view.
 
-    Spelled out so the column is never an ambiguous blank. Other values pass
-    through as Shopify reports them: fulfilled, partial, restocked.
+    A cancelled order reports fulfillment_status null exactly like a brand new
+    one, so reading that field alone files cancellations under "unfulfilled" and
+    overstates the work outstanding. cancelled_at is what separates them - the
+    admin shows these as "Fulfillment not required".
+
+    Otherwise null means genuinely awaiting fulfilment, spelled out so the column
+    is never an ambiguous blank; fulfilled, partial and restocked pass through
+    as Shopify reports them.
     """
+    if order.get("cancelled_at"):
+        return "cancelled"
     return order.get("fulfillment_status") or "unfulfilled"
 
 
