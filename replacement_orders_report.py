@@ -31,12 +31,16 @@ COLUMNS = [
     "total_price",
     "currency",
     "financial_status",
+    "fulfillment_status",
     "tags",
     "note",
 ]
 
 # Ask Shopify for only the fields we export, so the payload stays small.
-ORDER_FIELDS = "id,order_number,name,email,customer,created_at,total_price,currency,financial_status,tags,note"
+ORDER_FIELDS = (
+    "id,order_number,name,email,customer,created_at,total_price,currency,"
+    "financial_status,fulfillment_status,tags,note"
+)
 
 OUT_PATH = "replacement_orders_export.csv"
 
@@ -65,6 +69,15 @@ def customer_email(order: dict) -> str:
     return order.get("email") or customer.get("email") or ""
 
 
+def fulfillment_status(order: dict) -> str:
+    """Shopify leaves fulfillment_status null for a wholly unfulfilled order.
+
+    Spelled out so the column is never an ambiguous blank. Other values pass
+    through as Shopify reports them: fulfilled, partial, restocked.
+    """
+    return order.get("fulfillment_status") or "unfulfilled"
+
+
 def day_bounds(store_tz: ZoneInfo, start_date: str, end_date: str) -> tuple[str, str]:
     """Inclusive [start 00:00:00, end 23:59:59] in the store's own timezone."""
     start = datetime.combine(datetime.fromisoformat(start_date).date(), time.min, store_tz)
@@ -85,6 +98,7 @@ def to_row(order: dict, store_key: str) -> list:
         order.get("total_price"),
         order.get("currency"),
         order.get("financial_status"),
+        fulfillment_status(order),
         order.get("tags"),
         order.get("note"),
     ]
