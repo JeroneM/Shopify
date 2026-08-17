@@ -1,0 +1,57 @@
+{
+  "window": { "from": "2026-08-11", "to": "2026-08-17", "days": ["2026-08-11","2026-08-12","2026-08-13","2026-08-14","2026-08-15","2026-08-16","2026-08-17"], "lastDayPartial": true },
+  "note": "Population-level figures straight from Commslayer reports endpoints (reports_overview, reports_contact_reasons, reports_labels) per account. These are complete counts for the whole account over the window, not samples. Times are in seconds. Mary's Tanks reports in UTC+10, the other three in UTC, so day boundaries differ slightly for that brand.",
+  "brands": [
+    {
+      "id": "elsie", "name": "Simply Elsie", "accountId": 7356, "market": "United Kingdom", "tz": "UTC",
+      "aiAgent": "Bella",
+      "created": 306, "closed": 293,
+      "frtSec": 65059, "resSec": 58263, "avgRespSec": 79294,
+      "oneTouch": 29.0, "zeroTouch": 0.3, "messages": 704,
+      "daily": [46, 46, 65, 42, 55, 47, 5],
+      "dailyClosed": [51, 53, 83, 28, 48, 36, 40],
+      "top": { "Returns & Exchanges": 54, "Order Issue": 39, "Shipping & Delivery": 92, "Product Question": 26, "Billing & Payments": 32, "Order Status": 0, "General / Other": 15, "Subscription": 3 },
+      "sub": { "sizeExchange": 23, "delayed": 43, "tracking": 15, "lostPackage": 13, "wrongAddress": 3, "wrongItem": 0, "damagedItem": 1, "refundRequest": 29, "cancelOrder": 4, "editOrder": 7, "productDetails": 17, "scamAccusation": 5, "negativeFeedback": 0, "positiveFeedback": 0 },
+      "labels": { "refund-approved": 20, "chargeback": 3, "size_issue": null, "size_replacement": null }
+    },
+    {
+      "id": "maggie", "name": "Maggies Tanks", "accountId": 6576, "market": "United States", "tz": "UTC",
+      "aiAgent": "Jasmine",
+      "created": 9187, "closed": 8960,
+      "frtSec": 30718, "resSec": 172813, "avgRespSec": 52422,
+      "oneTouch": 26.2, "zeroTouch": 14.3, "messages": 18809,
+      "daily": [1442, 1516, 1560, 1578, 1384, 1452, 255],
+      "dailyClosed": [1287, 1516, 1551, 1806, 1629, 1583, 389],
+      "top": { "Returns & Exchanges": 1796, "Order Issue": 967, "Shipping & Delivery": 1081, "Product Question": 655, "Billing & Payments": 385, "Order Status": 910, "General / Other": 1132, "Subscription": 3 },
+      "sub": { "sizeExchange": 1344, "delayed": 592, "tracking": 160, "lostPackage": 95, "wrongAddress": 80, "wrongItem": 50, "damagedItem": 11, "refundRequest": 296, "cancelOrder": 165, "editOrder": 176, "productDetails": 367, "scamAccusation": 83, "negativeFeedback": 102, "positiveFeedback": 71 },
+      "labels": { "refund-approved": 209, "chargeback": 52, "size_issue": 1723, "size_replacement": 1723 },
+      "extra": { "Item fit and damage issue": 362, "Return request": 399, "Manufacturing location inquiry": 48, "Item size and refund request": 96, "Item replacement request": 51, "Follow-up on previous email": 169 }
+    },
+    {
+      "id": "mary", "name": "Mary's Tanks", "accountId": 6377, "market": "Australia", "tz": "UTC+10",
+      "aiAgent": "Lovely",
+      "created": 2497, "closed": 2898,
+      "frtSec": 196317, "resSec": 173041, "avgRespSec": 69837,
+      "oneTouch": 19.6, "zeroTouch": 12.0, "messages": 6519,
+      "daily": [482, 446, 346, 318, 271, 283, 280],
+      "dailyClosed": [515, 516, 387, 561, 628, 336, 245],
+      "top": { "Returns & Exchanges": 600, "Order Issue": 744, "Shipping & Delivery": 123, "Product Question": 291, "Billing & Payments": 163, "Order Status": 0, "General / Other": 74, "Subscription": 0 },
+      "sub": { "sizeExchange": 295, "delayed": 35, "tracking": 24, "lostPackage": 5, "wrongAddress": 11, "wrongItem": 5, "damagedItem": 4, "refundRequest": 51, "cancelOrder": 19, "editOrder": 67, "productDetails": 236, "scamAccusation": 38, "negativeFeedback": 0, "positiveFeedback": 0 },
+      "labels": { "refund-approved": 78, "chargeback": 5, "size_issue": null, "size_replacement": null },
+      "extra": { "Return and replacement request": 273, "Order inquiry": 341, "Order feedback": 105, "Follow-up on previous contact": 45, "Post-mastectomy product inquiry": 14, "Product size and billing error": 16, "Meta verification inquiry": 33 }
+    },
+    {
+      "id": "lyn", "name": "Lyn's Tanks", "accountId": 6527, "market": "New Zealand", "tz": "UTC",
+      "aiAgent": "Shantel",
+      "created": 201, "closed": 185,
+      "frtSec": 61510, "resSec": 60359, "avgRespSec": 63766,
+      "oneTouch": 18.4, "zeroTouch": 7.6, "messages": 454,
+      "daily": [37, 35, 31, 29, 18, 32, 19],
+      "dailyClosed": [22, 46, 58, 11, 33, 23, 17],
+      "top": { "Returns & Exchanges": 48, "Order Issue": 62, "Shipping & Delivery": 20, "Product Question": 32, "Billing & Payments": 16, "Order Status": 0, "General / Other": 14, "Subscription": 0 },
+      "sub": { "sizeExchange": 47, "delayed": 9, "tracking": 2, "lostPackage": 5, "wrongAddress": 0, "wrongItem": 2, "damagedItem": 0, "refundRequest": 11, "cancelOrder": 5, "editOrder": 7, "productDetails": 12, "scamAccusation": 0, "negativeFeedback": 0, "positiveFeedback": 2 },
+      "labels": { "refund-approved": 12, "chargeback": 6, "size_issue": 69, "size_replacement": 69 },
+      "extra": { "Chargeback inquiry": 12, "Product quality and sizing issues": 19, "Fit and refund inquiry": 10, "Unanswered emails": 7 }
+    }
+  ]
+}

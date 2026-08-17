@@ -267,6 +267,21 @@
 
   .empty { padding: 40px 20px; text-align: center; color: var(--ink-3); font-size: 13.5px; }
 
+  .banner {
+    background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
+    border-radius: 8px; padding: 10px 14px; font-size: 12.5px; color: var(--ink-2);
+    line-height: 1.55; margin-bottom: 14px;
+  }
+  .banner b { color: var(--ink); font-weight: 600; }
+  .banner.warn {
+    background: color-mix(in srgb, var(--warning) 12%, transparent);
+    border-color: color-mix(in srgb, var(--warning) 45%, transparent);
+  }
+  .brand-dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; flex: none; }
+  td.brand-cell { white-space: nowrap; }
+  td.brand-cell span.nm { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; }
+  #brand-mix th:first-child, #brand-mix td:first-child { position: sticky; left: 0; background: var(--surface); }
+
   footer { border-top: 1px solid var(--rule); padding-top: 18px; margin-top: 40px; font-size: 12px; color: var(--ink-3); line-height: 1.65; }
   footer h3 { font-size: 12px; color: var(--ink-2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .085em; }
   footer ul { margin: 0 0 14px; padding-left: 17px; }
@@ -285,18 +300,22 @@
 <div class="wrap">
   <header class="mast">
     <div>
-      <div class="eyebrow">Simply Elsie &middot; Operations &amp; Customer Support</div>
+      <div class="eyebrow">Simply Elsie &middot; Maggies Tanks &middot; Mary's Tanks &middot; Lyn's Tanks</div>
       <h1>Customer Issue Analytics</h1>
     </div>
     <div class="mast-meta">
-      <b id="m-count">0</b> tickets pulled from Commslayer<br>
-      <span id="m-range"></span><br>
-      <span id="m-gaps"></span>
+      <b id="m-pop">0</b> tickets counted across 4 Commslayer accounts<br>
+      <b id="m-count">0</b> retrieved individually for message-level analysis<br>
+      <span id="m-range"></span>
     </div>
   </header>
 
   <div class="controls">
     <div class="ctl-row">
+      <div class="ctl">
+        <label for="f-brand">Brand</label>
+        <select id="f-brand"><option value="">All brands</option></select>
+      </div>
       <div class="ctl">
         <label for="f-date">Date range</label>
         <select id="f-date">
@@ -341,17 +360,72 @@
     <div class="active-filters" id="chips"></div>
   </div>
 
+  <section id="brands">
+    <div class="sec-head">
+      <h2><span class="sec-num">01</span>Brand comparison &mdash; complete population</h2>
+      <span class="sec-note" id="brand-window"></span>
+    </div>
+    <div class="banner">
+      <b>These figures are complete, not sampled.</b> Every number in this section is the full ticket count for that
+      Commslayer account over the window, taken from the reporting endpoints. Sections 2 onwards work on individually
+      retrieved tickets and are a different, shallower dataset &mdash; read volumes here, read messages there.
+    </div>
+    <div class="grid-2" style="margin-bottom:14px">
+      <div class="card pad">
+        <div class="detail-h">Ticket volume per brand</div>
+        <div class="ib" id="brand-vol"></div>
+      </div>
+      <div class="card pad">
+        <div class="detail-h">Daily ticket volume, indexed to each brand's own peak</div>
+        <div class="chart-box">
+          <svg id="brand-svg" height="210" role="img" aria-label="Daily ticket volume by brand"></svg>
+          <div class="tip" id="brand-tip"></div>
+        </div>
+        <div class="legend" id="brand-legend"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tbl-scroll">
+        <table id="brand-tbl">
+          <thead><tr>
+            <th>Brand</th><th>Market</th><th class="num">Tickets</th><th class="num">Per day</th>
+            <th class="num">Size exchange</th><th class="num">Shipping</th><th class="num">Refund req.</th>
+            <th class="num">Chargeback</th><th class="num">Scam claims</th>
+            <th class="num">Avg resolution</th><th class="num">One-touch</th><th>Biggest issue</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="grid-2" style="margin-top:14px">
+      <div class="card pad">
+        <div class="detail-h">Issue mix by brand &mdash; share of that brand's tickets</div>
+        <div class="tbl-scroll"><table id="brand-mix"><thead></thead><tbody></tbody></table></div>
+      </div>
+      <div class="card pad">
+        <div class="detail-h">Sizing pressure &mdash; the shared failure across all four brands</div>
+        <div class="ib" id="brand-size"></div>
+        <p class="sec-note" style="margin:12px 0 0" id="brand-size-note"></p>
+      </div>
+    </div>
+  </section>
+
   <section id="kpi">
     <div class="sec-head">
-      <h2><span class="sec-num">01</span>Key performance indicators</h2>
+      <h2><span class="sec-num">02</span>Key performance indicators</h2>
       <span class="sec-note" id="kpi-note"></span>
+    </div>
+    <div class="banner warn" id="mix-warn" style="display:none">
+      <b>All brands selected.</b> The retrieved ticket depth differs by brand
+      (<span id="depth-list"></span>), so this section's percentages describe what was retrieved, not real relative
+      volume. Pick a single brand for a like-for-like read, or use the brand comparison above for true volumes.
     </div>
     <div class="kpis" id="kpi-grid"></div>
   </section>
 
   <section id="exec">
     <div class="sec-head">
-      <h2><span class="sec-num">02</span>Executive summary</h2>
+      <h2><span class="sec-num">03</span>Executive summary</h2>
       <span class="sec-note">Regenerates on every filter change</span>
     </div>
     <div class="card pad summary" id="exec-body"></div>
@@ -359,7 +433,7 @@
 
   <section id="trend">
     <div class="sec-head">
-      <h2><span class="sec-num">03</span>Customer issue trend</h2>
+      <h2><span class="sec-num">04</span>Customer issue trend</h2>
       <div class="seg" id="gran">
         <button class="btn on" data-g="day">Daily</button>
         <button class="btn" data-g="week">Weekly</button>
@@ -378,7 +452,7 @@
 
   <section id="breakdown">
     <div class="sec-head">
-      <h2><span class="sec-num">04</span>Issue breakdown</h2>
+      <h2><span class="sec-num">05</span>Issue breakdown</h2>
       <span class="sec-note">Click any issue to filter the whole dashboard</span>
     </div>
     <div class="grid-2">
@@ -395,7 +469,7 @@
 
   <section id="product">
     <div class="sec-head">
-      <h2><span class="sec-num">05</span>Product, variant &amp; SKU analysis</h2>
+      <h2><span class="sec-num">06</span>Product, variant &amp; SKU analysis</h2>
       <span class="sec-note">Only tickets where the customer or order data named a variant</span>
     </div>
     <div class="grid-3" id="prod-leads" style="margin-bottom:14px"></div>
@@ -415,7 +489,7 @@
 
   <section id="emerging">
     <div class="sec-head">
-      <h2><span class="sec-num">06</span>Emerging issues &amp; root-cause insights</h2>
+      <h2><span class="sec-num">07</span>Emerging issues &amp; root-cause insights</h2>
       <span class="sec-note">Theme detection over customer message text</span>
     </div>
     <div class="alerts" id="alert-grid"></div>
@@ -423,7 +497,7 @@
 
   <section id="resolution">
     <div class="sec-head">
-      <h2><span class="sec-num">07</span>Resolution performance</h2>
+      <h2><span class="sec-num">08</span>Resolution performance</h2>
       <span class="sec-note">Ageing measured against the latest activity in the dataset</span>
     </div>
     <div class="grid-3" id="res-grid"></div>
@@ -431,7 +505,7 @@
 
   <section id="tickets">
     <div class="sec-head">
-      <h2><span class="sec-num">08</span>Ticket investigation</h2>
+      <h2><span class="sec-num">09</span>Ticket investigation</h2>
       <span class="sec-note" id="tk-note"></span>
     </div>
     <div class="ctl-row" style="margin-bottom:12px">
@@ -445,7 +519,7 @@
       <div class="tbl-scroll">
         <table id="tk-tbl">
           <thead><tr>
-            <th data-s="created">Date</th><th data-s="t">Ticket</th><th>Order</th><th>Product</th>
+            <th data-s="created">Date</th><th>Brand</th><th data-s="t">Ticket</th><th>Order</th><th>Product</th>
             <th>Size / colour</th><th data-s="cat">Issue</th><th>Sub-issue</th>
             <th>Customer message</th><th data-s="status">Status</th><th>Action taken</th><th data-s="agent">Agent</th>
           </tr></thead>
@@ -459,8 +533,9 @@
   <footer>
     <h3>About this data</h3>
     <ul>
-      <li><b>Source.</b> Every ticket, message, status, label and agent assignment on this page was pulled live from the Commslayer account <code>Simply Elsie</code> (account 7356) via the Commslayer MCP API. Nothing is simulated.</li>
-      <li><b>Coverage.</b> <span id="foot-cov"></span> Commslayer's list endpoint caps out well below the account's full history, so tickets were fetched individually by conversation ID to guarantee an unbroken block rather than a scattered sample. Every count, rate and trend on this page is a true count within that window.</li>
+      <li><b>Source.</b> Everything here was pulled live from four Commslayer accounts on one login &mdash; <code>Simply Elsie</code> (7356, UK), <code>Maggies Tanks</code> (6576, US), <code>Mary's Tanks</code> (6377, AU) and <code>Lyn's Tanks</code> (6527, NZ) &mdash; via the Commslayer MCP API. Nothing is simulated. A fifth account, <code>Mary and James</code> (6570), was deliberately excluded.</li>
+      <li><b>Coverage.</b> <span id="foot-cov"></span> The two layers answer different questions and must not be mixed: layer one tells you how much of each issue there really is, layer two lets you read what customers actually wrote. Retrieval depth in layer two is uneven by design &mdash; Maggies Tanks alone runs over 1,300 tickets a day, far beyond what can be read ticket by ticket &mdash; so layer two percentages describe the retrieved set, not the business.</li>
+      <li><b>Brand comparison basis.</b> Section 1 is fixed to 11&ndash;17 August because the reporting endpoints return one aggregate per window; it does not follow the date filter above, which drives layer two only. The final day is partial in every brand (data pulled mid-morning UTC on the 17th), which is why every brand's last point drops. Mary's Tanks reports in UTC+10, so its day boundaries differ by ten hours from the other three.</li>
       <li><b>Classification.</b> Primary issue category and sub-issue were assigned by reading each customer's actual message text, not by reusing Commslayer's labels. Categories beyond the requested list were added where the data demanded them &mdash; <em>Product Usage / Difficult to Put On</em>, <em>Brand Trust / Provenance Doubt</em>, <em>Order Lookup / Account Data Error</em> and <em>Spam / Solicitation</em> each recur often enough to stand alone.</li>
       <li><b>Fields shown as "Not Available".</b> Commslayer exposes no SKU field, and its conversation custom-attribute store is empty for this account, so SKU is unavailable for every ticket. Product, variant, size and colour are populated only where the customer stated them or where an order-confirmation or refund email was quoted inside the thread. Nothing has been inferred.</li>
       <li><b>Resolution timing.</b> Commslayer's API returns <code>created_at</code> and <code>last_activity_at</code>, but no explicit resolved-at timestamp. Resolution time and "date resolved" therefore use last activity on tickets whose status is <em>resolved</em>, which is an upper bound on the true handling time.</li>
@@ -472,6 +547,8 @@
 
 <script>
 const RAW = /*__DATA__*/[];
+const BRANDS = /*__BRANDS__*/null;
+const BRAND_COLOR = { "Simply Elsie": "var(--s1)", "Maggies Tanks": "var(--s2)", "Mary's Tanks": "var(--s3)", "Lyn's Tanks": "var(--s4)" };
 
 /* ============ normalisation ============ */
 const SIZING = ["Sizing Issue"];
@@ -544,12 +621,13 @@ function resolveRange(preset, from, to) {
 }
 
 /* ============ state ============ */
-const S = { preset: "all", from: "", to: "", store: "", status: "", agent: "", search: "", cat: "", sub: "", size: "", color: "", product: "", gran: "day", hidden: new Set(), open: new Set() };
+const S = { brand: "", preset: "all", from: "", to: "", store: "", status: "", agent: "", search: "", cat: "", sub: "", size: "", color: "", product: "", gran: "day", hidden: new Set(), open: new Set() };
 
 function inRange(list, a, b) { return list.filter(t => +t.d >= a && +t.d <= b); }
 
 function applyDims(list) {
   return list.filter(t =>
+    (!S.brand || t.brand === S.brand) &&
     (!S.store || t.store === S.store) &&
     (!S.status || t.status === S.status) &&
     (!S.agent || t.agent === S.agent) &&
@@ -593,6 +671,168 @@ function catColors(list) {
   const m = new Map();
   ranked.slice(0, 6).forEach(([c], i) => m.set(c, `var(${SERIES[i]})`));
   return { map: m, color: c => m.get(c) || "var(--other)", top: ranked.slice(0, 6).map(r => r[0]) };
+}
+
+/* ============ brand comparison (population level) ============ */
+const hhmm = sec => sec >= 3600 ? (sec / 3600).toFixed(1) + " h" : Math.round(sec / 60) + " m";
+
+function renderBrands() {
+  const B = BRANDS.brands, W = BRANDS.window;
+  const sel = S.brand;
+  document.getElementById("brand-window").textContent =
+    `${W.from} to ${W.to} · all tickets in each account · final day partial`;
+
+  // volume bars
+  const maxV = Math.max(...B.map(b => b.created));
+  const host = document.getElementById("brand-vol");
+  host.replaceChildren();
+  [...B].sort((x, y) => y.created - x.created).forEach(b => {
+    const row = el("button", "ib-row" + (sel === b.name ? " sel" : ""));
+    const nm = el("div", "ib-name");
+    nm.innerHTML = `<span style="display:inline-flex;align-items:center;gap:7px"><i class="brand-dot" style="background:${BRAND_COLOR[b.name]}"></i>${esc(b.name)}</span>`;
+    row.appendChild(nm);
+    const track = el("div", "ib-track"), bar = el("div", "ib-bar");
+    bar.style.width = Math.max(2, (b.created / maxV) * 100) + "%";
+    bar.style.background = BRAND_COLOR[b.name];
+    track.appendChild(bar); row.appendChild(track);
+    const fig = el("div", "ib-fig");
+    fig.innerHTML = `<b>${b.created.toLocaleString()}</b> · ${Math.round(b.created / 7)}/day`;
+    row.appendChild(fig);
+    row.onclick = () => { S.brand = S.brand === b.name ? "" : b.name; render(); };
+    host.appendChild(row);
+  });
+
+  // indexed daily lines
+  const svg = document.getElementById("brand-svg"), tip = document.getElementById("brand-tip");
+  svg.replaceChildren();
+  const W_ = svg.clientWidth || 640, H = 210, M = { t: 12, r: 14, b: 30, l: 34 };
+  const iw = Math.max(10, W_ - M.l - M.r), ih = H - M.t - M.b;
+  const NS = "http://www.w3.org/2000/svg";
+  const mk = (t, at) => { const n = document.createElementNS(NS, t); for (const k in at) n.setAttribute(k, at[k]); return n; };
+  svg.setAttribute("viewBox", `0 0 ${W_} ${H}`);
+  const X = i => M.l + (i / (W.days.length - 1)) * iw;
+  const Y = pctv => M.t + ih - (pctv / 100) * ih;
+  [0, 25, 50, 75, 100].forEach(p => {
+    svg.appendChild(mk("line", { x1: M.l, x2: M.l + iw, y1: Y(p), y2: Y(p), stroke: "var(--rule)", "stroke-width": 1 }));
+    const tx = mk("text", { x: M.l - 7, y: Y(p) + 4, "text-anchor": "end", fill: "var(--ink-3)", "font-size": 10.5 });
+    tx.textContent = p + "%"; svg.appendChild(tx);
+  });
+  W.days.forEach((d, i) => {
+    if (i % 2 && i !== W.days.length - 1) return;
+    const tx = mk("text", { x: X(i), y: H - 11, "text-anchor": "middle", fill: "var(--ink-3)", "font-size": 10.5 });
+    tx.textContent = fmtD(Date.parse(d + "T00:00:00Z")); svg.appendChild(tx);
+  });
+  // shade the partial final day
+  svg.appendChild(mk("rect", { x: (X(W.days.length - 1) + X(W.days.length - 2)) / 2, y: M.t,
+    width: M.l + iw - (X(W.days.length - 1) + X(W.days.length - 2)) / 2, height: ih, fill: "var(--ink-3)", opacity: .07 }));
+
+  B.forEach(b => {
+    if (sel && sel !== b.name) return;
+    const pk = Math.max(...b.daily);
+    const pts = b.daily.map((v2, i) => [X(i), Y(pk ? v2 / pk * 100 : 0)]);
+    svg.appendChild(mk("path", { d: pts.map((p, i) => (i ? "L" : "M") + p[0] + " " + p[1]).join(" "),
+      fill: "none", stroke: BRAND_COLOR[b.name], "stroke-width": 2, "stroke-linejoin": "round" }));
+    pts.forEach(p => svg.appendChild(mk("circle", { cx: p[0], cy: p[1], r: 4, fill: BRAND_COLOR[b.name], stroke: "var(--surface)", "stroke-width": 2 })));
+  });
+  const hit = mk("rect", { x: M.l, y: M.t, width: iw, height: ih, fill: "transparent" });
+  svg.appendChild(hit);
+  const box = svg.parentElement;
+  hit.addEventListener("pointermove", e => {
+    const r = svg.getBoundingClientRect(), rel = (e.clientX - r.left) * (W_ / r.width);
+    let bi = 0, best = Infinity;
+    W.days.forEach((_, i) => { const d = Math.abs(X(i) - rel); if (d < best) { best = d; bi = i; } });
+    const rows = B.filter(b => !sel || sel === b.name).map(b =>
+      `<div class="tip-r"><span style="display:flex;gap:7px;align-items:center"><i style="background:${BRAND_COLOR[b.name]}"></i>${esc(b.name)}</span><b>${b.daily[bi].toLocaleString()}</b></div>`).join("");
+    tip.innerHTML = `<div class="tip-h">${fmtD(Date.parse(W.days[bi] + "T00:00:00Z"))}${bi === W.days.length - 1 ? " (partial)" : ""}</div>${rows}`;
+    tip.classList.add("show");
+    const px = (X(bi) / W_) * box.clientWidth;
+    tip.style.left = Math.min(Math.max(6, px + 12), box.clientWidth - tip.offsetWidth - 6) + "px";
+    tip.style.top = "6px";
+  });
+  hit.addEventListener("pointerleave", () => tip.classList.remove("show"));
+  document.getElementById("brand-legend").replaceChildren(...B.map(b => {
+    const btn = el("button", "lg" + (sel && sel !== b.name ? " off" : ""));
+    const i = el("i"); i.style.background = BRAND_COLOR[b.name];
+    btn.append(i, document.createTextNode(b.name));
+    btn.onclick = () => { S.brand = S.brand === b.name ? "" : b.name; render(); };
+    return btn;
+  }));
+
+  // summary table
+  const body = document.querySelector("#brand-tbl tbody");
+  body.replaceChildren();
+  [...B].sort((x, y) => y.created - x.created).forEach(b => {
+    const tr = el("tr");
+    if (sel === b.name) tr.style.background = "var(--accent-soft)";
+    const top = Object.entries(b.top).sort((x, y) => y[1] - x[1])[0];
+    const cells = [
+      `<span class="nm"><i class="brand-dot" style="background:${BRAND_COLOR[b.name]}"></i>${esc(b.name)}</span>`,
+      esc(b.market),
+      b.created.toLocaleString(),
+      Math.round(b.created / 7).toLocaleString(),
+      `${b.sub.sizeExchange.toLocaleString()} <span style="color:var(--ink-3)">(${p1(pct(b.sub.sizeExchange, b.created))}%)</span>`,
+      `${b.top["Shipping & Delivery"].toLocaleString()} <span style="color:var(--ink-3)">(${p1(pct(b.top["Shipping & Delivery"], b.created))}%)</span>`,
+      `${b.sub.refundRequest.toLocaleString()} <span style="color:var(--ink-3)">(${p1(pct(b.sub.refundRequest, b.created))}%)</span>`,
+      b.labels.chargeback == null ? NAV : b.labels.chargeback,
+      b.sub.scamAccusation || 0,
+      hhmm(b.resSec),
+      b.oneTouch + "%",
+      top ? esc(top[0]) : NAV
+    ];
+    cells.forEach((c, i) => {
+      const td = el("td", i === 0 ? "brand-cell" : (i >= 2 && i <= 10 ? "num" : ""));
+      td.innerHTML = c;
+      tr.appendChild(td);
+    });
+    tr.style.cursor = "pointer";
+    tr.onclick = () => { S.brand = S.brand === b.name ? "" : b.name; render(); };
+    body.appendChild(tr);
+  });
+
+  // issue mix matrix
+  const cats = ["Returns & Exchanges", "Order Issue", "Shipping & Delivery", "Product Question", "Billing & Payments", "Order Status", "General / Other"];
+  const mix = document.getElementById("brand-mix");
+  mix.querySelector("thead").innerHTML =
+    "<tr><th>Issue group</th>" + B.map(b => `<th class="num">${esc(b.name.replace(/'s Tanks| Tanks/, ""))}</th>`).join("") + "</tr>";
+  const mb = mix.querySelector("tbody");
+  mb.replaceChildren();
+  cats.forEach(c => {
+    const tr = el("tr");
+    tr.innerHTML = `<td>${esc(c)}</td>` + B.map(b => {
+      const share = pct(b.top[c] || 0, b.created);
+      const strength = Math.min(1, share / 25);
+      return `<td class="num" style="background:color-mix(in srgb, ${BRAND_COLOR[b.name]} ${Math.round(strength * 26)}%, transparent)">${p1(share)}%</td>`;
+    }).join("");
+    mb.appendChild(tr);
+  });
+
+  // sizing pressure
+  const sizeHost = document.getElementById("brand-size");
+  const rows = B.map(b => [b.name, pct(b.sub.sizeExchange, b.created)]).sort((x, y) => y[1] - x[1]);
+  const maxS = rows[0][1];
+  sizeHost.replaceChildren();
+  rows.forEach(([nm, share]) => {
+    const b = B.find(x => x.name === nm);
+    const row = el("div", "ib-row");
+    const n = el("div", "ib-name");
+    n.innerHTML = `<span style="display:inline-flex;align-items:center;gap:7px"><i class="brand-dot" style="background:${BRAND_COLOR[nm]}"></i>${esc(nm)}</span>`;
+    row.appendChild(n);
+    const track = el("div", "ib-track"), bar = el("div", "ib-bar");
+    bar.style.width = Math.max(2, (share / maxS) * 100) + "%";
+    bar.style.background = BRAND_COLOR[nm];
+    track.appendChild(bar); row.appendChild(track);
+    const fig = el("div", "ib-fig");
+    fig.innerHTML = `<b>${p1(share)}%</b> · ${b.sub.sizeExchange.toLocaleString()}`;
+    row.appendChild(fig);
+    sizeHost.appendChild(row);
+  });
+  const tot = B.reduce((s, b) => s + b.created, 0), totSz = B.reduce((s, b) => s + b.sub.sizeExchange, 0);
+  const withLabel = B.filter(b => b.labels.size_issue != null);
+  document.getElementById("brand-size-note").innerHTML =
+    `Across all four brands, <b>${totSz.toLocaleString()}</b> of <b>${tot.toLocaleString()}</b> tickets (${p1(pct(totSz, tot))}%) are size exchanges &mdash; ` +
+    `the single largest driver in the business, and the only issue that ranks near the top in every market. ` +
+    (withLabel.length ? `Where Commslayer's <span class="mono">size_issue</span> label is in use, it sits even higher: ` +
+      withLabel.map(b => `${esc(b.name)} <b>${b.labels.size_issue.toLocaleString()}</b> (${p1(pct(b.labels.size_issue, b.created))}%)`).join(", ") + "." : "");
 }
 
 /* ============ KPI ============ */
@@ -670,7 +910,9 @@ function renderExec(v) {
   const t3 = ranked.slice(0, 3).map(([c, k]) => `<b>${esc(c)}</b> at ${p1(pct(k, n))}% (${k})`);
 
   const P = [];
-  P.push(`<p>Across <b>${label}</b> (${days} day${days > 1 ? "s" : ""}) Simply Elsie received <b>${n}</b> customer tickets, an average of <b>${p1(n / days)}</b> a day. The largest issue was ${t3[0]}${t3[1] ? `, followed by ${t3[1]}` : ""}${t3[2] ? ` and ${t3[2]}` : ""}.</p>`);
+  const who = S.brand || "the four brands combined";
+  P.push(`<p>Across <b>${label}</b> (${days} day${days > 1 ? "s" : ""}), of the tickets retrieved for <b>${esc(who)}</b>, <b>${n}</b> were read in full. The largest issue was ${t3[0]}${t3[1] ? `, followed by ${t3[1]}` : ""}${t3[2] ? ` and ${t3[2]}` : ""}.` +
+    (S.brand ? "" : ` Retrieval depth differs by brand, so treat this mix as a reading sample rather than true relative volume &mdash; section 1 has the real counts.`) + `</p>`);
 
   // movement
   if (prevValid && prev.length) {
@@ -863,6 +1105,7 @@ function renderBreakdown(v) {
   const { cur } = v;
   // category bars are computed before the category filter is applied, so clicking one never empties the chart
   const baseList = inRange(T, v.a, v.b).filter(t =>
+    (!S.brand || t.brand === S.brand) &&
     (!S.store || t.store === S.store) && (!S.status || t.status === S.status) &&
     (!S.agent || t.agent === S.agent) && (!S.size || t.size === S.size) &&
     (!S.color || (t.color || "").split(", ").includes(S.color)) &&
@@ -1110,6 +1353,7 @@ function renderTable(v) {
     const sizeCol = [t.size, t.color].filter(x => x && x !== "Not Available").join(" / ");
     tr.innerHTML = `
       <td class="mono" style="white-space:nowrap">${fmtDT(t.created)}</td>
+      <td class="brand-cell"><span class="nm" style="font-size:12.5px"><i class="brand-dot" style="background:${BRAND_COLOR[t.brand] || "var(--other)"}"></i>${esc(t.brand)}</span></td>
       <td class="mono">C-${t.t}</td>
       <td class="mono">${cell(t.order)}</td>
       <td>${cell(t.product)}</td>
@@ -1127,11 +1371,12 @@ function renderTable(v) {
 
     if (S.open.has(t.t)) {
       const dr = el("tr", "detail"), td = el("td");
-      td.colSpan = 11;
+      td.colSpan = 12;
       td.innerHTML = `<div class="detail-in">
         <div>
           <div class="detail-h">Ticket record</div>
           <dl class="dl">
+            <dt>Brand</dt><dd>${esc(t.brand)}</dd>
             <dt>Conversation</dt><dd class="mono">C-${t.t}</dd>
             <dt>Created</dt><dd>${fmtDT(t.created)}</dd>
             <dt>Last updated</dt><dd>${fmtDT(t.updated)}</dd>
@@ -1177,6 +1422,7 @@ function renderChips() {
   const host = document.getElementById("chips");
   const items = [];
   const add = (k, label) => items.push([k, label]);
+  if (S.brand) add("brand", "Brand: " + S.brand);
   if (S.preset !== "all") add("preset", "Range: " + document.getElementById("f-date").selectedOptions[0].textContent);
   if (S.store) add("store", "Store: " + S.store);
   if (S.status) add("status", "Status: " + S.status);
@@ -1202,7 +1448,8 @@ function renderChips() {
 function render() {
   const v = currentView();
   // dimension option lists follow the date range only, so they never dead-end
-  const scope = inRange(T, v.a, v.b);
+  const scope = inRange(T, v.a, v.b).filter(t => !S.brand || t.brand === S.brand);
+  fillSelect("f-brand", [...new Set(T.map(t => t.brand))].sort(), S.brand);
   fillSelect("f-store", [...new Set(scope.map(t => t.store))].sort(), S.store);
   fillSelect("f-status", [...new Set(scope.map(t => t.status))].sort(), S.status);
   fillSelect("f-agent", [...new Set(scope.map(t => t.agent))].sort(), S.agent);
@@ -1213,6 +1460,11 @@ function render() {
   fillSelect("f-product", [...new Set(scope.map(t => t.product))].filter(x => x !== "Not Available").sort(), S.product);
 
   renderChips();
+  renderBrands();
+  const depth = [...new Set(T.map(t => t.brand))].sort()
+    .map(b => `${b} ${T.filter(t => t.brand === b).length}`).join(", ");
+  document.getElementById("depth-list").textContent = depth;
+  document.getElementById("mix-warn").style.display = S.brand ? "none" : "block";
   renderKPI(v);
   renderExec(v);
   renderTrend(v);
@@ -1231,6 +1483,7 @@ document.getElementById("f-date").onchange = e => {
 };
 document.getElementById("f-from").onchange = e => { S.from = e.target.value; render(); };
 document.getElementById("f-to").onchange = e => { S.to = e.target.value; render(); };
+document.getElementById("f-brand").onchange = e => { S.brand = e.target.value; S.store = ""; render(); };
 ["store", "status", "agent", "size", "color", "product"].forEach(k => {
   document.getElementById("f-" + k).onchange = e => { S[k] = e.target.value; render(); };
 });
@@ -1242,7 +1495,7 @@ document.getElementById("f-search").oninput = e => {
   sdeb = setTimeout(() => { S.search = e.target.value.trim(); render(); }, 180);
 };
 document.getElementById("f-reset").onclick = () => {
-  Object.assign(S, { preset: "all", from: "", to: "", store: "", status: "", agent: "", search: "", cat: "", sub: "", size: "", color: "", product: "" });
+  Object.assign(S, { brand: "", preset: "all", from: "", to: "", store: "", status: "", agent: "", search: "", cat: "", sub: "", size: "", color: "", product: "" });
   S.hidden.clear(); S.open.clear();
   document.getElementById("f-date").value = "all";
   document.getElementById("f-search").value = "";
@@ -1260,13 +1513,22 @@ let rz;
 addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => renderTrend(currentView()), 140); });
 
 /* masthead + footer facts */
+const POP = BRANDS.brands.reduce((s, b) => s + b.created, 0);
+document.getElementById("m-pop").textContent = POP.toLocaleString();
 document.getElementById("m-count").textContent = T.length;
 document.getElementById("m-range").textContent =
-  `C-${NUMS[0]} – C-${NUMS[NUMS.length - 1]} · ${fmtDT(MIND.toISOString())} – ${fmtDT(MAXD.toISOString())} UTC`;
-document.getElementById("m-gaps").textContent =
-  GAPS.length ? `${GAPS.length} conversation IDs missing in range` : "Unbroken conversation-ID range — no sampling";
-document.getElementById("foot-cov").textContent =
-  `${T.length} consecutive conversations, C-${NUMS[0]} through C-${NUMS[NUMS.length - 1]}, covering ${fmtDT(MIND.toISOString())} to ${fmtDT(MAXD.toISOString())} UTC${GAPS.length ? ` (${GAPS.length} IDs missing)` : " with no gaps"}.`;
+  `${fmtDT(MIND.toISOString())} – ${fmtDT(MAXD.toISOString())} UTC`;
+document.getElementById("foot-cov").innerHTML =
+  `Two layers. <b>Layer one</b> (section 1) counts every ticket in all four accounts over ` +
+  `${BRANDS.window.from} to ${BRANDS.window.to}: <b>${POP.toLocaleString()}</b> tickets, complete, via Commslayer's ` +
+  `reporting endpoints. <b>Layer two</b> (sections 2 onward) is <b>${T.length}</b> conversations pulled one by one ` +
+  `for their message text: ` +
+  [...new Set(T.map(t => t.brand))].sort().map(b => {
+    const rows = T.filter(t => t.brand === b).map(t => t.t).sort((x, y) => x - y);
+    const gaps = [];
+    for (let i = rows[0]; i <= rows[rows.length - 1]; i++) if (!rows.includes(i)) gaps.push(i);
+    return `${b} <b>${rows.length}</b> (C-${rows[0]}–C-${rows[rows.length - 1]}${gaps.length ? "" : ", contiguous"})`;
+  }).join("; ") + ".";
 document.getElementById("foot-today").textContent = isoDay(dayStart(MAXD));
 document.getElementById("f-from").value = isoDay(dayStart(MIND));
 document.getElementById("f-to").value = isoDay(dayStart(MAXD));
