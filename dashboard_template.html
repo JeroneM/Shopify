@@ -614,6 +614,19 @@ const DAILY = /*__DAILY__*/null;
    A stored period is only counted when it sits entirely inside the selection —
    a 3-day block cannot be split, so a range that cuts through one reports that
    brand's resolution honestly instead of inventing a share of it. */
+/* The stored periods are the finest resolution that exists. A selection that
+   cuts through one is widened to the whole of every period it touches, so the
+   table always resolves to real counts instead of emptying out. */
+function expandToPeriods(from, to) {
+  let lo = null, hi = null;
+  Object.values(DAILY.brands || {}).forEach(periods => periods.forEach(p => {
+    if (p.to >= from && p.from <= to) {
+      if (lo === null || p.from < lo) lo = p.from;
+      if (hi === null || p.to > hi) hi = p.to;
+    }
+  }));
+  return lo === null ? [from, to] : [lo, hi];
+}
 function periodSlice(brandName, from, to) {
   const periods = (DAILY.brands || {})[brandName] || [];
   const out = { created: 0, g: {}, s: {}, used: [], clipped: [], partial: false, derived: false };
@@ -766,16 +779,23 @@ const hhmm = sec => sec >= 3600 ? (sec / 3600).toFixed(1) + " h" : Math.round(se
 function renderBrands() {
   const W = BRANDS.window;
   // re-slice every brand to the selected period; downstream code reads created/top/sub unchanged
+  const [efFrom, efTo] = expandToPeriods(S.bfrom, S.bto);
+  const widened = efFrom !== S.bfrom || efTo !== S.bto;
   const B = BRANDS.brands.map(b => {
-    const sl = periodSlice(b.name, S.bfrom, S.bto);
+    const sl = periodSlice(b.name, efFrom, efTo);
     return Object.assign({}, b, { created: sl.created, top: sl.g, sub: sl.s, _slice: sl });
   });
   const sel = S.brand;
-  const days = dayCount(S.bfrom, S.bto);
+  const days = dayCount(efFrom, efTo);
   const clipped = B.filter(b => b._slice.clipped.length);
   const short = B.filter(b => b._slice.coveredDays < days);
-  document.getElementById("brand-window").innerHTML =
-    `<b>Showing ${esc(fmtD(Date.parse(S.bfrom + "T00:00:00Z")))} to ${esc(fmtD(Date.parse(S.bto + "T00:00:00Z")))}</b> (${days} day${days > 1 ? "s" : ""}). ` +
+  const widenNote = widened
+    ? `You picked ${fmtD(Date.parse(S.bfrom + "T00:00:00Z"))}&ndash;${fmtD(Date.parse(S.bto + "T00:00:00Z"))}. ` +
+      `Commslayer only stores issue counts per fetched period, and the finest period covering those dates runs ` +
+      `${fmtD(Date.parse(efFrom + "T00:00:00Z"))}&ndash;${fmtD(Date.parse(efTo + "T00:00:00Z"))}, so that is what is shown rather than an empty table. `
+    : "";
+  document.getElementById("brand-window").innerHTML = widenNote +
+    `<b>Showing ${esc(fmtD(Date.parse(efFrom + "T00:00:00Z")))} to ${esc(fmtD(Date.parse(efTo + "T00:00:00Z")))}</b> (${days} day${days > 1 ? "s" : ""}). ` +
     (short.length
       ? `Commslayer returns one aggregate per request, so per-issue counts were fetched per period, not per ticket. ` +
         short.map(b => `<b>${esc(b.name)}</b> covers ${b._slice.coveredDays} of these ${days} days` +
@@ -990,7 +1010,8 @@ function renderBrands() {
   const withTotal = avail.filter(b => !b._slice.noTotal);
   const totKnown = withTotal.reduce((s, b) => s + b.created, 0);
   document.getElementById("mix-range-note").innerHTML =
-    `Counting <b>${esc(fmtD(Date.parse(S.bfrom + "T00:00:00Z")))} &ndash; ${esc(fmtD(Date.parse(S.bto + "T00:00:00Z")))}</b>` +
+    (widened ? `<b>Widened to match stored periods.</b> ` : "") +
+    `Counting <b>${esc(fmtD(Date.parse(efFrom + "T00:00:00Z")))} &ndash; ${esc(fmtD(Date.parse(efTo + "T00:00:00Z")))}</b>` +
     ` &middot; issue counts for <b>${avail.length}</b> of ${B.length} brand${B.length === 1 ? "" : "s"}` +
     (B.length - avail.length ? ` (${B.filter(b => b._slice.unavailable).map(b => esc(b.name)).join(", ")} unavailable at this range)` : "") +
     (withTotal.length === avail.length
