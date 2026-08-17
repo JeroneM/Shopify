@@ -1,0 +1,57 @@
+{
+  "note": "Per-issue ticket counts per brand, per period, straight from Commslayer reports_contact_reasons. Periods marked kind='day' are single days; kind='block' covers 2026-08-11..13 as one bucket because pulling every day individually for every brand was not affordable. Entries marked derived=true were computed exactly by subtracting the fetched periods from the fetched 11-17 week aggregate, so they are exact, not estimated. Group totals do not sum to 'created' because Commslayer leaves some conversations unclassified.",
+  "groups": ["Returns & Exchanges", "Order Issue", "Shipping & Delivery", "Product Question", "Order Status", "Billing & Payments", "General / Other", "Subscription"],
+  "brands": {
+    "Simply Elsie": [
+      {"from": "2026-08-11", "to": "2026-08-13", "kind": "block", "created": 157,
+       "g": {"Returns & Exchanges": 14, "Order Issue": 19, "Shipping & Delivery": 58, "Product Question": 13, "Order Status": 0, "Billing & Payments": 8, "General / Other": 11, "Subscription": 2},
+       "s": {"sizeExchange": 7, "delayed": 28, "tracking": 9, "lostPackage": 11, "wrongAddress": 2, "wrongItem": 0, "damagedItem": 0, "refundRequest": 7, "cancelOrder": 0, "editOrder": 1, "productDetails": 5, "scamAccusation": 4, "negativeFeedback": 0, "positiveFeedback": 0}},
+      {"from": "2026-08-14", "to": "2026-08-14", "kind": "day", "created": 42,
+       "g": {"Returns & Exchanges": 10, "Order Issue": 3, "Shipping & Delivery": 15, "Product Question": 4, "Order Status": 0, "Billing & Payments": 7, "General / Other": 0, "Subscription": 0},
+       "s": {"sizeExchange": 4, "delayed": 7, "tracking": 3, "lostPackage": 0, "wrongAddress": 0, "wrongItem": 0, "damagedItem": 1, "refundRequest": 7, "cancelOrder": 0, "editOrder": 0, "productDetails": 4, "scamAccusation": 0, "negativeFeedback": 0, "positiveFeedback": 0}},
+      {"from": "2026-08-15", "to": "2026-08-15", "kind": "day", "created": 55,
+       "g": {"Returns & Exchanges": 14, "Order Issue": 7, "Shipping & Delivery": 9, "Product Question": 6, "Order Status": 0, "Billing & Payments": 9, "General / Other": 3, "Subscription": 0},
+       "s": {"sizeExchange": 5, "delayed": 6, "tracking": 0, "lostPackage": 1, "wrongAddress": 0, "wrongItem": 0, "damagedItem": 0, "refundRequest": 8, "cancelOrder": 3, "editOrder": 2, "productDetails": 5, "scamAccusation": 1, "negativeFeedback": 0, "positiveFeedback": 0}},
+      {"from": "2026-08-16", "to": "2026-08-16", "kind": "day", "created": 47,
+       "g": {"Returns & Exchanges": 15, "Order Issue": 8, "Shipping & Delivery": 9, "Product Question": 3, "Order Status": 0, "Billing & Payments": 8, "General / Other": 1, "Subscription": 1},
+       "s": {"sizeExchange": 6, "delayed": 1, "tracking": 3, "lostPackage": 1, "wrongAddress": 1, "wrongItem": 0, "damagedItem": 0, "refundRequest": 7, "cancelOrder": 0, "editOrder": 4, "productDetails": 3, "scamAccusation": 0, "negativeFeedback": 0, "positiveFeedback": 0}},
+      {"from": "2026-08-17", "to": "2026-08-17", "kind": "day", "created": 5, "partial": true, "derived": true,
+       "g": {"Returns & Exchanges": 1, "Order Issue": 2, "Shipping & Delivery": 1, "Product Question": 0, "Order Status": 0, "Billing & Payments": 0, "General / Other": 0, "Subscription": 0},
+       "s": {"sizeExchange": 1, "delayed": 1, "tracking": 0, "lostPackage": 0, "wrongAddress": 0, "wrongItem": 0, "damagedItem": 0, "refundRequest": 0, "cancelOrder": 1, "editOrder": 0, "productDetails": 0, "scamAccusation": 0, "negativeFeedback": 0, "positiveFeedback": 0}}
+    ],
+    "Maggies Tanks": [
+      {"from": "2026-08-11", "to": "2026-08-13", "kind": "block", "created": 4518, "derived": true,
+       "g": {"Returns & Exchanges": 790, "Order Issue": 446, "Shipping & Delivery": 534, "Product Question": 304, "Order Status": 479, "Billing & Payments": 175, "General / Other": 518, "Subscription": 1},
+       "s": {"sizeExchange": 559, "delayed": 284, "tracking": 111, "lostPackage": 44, "wrongAddress": 30, "wrongItem": 20, "damagedItem": 4, "refundRequest": 138, "cancelOrder": 70, "editOrder": 64, "productDetails": 167, "scamAccusation": 47, "negativeFeedback": 41, "positiveFeedback": 30}},
+      {"from": "2026-08-14", "to": "2026-08-14", "kind": "day", "created": 1578,
+       "g": {"Returns & Exchanges": 320, "Order Issue": 163, "Shipping & Delivery": 227, "Product Question": 123, "Order Status": 145, "Billing & Payments": 73, "General / Other": 212, "Subscription": 0},
+       "s": {"sizeExchange": 240, "delayed": 138, "tracking": 27, "lostPackage": 11, "wrongAddress": 14, "wrongItem": 5, "damagedItem": 3, "refundRequest": 55, "cancelOrder": 21, "editOrder": 34, "productDetails": 67, "scamAccusation": 9, "negativeFeedback": 18, "positiveFeedback": 13}},
+      {"from": "2026-08-15", "to": "2026-08-15", "kind": "day", "created": 1384,
+       "g": {"Returns & Exchanges": 305, "Order Issue": 156, "Shipping & Delivery": 180, "Product Question": 107, "Order Status": 149, "Billing & Payments": 70, "General / Other": 204, "Subscription": 0},
+       "s": {"sizeExchange": 233, "delayed": 102, "tracking": 13, "lostPackage": 21, "wrongAddress": 14, "wrongItem": 9, "damagedItem": 1, "refundRequest": 56, "cancelOrder": 27, "editOrder": 26, "productDetails": 59, "scamAccusation": 17, "negativeFeedback": 20, "positiveFeedback": 17}},
+      {"from": "2026-08-16", "to": "2026-08-16", "kind": "day", "created": 1452,
+       "g": {"Returns & Exchanges": 315, "Order Issue": 169, "Shipping & Delivery": 113, "Product Question": 92, "Order Status": 113, "Billing & Payments": 54, "General / Other": 173, "Subscription": 1},
+       "s": {"sizeExchange": 256, "delayed": 53, "tracking": 6, "lostPackage": 15, "wrongAddress": 22, "wrongItem": 14, "damagedItem": 2, "refundRequest": 37, "cancelOrder": 38, "editOrder": 47, "productDetails": 58, "scamAccusation": 6, "negativeFeedback": 21, "positiveFeedback": 9}},
+      {"from": "2026-08-17", "to": "2026-08-17", "kind": "day", "created": 255, "partial": true,
+       "g": {"Returns & Exchanges": 66, "Order Issue": 33, "Shipping & Delivery": 27, "Product Question": 29, "Order Status": 24, "Billing & Payments": 13, "General / Other": 25, "Subscription": 1},
+       "s": {"sizeExchange": 56, "delayed": 15, "tracking": 3, "lostPackage": 4, "wrongAddress": 0, "wrongItem": 2, "damagedItem": 1, "refundRequest": 10, "cancelOrder": 9, "editOrder": 5, "productDetails": 16, "scamAccusation": 4, "negativeFeedback": 2, "positiveFeedback": 2}}
+    ],
+    "Lyn's Tanks": [
+      {"from": "2026-08-11", "to": "2026-08-13", "kind": "block", "created": 103,
+       "g": {"Returns & Exchanges": 24, "Order Issue": 29, "Shipping & Delivery": 10, "Product Question": 21, "Order Status": 0, "Billing & Payments": 8, "General / Other": 10, "Subscription": 0},
+       "s": {"sizeExchange": 24, "delayed": 4, "tracking": 1, "lostPackage": 2, "wrongAddress": 0, "wrongItem": 1, "damagedItem": 0, "refundRequest": 5, "cancelOrder": 3, "editOrder": 2, "productDetails": 7, "scamAccusation": 0, "negativeFeedback": 0, "positiveFeedback": 1}},
+      {"from": "2026-08-14", "to": "2026-08-14", "kind": "day", "created": 29,
+       "g": {"Returns & Exchanges": 4, "Order Issue": 11, "Shipping & Delivery": 4, "Product Question": 3, "Order Status": 0, "Billing & Payments": 5, "General / Other": 1, "Subscription": 0},
+       "s": {"sizeExchange": 4, "delayed": 2, "tracking": 0, "lostPackage": 2, "wrongAddress": 0, "wrongItem": 0, "damagedItem": 0, "refundRequest": 4, "cancelOrder": 0, "editOrder": 2, "productDetails": 2, "scamAccusation": 0, "negativeFeedback": 0, "positiveFeedback": 0}},
+      {"from": "2026-08-15", "to": "2026-08-15", "kind": "day", "created": 18,
+       "g": {"Returns & Exchanges": 2, "Order Issue": 7, "Shipping & Delivery": 2, "Product Question": 3, "Order Status": 0, "Billing & Payments": 2, "General / Other": 1, "Subscription": 0},
+       "s": {"sizeExchange": 1, "delayed": 1, "tracking": 0, "lostPackage": 1, "wrongAddress": 0, "wrongItem": 0, "damagedItem": 0, "refundRequest": 1, "cancelOrder": 0, "editOrder": 1, "productDetails": 2, "scamAccusation": 0, "negativeFeedback": 0, "positiveFeedback": 1}},
+      {"from": "2026-08-16", "to": "2026-08-16", "kind": "day", "created": 32,
+       "g": {"Returns & Exchanges": 10, "Order Issue": 11, "Shipping & Delivery": 2, "Product Question": 3, "Order Status": 0, "Billing & Payments": 1, "General / Other": 1, "Subscription": 0},
+       "s": {"sizeExchange": 10, "delayed": 0, "tracking": 1, "lostPackage": 0, "wrongAddress": 0, "wrongItem": 1, "damagedItem": 0, "refundRequest": 1, "cancelOrder": 2, "editOrder": 1, "productDetails": 1, "scamAccusation": 0, "negativeFeedback": 0, "positiveFeedback": 0}},
+      {"from": "2026-08-17", "to": "2026-08-17", "kind": "day", "created": 19, "partial": true, "derived": true,
+       "g": {"Returns & Exchanges": 8, "Order Issue": 4, "Shipping & Delivery": 2, "Product Question": 2, "Order Status": 0, "Billing & Payments": 0, "General / Other": 2, "Subscription": 0},
+       "s": {"sizeExchange": 8, "delayed": 2, "tracking": 0, "lostPackage": 0, "wrongAddress": 0, "wrongItem": 0, "damagedItem": 0, "refundRequest": 0, "cancelOrder": 0, "editOrder": 1, "productDetails": 0, "scamAccusation": 0, "negativeFeedback": 0, "positiveFeedback": 0}}
+    ]
+  }
+}

@@ -13,6 +13,7 @@ import sys
 ROOT = pathlib.Path(__file__).parent
 MARKER = "/*__DATA__*/[]"
 BRAND_MARKER = "/*__BRANDS__*/null"
+DAILY_MARKER = "/*__DAILY__*/null"
 DEFAULT_BRAND = "Simply Elsie"
 
 
@@ -37,12 +38,20 @@ def main():
     tickets = load_tickets()
     brands = json.loads((ROOT / "data" / "brands.json").read_text(encoding="utf-8"))
 
+    daily = json.loads((ROOT / "data" / "daily_issues.json").read_text(encoding="utf-8"))
+    for extra in ("daily_mary.json",):
+        more = json.loads((ROOT / "data" / extra).read_text(encoding="utf-8"))
+        daily["brands"].update(more["brands"])
+    for name, periods in daily["brands"].items():
+        periods.sort(key=lambda p: p["from"])
+
     template = (ROOT / "dashboard_template.html").read_text(encoding="utf-8")
-    for marker in (MARKER, BRAND_MARKER):
+    for marker in (MARKER, BRAND_MARKER, DAILY_MARKER):
         if marker not in template:
             sys.exit(f"Marker {marker} not found in template")
     out = template.replace(MARKER, json.dumps(tickets, ensure_ascii=False, separators=(",", ":")))
     out = out.replace(BRAND_MARKER, json.dumps(brands, ensure_ascii=False, separators=(",", ":")))
+    out = out.replace(DAILY_MARKER, json.dumps(daily, ensure_ascii=False, separators=(",", ":")))
     (ROOT / "customer_issue_dashboard.html").write_text(out, encoding="utf-8")
 
     print(f"tickets:  {len(tickets)} across {len({t['brand'] for t in tickets})} brands")

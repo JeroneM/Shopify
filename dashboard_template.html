@@ -371,12 +371,24 @@
   <section id="brands">
     <div class="sec-head">
       <h2><span class="sec-num">01</span>Brand comparison &mdash; complete population</h2>
-      <span class="sec-note" id="brand-window"></span>
+      <div class="ctl-row" style="gap:10px 14px">
+        <div class="seg" id="bperiod">
+          <button class="btn" data-p="2026-08-17:2026-08-17">Today</button>
+          <button class="btn" data-p="2026-08-16:2026-08-16">Yesterday</button>
+          <button class="btn on" data-p="2026-08-11:2026-08-17">Full week</button>
+          <button class="btn" data-p="custom">Custom&hellip;</button>
+        </div>
+        <div class="ctl custom-range" id="bcr">
+          <div class="ctl"><label for="b-from">From</label><input type="date" id="b-from" min="2026-08-11" max="2026-08-17"></div>
+          <div class="ctl"><label for="b-to">To</label><input type="date" id="b-to" min="2026-08-11" max="2026-08-17"></div>
+        </div>
+      </div>
     </div>
     <div class="banner">
       <b>These figures are complete, not sampled.</b> Every number in this section is the full ticket count for that
-      Commslayer account over the window, taken from the reporting endpoints. Sections 2 onwards work on individually
-      retrieved tickets and are a different, shallower dataset &mdash; read volumes here, read messages there.
+      Commslayer account over the selected period, taken from the reporting endpoints. Sections 2 onwards work on
+      individually retrieved tickets and are a different, shallower dataset &mdash; read volumes here, read messages there.
+      <span id="brand-window"></span>
     </div>
     <div class="grid-2" style="margin-bottom:14px">
       <div class="card pad">
@@ -399,7 +411,7 @@
             <th>Brand</th><th>Market</th><th class="num">Tickets</th><th class="num">Per day</th>
             <th class="num">Size exchange</th><th class="num">Shipping</th><th class="num">Refund req.</th>
             <th class="num">Chargeback</th><th class="num">Scam claims</th>
-            <th class="num">Avg resolution</th><th class="num">One-touch</th><th>Biggest issue</th>
+            <th class="num">Avg resolution *</th><th class="num">One-touch *</th><th>Biggest issue</th>
           </tr></thead>
           <tbody></tbody>
         </table>
@@ -567,6 +579,33 @@
 const RAW = /*__DATA__*/[];
 const BRANDS = /*__BRANDS__*/null;
 const BRAND_COLOR = { "Simply Elsie": "var(--s1)", "Maggies Tanks": "var(--s2)", "Mary's Tanks": "var(--s3)", "Lyn's Tanks": "var(--s4)" };
+const DAILY = /*__DAILY__*/null;
+
+/* Sum the stored per-period issue counts that fall inside [from,to].
+   A stored period is only counted when it sits entirely inside the selection —
+   a 3-day block cannot be split, so a range that cuts through one reports that
+   brand's resolution honestly instead of inventing a share of it. */
+function periodSlice(brandName, from, to) {
+  const periods = (DAILY.brands || {})[brandName] || [];
+  const out = { created: 0, g: {}, s: {}, used: [], clipped: [], partial: false, derived: false };
+  periods.forEach(p => {
+    if (p.from >= from && p.to <= to) {
+      out.created += p.created;
+      for (const k in p.g) out.g[k] = (out.g[k] || 0) + p.g[k];
+      for (const k in p.s) out.s[k] = (out.s[k] || 0) + p.s[k];
+      out.used.push(p);
+      if (p.partial) out.partial = true;
+      if (p.derived) out.derived = true;
+    } else if (p.to >= from && p.from <= to) {
+      out.clipped.push(p);
+    }
+  });
+  // nothing stored lines up with this range: report it as unavailable, never as zero
+  out.unavailable = out.used.length === 0 && out.clipped.length > 0;
+  out.coveredDays = out.used.reduce((n, p2) => n + dayCount(p2.from, p2.to), 0);
+  return out;
+}
+const dayCount = (from, to) => Math.round((Date.parse(to) - Date.parse(from)) / 864e5) + 1;
 
 /* ============ normalisation ============ */
 const SIZING = ["Sizing Issue"];
@@ -639,7 +678,7 @@ function resolveRange(preset, from, to) {
 }
 
 /* ============ state ============ */
-const S = { mixMode: "both", brand: "", preset: "all", from: "", to: "", store: "", status: "", agent: "", search: "", cat: "", sub: "", size: "", color: "", product: "", gran: "day", hidden: new Set(), open: new Set() };
+const S = { bfrom: "2026-08-11", bto: "2026-08-17", mixMode: "both", brand: "", preset: "all", from: "", to: "", store: "", status: "", agent: "", search: "", cat: "", sub: "", size: "", color: "", product: "", gran: "day", hidden: new Set(), open: new Set() };
 
 function inRange(list, a, b) { return list.filter(t => +t.d >= a && +t.d <= b); }
 
@@ -695,16 +734,30 @@ function catColors(list) {
 const hhmm = sec => sec >= 3600 ? (sec / 3600).toFixed(1) + " h" : Math.round(sec / 60) + " m";
 
 function renderBrands() {
-  const B = BRANDS.brands, W = BRANDS.window;
+  const W = BRANDS.window;
+  // re-slice every brand to the selected period; downstream code reads created/top/sub unchanged
+  const B = BRANDS.brands.map(b => {
+    const sl = periodSlice(b.name, S.bfrom, S.bto);
+    return Object.assign({}, b, { created: sl.created, top: sl.g, sub: sl.s, _slice: sl });
+  });
   const sel = S.brand;
-  document.getElementById("brand-window").textContent =
-    `${W.from} to ${W.to} · all tickets in each account · final day partial`;
+  const days = dayCount(S.bfrom, S.bto);
+  const clipped = B.filter(b => b._slice.clipped.length);
+  const short = B.filter(b => b._slice.coveredDays < days);
+  document.getElementById("brand-window").innerHTML =
+    `<b>Showing ${esc(fmtD(Date.parse(S.bfrom + "T00:00:00Z")))} to ${esc(fmtD(Date.parse(S.bto + "T00:00:00Z")))}</b> (${days} day${days > 1 ? "s" : ""}). ` +
+    (short.length
+      ? `Commslayer returns one aggregate per request, so per-issue counts were fetched per period, not per ticket. ` +
+        short.map(b => `<b>${esc(b.name)}</b> covers ${b._slice.coveredDays} of these ${days} days` +
+          (b._slice.clipped.length ? ` &mdash; the rest sits inside a stored ${b._slice.clipped.map(p => p.from + "&ndash;" + p.to).join(", ")} block that cannot be split without guessing` : "")).join("; ") +
+        `. Partly covered brands are counted only for the days that line up; fully uncovered ones read Not Available rather than zero.`
+      : `Every brand has stored periods covering this range exactly, with no gaps or splits.`);
 
   // volume bars
   const maxV = Math.max(...B.map(b => b.created));
   const host = document.getElementById("brand-vol");
   host.replaceChildren();
-  [...B].sort((x, y) => y.created - x.created).forEach(b => {
+  [...B].filter(b => !b._slice.unavailable).sort((x, y) => y.created - x.created).forEach(b => {
     const row = el("button", "ib-row" + (sel === b.name ? " sel" : ""));
     const nm = el("div", "ib-name");
     nm.innerHTML = `<span style="display:inline-flex;align-items:center;gap:7px"><i class="brand-dot" style="background:${BRAND_COLOR[b.name]}"></i>${esc(b.name)}</span>`;
@@ -714,7 +767,7 @@ function renderBrands() {
     bar.style.background = BRAND_COLOR[b.name];
     track.appendChild(bar); row.appendChild(track);
     const fig = el("div", "ib-fig");
-    fig.innerHTML = `<b>${b.created.toLocaleString()}</b> · ${Math.round(b.created / 7)}/day`;
+    fig.innerHTML = `<b>${b.created.toLocaleString()}</b> · ${Math.round(b.created / days)}/day`;
     row.appendChild(fig);
     row.onclick = () => { S.brand = S.brand === b.name ? "" : b.name; render(); };
     host.appendChild(row);
@@ -782,20 +835,26 @@ function renderBrands() {
   [...B].sort((x, y) => y.created - x.created).forEach(b => {
     const tr = el("tr");
     if (sel === b.name) tr.style.background = "var(--accent-soft)";
+    const na = b._slice.unavailable;
     const top = Object.entries(b.top).sort((x, y) => y[1] - x[1])[0];
+    const cnt = (v) => {
+      if (na) return NAV;
+      const n = v || 0;
+      return `${n.toLocaleString()} <span style="color:var(--ink-3)">(${p1(pct(n, b.created))}%)</span>`;
+    };
     const cells = [
       `<span class="nm"><i class="brand-dot" style="background:${BRAND_COLOR[b.name]}"></i>${esc(b.name)}</span>`,
       esc(b.market),
-      b.created.toLocaleString(),
-      Math.round(b.created / 7).toLocaleString(),
-      `${b.sub.sizeExchange.toLocaleString()} <span style="color:var(--ink-3)">(${p1(pct(b.sub.sizeExchange, b.created))}%)</span>`,
-      `${b.top["Shipping & Delivery"].toLocaleString()} <span style="color:var(--ink-3)">(${p1(pct(b.top["Shipping & Delivery"], b.created))}%)</span>`,
-      `${b.sub.refundRequest.toLocaleString()} <span style="color:var(--ink-3)">(${p1(pct(b.sub.refundRequest, b.created))}%)</span>`,
+      na ? NAV : b.created.toLocaleString(),
+      na ? NAV : Math.round(b.created / days).toLocaleString(),
+      cnt(b.sub.sizeExchange),
+      cnt(b.top["Shipping & Delivery"]),
+      cnt(b.sub.refundRequest),
       b.labels.chargeback == null ? NAV : b.labels.chargeback,
-      b.sub.scamAccusation || 0,
+      na ? NAV : (b.sub.scamAccusation || 0),
       hhmm(b.resSec),
       b.oneTouch + "%",
-      top ? esc(top[0]) : NAV
+      na ? NAV : (top ? esc(top[0]) : NAV)
     ];
     cells.forEach((c, i) => {
       const td = el("td", i === 0 ? "brand-cell" : (i >= 2 && i <= 10 ? "num" : ""));
@@ -858,17 +917,17 @@ function renderBrands() {
   };
 
   sectionRow("Top-level issue groups");
-  GROUPS.forEach(c => dataRow(c, b => b.top[c] || 0));
-  dataRow("Total tickets received", b => b.created);
+  GROUPS.forEach(c => dataRow(c, b => b._slice.unavailable ? null : (b.top[c] || 0)));
+  dataRow("Total tickets received", b => b._slice.unavailable ? null : b.created);
   sectionRow("Detailed reasons (subsets of the groups above)");
-  DETAIL.forEach(([k, label]) => dataRow(label, b => b.sub[k] == null ? null : b.sub[k]));
+  DETAIL.forEach(([k, label]) => dataRow(label, b => b._slice.unavailable ? null : (b.sub[k] || 0)));
   sectionRow("Commslayer labels");
   LBL.forEach(([k, label]) => dataRow(label, b => b.labels[k] == null ? null : b.labels[k]));
 
   // sizing pressure
   const sizeHost = document.getElementById("brand-size");
-  const rows = B.map(b => [b.name, pct(b.sub.sizeExchange, b.created)]).sort((x, y) => y[1] - x[1]);
-  const maxS = rows[0][1];
+  const rows = B.filter(b => !b._slice.unavailable).map(b => [b.name, pct(b.sub.sizeExchange || 0, b.created)]).sort((x, y) => y[1] - x[1]);
+  const maxS = rows.length ? (rows[0][1] || 1) : 1;
   sizeHost.replaceChildren();
   rows.forEach(([nm, share]) => {
     const b = B.find(x => x.name === nm);
@@ -881,14 +940,15 @@ function renderBrands() {
     bar.style.background = BRAND_COLOR[nm];
     track.appendChild(bar); row.appendChild(track);
     const fig = el("div", "ib-fig");
-    fig.innerHTML = `<b>${b.sub.sizeExchange.toLocaleString()}</b> · ${p1(share)}%`;
+    fig.innerHTML = `<b>${(b.sub.sizeExchange || 0).toLocaleString()}</b> · ${p1(share)}%`;
     row.appendChild(fig);
     sizeHost.appendChild(row);
   });
-  const tot = B.reduce((s, b) => s + b.created, 0), totSz = B.reduce((s, b) => s + b.sub.sizeExchange, 0);
-  const withLabel = B.filter(b => b.labels.size_issue != null);
+  const avail = B.filter(b => !b._slice.unavailable);
+  const tot = avail.reduce((s, b) => s + b.created, 0), totSz = avail.reduce((s, b) => s + (b.sub.sizeExchange || 0), 0);
+  const withLabel = avail.filter(b => b.labels.size_issue != null);
   document.getElementById("brand-size-note").innerHTML =
-    `Across all four brands, <b>${totSz.toLocaleString()}</b> of <b>${tot.toLocaleString()}</b> tickets (${p1(pct(totSz, tot))}%) are size exchanges &mdash; ` +
+    `Across ${avail.length === B.length ? "all four brands" : avail.length + " of the four brands"}, <b>${totSz.toLocaleString()}</b> of <b>${tot.toLocaleString()}</b> tickets (${p1(pct(totSz, tot))}%) are size exchanges &mdash; ` +
     `the single largest driver in the business, and the only issue that ranks near the top in every market. ` +
     (withLabel.length ? `Where Commslayer's <span class="mono">size_issue</span> label is in use, it sits even higher: ` +
       withLabel.map(b => `${esc(b.name)} <b>${b.labels.size_issue.toLocaleString()}</b> (${p1(pct(b.labels.size_issue, b.created))}%)`).join(", ") + "." : "");
@@ -1598,6 +1658,25 @@ document.getElementById("f-reset").onclick = () => {
   document.getElementById("cr").classList.remove("show");
   render();
 };
+document.querySelectorAll("#bperiod .btn").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll("#bperiod .btn").forEach(x => x.classList.toggle("on", x === b));
+    const custom = b.dataset.p === "custom";
+    document.getElementById("bcr").classList.toggle("show", custom);
+    if (!custom) { const [f, t] = b.dataset.p.split(":"); S.bfrom = f; S.bto = t; }
+    else { S.bfrom = document.getElementById("b-from").value || "2026-08-11"; S.bto = document.getElementById("b-to").value || "2026-08-17"; }
+    render();
+  };
+});
+["b-from", "b-to"].forEach(id => {
+  document.getElementById(id).onchange = () => {
+    const f = document.getElementById("b-from").value, t = document.getElementById("b-to").value;
+    if (f) S.bfrom = f;
+    if (t) S.bto = t;
+    if (S.bto < S.bfrom) S.bto = S.bfrom;
+    render();
+  };
+});
 document.querySelectorAll("#mixmode .btn").forEach(b => {
   b.onclick = () => {
     S.mixMode = b.dataset.m;
@@ -1633,6 +1712,8 @@ document.getElementById("foot-cov").innerHTML =
     return `${b} <b>${rows.length}</b> (C-${rows[0]}–C-${rows[rows.length - 1]}${gaps.length ? "" : ", contiguous"})`;
   }).join("; ") + ".";
 document.getElementById("foot-today").textContent = isoDay(dayStart(MAXD));
+document.getElementById("b-from").value = S.bfrom;
+document.getElementById("b-to").value = S.bto;
 document.getElementById("f-from").value = isoDay(dayStart(MIND));
 document.getElementById("f-to").value = isoDay(dayStart(MAXD));
 

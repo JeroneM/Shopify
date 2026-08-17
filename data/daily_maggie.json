@@ -1,0 +1,17 @@
+{
+  "brand": "Maggies Tanks", "accountId": 6576, "tz": "UTC",
+  "days": [
+    {"d": "2026-08-14", "created": 1578,
+     "g": {"Returns & Exchanges": 320, "Order Issue": 163, "Shipping & Delivery": 227, "Product Question": 123, "Order Status": 145, "Billing & Payments": 73, "General / Other": 212, "Subscription": 0},
+     "s": {"sizeExchange": 240, "delayed": 138, "tracking": 27, "lostPackage": 11, "wrongAddress": 14, "wrongItem": 5, "damagedItem": 3, "refundRequest": 55, "cancelOrder": 21, "editOrder": 34, "productDetails": 67, "scamAccusation": 9, "negativeFeedback": 18, "positiveFeedback": 13}},
+    {"d": "2026-08-15", "created": 1384,
+     "g": {"Returns & Exchanges": 305, "Order Issue": 156, "Shipping & Delivery": 180, "Product Question": 107, "Order Status": 149, "Billing & Payments": 70, "General / Other": 204, "Subscription": 0},
+     "s": {"sizeExchange": 233, "delayed": 102, "tracking": 13, "lostPackage": 21, "wrongAddress": 14, "wrongItem": 9, "damagedItem": 1, "refundRequest": 56, "cancelOrder": 27, "editOrder": 26, "productDetails": 59, "scamAccusation": 17, "negativeFeedback": 20, "positiveFeedback": 17}},
+    {"d": "2026-08-16", "created": 1452,
+     "g": {"Returns & Exchanges": 315, "Order Issue": 169, "Shipping & Delivery": 113, "Product Question": 92, "Order Status": 113, "Billing & Payments": 54, "General / Other": 173, "Subscription": 1},
+     "s": {"sizeExchange": 256, "delayed": 53, "tracking": 6, "lostPackage": 15, "wrongAddress": 22, "wrongItem": 14, "damagedItem": 2, "refundRequest": 37, "cancelOrder": 38, "editOrder": 47, "productDetails": 58, "scamAccusation": 6, "negativeFeedback": 21, "positiveFeedback": 9}},
+    {"d": "2026-08-17", "created": 255, "partial": true,
+     "g": {"Returns & Exchanges": 66, "Order Issue": 33, "Shipping & Delivery": 27, "Product Question": 29, "Order Status": 24, "Billing & Payments": 13, "General / Other": 25, "Subscription": 1},
+     "s": {"sizeExchange": 56, "delayed": 15, "tracking": 3, "lostPackage": 4, "wrongAddress": 0, "wrongItem": 2, "damagedItem": 1, "refundRequest": 10, "cancelOrder": 9, "editOrder": 5, "productDetails": 16, "scamAccusation": 4, "negativeFeedback": 2, "positiveFeedback": 2}}
+  ]
+}

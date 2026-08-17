@@ -1,0 +1,15 @@
+{
+  "brands": {
+    "Mary's Tanks": [
+      {"from": "2026-08-11", "to": "2026-08-13", "kind": "block", "created": 1274,
+       "g": {"Returns & Exchanges": 287, "Order Issue": 358, "Shipping & Delivery": 67, "Product Question": 135, "Order Status": 0, "Billing & Payments": 58, "General / Other": 34, "Subscription": 0},
+       "s": {"sizeExchange": 138, "delayed": 16, "tracking": 16, "lostPackage": 4, "wrongAddress": 6, "wrongItem": 2, "damagedItem": 1, "refundRequest": 25, "cancelOrder": 7, "editOrder": 30, "productDetails": 110, "scamAccusation": 16, "negativeFeedback": 0, "positiveFeedback": 0}},
+      {"from": "2026-08-14", "to": "2026-08-16", "kind": "block", "created": 872,
+       "g": {"Returns & Exchanges": 225, "Order Issue": 288, "Shipping & Delivery": 31, "Product Question": 118, "Order Status": 0, "Billing & Payments": 72, "General / Other": 33, "Subscription": 0},
+       "s": {"sizeExchange": 120, "delayed": 7, "tracking": 4, "lostPackage": 0, "wrongAddress": 5, "wrongItem": 3, "damagedItem": 3, "refundRequest": 16, "cancelOrder": 9, "editOrder": 31, "productDetails": 95, "scamAccusation": 18, "negativeFeedback": 0, "positiveFeedback": 0}},
+      {"from": "2026-08-17", "to": "2026-08-17", "kind": "day", "created": 351, "partial": true, "derived": true,
+       "g": {"Returns & Exchanges": 88, "Order Issue": 98, "Shipping & Delivery": 25, "Product Question": 38, "Order Status": 0, "Billing & Payments": 33, "General / Other": 7, "Subscription": 0},
+       "s": {"sizeExchange": 37, "delayed": 12, "tracking": 4, "lostPackage": 1, "wrongAddress": 0, "wrongItem": 0, "damagedItem": 0, "refundRequest": 10, "cancelOrder": 3, "editOrder": 6, "productDetails": 31, "scamAccusation": 4, "negativeFeedback": 0, "positiveFeedback": 0}}
+    ]
+  }
+}
