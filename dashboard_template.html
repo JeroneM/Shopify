@@ -1,0 +1,1275 @@
+<title>Elsie Issue Radar</title>
+<style>
+  :root {
+    color-scheme: light;
+    --plane: #f4f3ef;
+    --surface: #fcfcfb;
+    --surface-2: #f0efea;
+    --ink: #14130f;
+    --ink-2: #52514e;
+    --ink-3: #86847d;
+    --rule: #e2e0d7;
+    --rule-strong: #c9c6ba;
+    --accent: #4a3aa7;
+    --accent-soft: #ece9fa;
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+    --s4: #eda100; --s5: #e87ba4; --s6: #008300;
+    --other: #86847d;
+    --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
+    --good-ink: #006300; --critical-ink: #a52121;
+    --shadow: 0 1px 2px rgba(20,19,15,.05), 0 1px 12px rgba(20,19,15,.04);
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --plane: #0d0d0c;
+      --surface: #1a1a19;
+      --surface-2: #232322;
+      --ink: #f7f6f2;
+      --ink-2: #c3c2b7;
+      --ink-3: #898781;
+      --rule: #2c2c2a;
+      --rule-strong: #3d3d3a;
+      --accent: #9085e9;
+      --accent-soft: #262340;
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+      --s4: #c98500; --s5: #d55181; --s6: #008300;
+      --other: #898781;
+      --good-ink: #0ca30c; --critical-ink: #e07a7a;
+      --shadow: 0 1px 2px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --plane: #0d0d0c;
+    --surface: #1a1a19;
+    --surface-2: #232322;
+    --ink: #f7f6f2;
+    --ink-2: #c3c2b7;
+    --ink-3: #898781;
+    --rule: #2c2c2a;
+    --rule-strong: #3d3d3a;
+    --accent: #9085e9;
+    --accent-soft: #262340;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+    --s4: #c98500; --s5: #d55181; --s6: #008300;
+    --other: #898781;
+    --good-ink: #0ca30c; --critical-ink: #e07a7a;
+    --shadow: 0 1px 2px rgba(0,0,0,.4);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--plane);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1360px; margin: 0 auto; padding: 0 20px 72px; }
+  h1, h2, h3 { margin: 0; text-wrap: balance; font-weight: 600; letter-spacing: -.01em; }
+  a { color: var(--accent); }
+
+  /* ---- masthead ---- */
+  .mast { padding: 28px 0 18px; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; }
+  .mast h1 { font-size: 26px; letter-spacing: -.02em; }
+  .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: .13em; color: var(--ink-3); font-weight: 600; }
+  .mast-meta { font-size: 12.5px; color: var(--ink-2); text-align: right; }
+  .mast-meta b { font-variant-numeric: tabular-nums; color: var(--ink); }
+
+  /* ---- controls ---- */
+  .controls {
+    position: sticky; top: 0; z-index: 40;
+    background: color-mix(in srgb, var(--plane) 92%, transparent);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+    padding: 12px 0; margin-bottom: 22px;
+  }
+  .ctl-row { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: flex-end; }
+  .ctl { display: flex; flex-direction: column; gap: 5px; }
+  .ctl > label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-3); font-weight: 600; }
+  select, input[type="date"], input[type="search"] {
+    font: inherit; font-size: 13px; color: var(--ink);
+    background: var(--surface); border: 1px solid var(--rule-strong);
+    border-radius: 6px; padding: 6px 9px; min-height: 34px;
+  }
+  select:focus-visible, input:focus-visible, button:focus-visible, .chip:focus-visible, tr:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 1px;
+  }
+  .btn {
+    font: inherit; font-size: 12.5px; font-weight: 500;
+    background: var(--surface); color: var(--ink-2);
+    border: 1px solid var(--rule-strong); border-radius: 6px;
+    padding: 7px 12px; cursor: pointer; min-height: 34px;
+  }
+  .btn:hover { background: var(--surface-2); color: var(--ink); }
+  .btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  :root[data-theme="dark"] .btn.on, :root:not([data-theme="light"]) .btn.on { color: #14130f; }
+  .seg { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 6px; overflow: hidden; }
+  .seg .btn { border: 0; border-radius: 0; border-right: 1px solid var(--rule-strong); }
+  .seg .btn:last-child { border-right: 0; }
+  .custom-range { display: none; gap: 8px; align-items: flex-end; }
+  .custom-range.show { display: flex; }
+
+  /* ---- active filters ---- */
+  .active-filters { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; margin-top: 11px; }
+  .active-filters:empty { display: none; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--accent-soft); color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+    border-radius: 999px; padding: 3px 6px 3px 10px;
+    font-size: 12px; font-weight: 500; cursor: pointer;
+  }
+  .chip span { font-size: 14px; line-height: 1; opacity: .75; }
+  .chip:hover span { opacity: 1; }
+
+  /* ---- sections ---- */
+  section { margin-bottom: 34px; scroll-margin-top: 90px; }
+  .sec-head { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: baseline; justify-content: space-between; margin-bottom: 13px; padding-bottom: 9px; border-bottom: 1px solid var(--rule); }
+  .sec-head h2 { font-size: 15px; letter-spacing: .005em; }
+  .sec-num { font-family: var(--mono); font-size: 11px; color: var(--ink-3); margin-right: 9px; }
+  .sec-note { font-size: 12px; color: var(--ink-3); }
+
+  .card { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; box-shadow: var(--shadow); }
+  .pad { padding: 16px 18px; }
+
+  /* ---- KPI ---- */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(158px, 1fr)); gap: 10px; }
+  .kpi { background: var(--surface); border: 1px solid var(--rule); border-radius: 9px; padding: 12px 13px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 3px; }
+  .kpi.wide { grid-column: span 2; }
+  .kpi-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .085em; color: var(--ink-3); font-weight: 600; }
+  .kpi-val { font-size: 27px; font-weight: 600; letter-spacing: -.02em; line-height: 1.12; }
+  .kpi-val.sm { font-size: 16px; font-weight: 600; letter-spacing: -.005em; line-height: 1.3; }
+  .kpi-sub { font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .kpi-stripe { height: 3px; border-radius: 2px; margin-bottom: 6px; width: 30px; }
+  .up { color: var(--critical-ink); font-weight: 600; }
+  .down { color: var(--good-ink); font-weight: 600; }
+
+  /* ---- exec summary ---- */
+  .summary { font-size: 14.5px; line-height: 1.68; color: var(--ink-2); }
+  .summary p { margin: 0 0 11px; max-width: 76ch; }
+  .summary p:last-child { margin-bottom: 0; }
+  .summary b { color: var(--ink); font-weight: 600; }
+
+  /* ---- charts ---- */
+  .chart-box { position: relative; }
+  svg { display: block; width: 100%; overflow: visible; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .lg {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; padding: 4px 9px; border-radius: 999px;
+    border: 1px solid var(--rule-strong); background: var(--surface);
+    color: var(--ink-2); cursor: pointer; font-weight: 500;
+  }
+  .lg:hover { border-color: var(--rule-strong); color: var(--ink); }
+  .lg.off { opacity: .42; }
+  .lg i { width: 9px; height: 9px; border-radius: 2px; display: block; }
+  .tip {
+    position: absolute; pointer-events: none; opacity: 0; transition: opacity .1s;
+    background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 7px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.14); padding: 8px 10px; font-size: 12px;
+    min-width: 128px; z-index: 30; color: var(--ink);
+  }
+  .tip.show { opacity: 1; }
+  .tip-h { font-weight: 600; margin-bottom: 5px; font-size: 12px; }
+  .tip-r { display: flex; align-items: center; gap: 7px; justify-content: space-between; font-variant-numeric: tabular-nums; }
+  .tip-r i { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+  .tip-r b { font-weight: 600; }
+
+  /* ---- issue breakdown rows ---- */
+  .ib { display: flex; flex-direction: column; gap: 1px; }
+  .ib-row {
+    display: grid; grid-template-columns: minmax(150px, 210px) 1fr 92px;
+    gap: 12px; align-items: center; padding: 5px 8px; border-radius: 6px;
+    cursor: pointer; border: 1px solid transparent; text-align: left;
+    background: none; font: inherit; color: inherit; width: 100%;
+  }
+  .ib-row:hover { background: var(--surface-2); }
+  .ib-row.sel { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+  .ib-name { font-size: 13px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ib-track { background: var(--surface-2); border-radius: 3px; height: 15px; overflow: hidden; }
+  .ib-bar { height: 100%; border-radius: 0 4px 4px 0; }
+  .ib-fig { font-size: 12.5px; color: var(--ink-2); text-align: right; font-variant-numeric: tabular-nums; }
+  .ib-fig b { color: var(--ink); font-weight: 600; }
+
+  /* ---- tables ---- */
+  .tbl-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: .075em;
+    color: var(--ink-3); font-weight: 600; white-space: nowrap;
+    position: sticky; top: 0; background: var(--surface); z-index: 2;
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .mono { font-family: var(--mono); font-size: 12px; }
+  .na { color: var(--ink-3); font-style: italic; font-size: 12px; }
+  tbody tr.tk { cursor: pointer; }
+  tbody tr.tk:hover { background: var(--surface-2); }
+  .msg-cell { max-width: 300px; color: var(--ink-2); font-size: 12.5px; }
+  .clamp { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; border: 1px solid; }
+  .p-open { color: var(--critical-ink); border-color: color-mix(in srgb, var(--critical) 42%, transparent); background: color-mix(in srgb, var(--critical) 11%, transparent); }
+  .p-snoozed { color: #9a6a00; border-color: color-mix(in srgb, var(--warning) 52%, transparent); background: color-mix(in srgb, var(--warning) 15%, transparent); }
+  .p-resolved { color: var(--good-ink); border-color: color-mix(in srgb, var(--good) 40%, transparent); background: color-mix(in srgb, var(--good) 10%, transparent); }
+  .p-pending { color: var(--ink-2); border-color: var(--rule-strong); background: var(--surface-2); }
+  :root[data-theme="dark"] .p-snoozed, :root:not([data-theme="light"]) .p-snoozed { color: #f0c04d; }
+
+  .tag { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 10.5px; font-family: var(--mono); background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--rule); margin: 1px 2px 1px 0; }
+  .tag.risk { color: var(--critical-ink); border-color: color-mix(in srgb, var(--critical) 40%, transparent); }
+
+  /* ---- detail drawer row ---- */
+  tr.detail > td { background: var(--surface-2); padding: 0; }
+  .detail-in { padding: 15px 18px; display: grid; grid-template-columns: minmax(230px, 1fr) 2fr; gap: 20px; }
+  .dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 12.5px; align-content: start; }
+  .dl dt { color: var(--ink-3); white-space: nowrap; }
+  .dl dd { margin: 0; color: var(--ink); }
+  .quote {
+    background: var(--surface); border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    border-radius: 0 7px 7px 0; padding: 11px 14px; font-size: 13px; color: var(--ink);
+    white-space: pre-wrap; line-height: 1.6; max-height: 300px; overflow-y: auto;
+  }
+  .detail-h { font-size: 10.5px; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-3); font-weight: 600; margin-bottom: 6px; }
+
+  /* ---- alerts ---- */
+  .alerts { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 11px; }
+  .alert { background: var(--surface); border: 1px solid var(--rule); border-left: 3px solid var(--ink-3); border-radius: 0 9px 9px 0; padding: 13px 15px; box-shadow: var(--shadow); }
+  .alert.critical { border-left-color: var(--critical); }
+  .alert.warning { border-left-color: var(--warning); }
+  .alert.serious { border-left-color: var(--serious); }
+  .alert.good { border-left-color: var(--good); }
+  .alert-h { font-size: 13.5px; font-weight: 600; margin-bottom: 5px; display: flex; gap: 7px; align-items: baseline; }
+  .alert-sev { font-size: 9.5px; text-transform: uppercase; letter-spacing: .1em; font-weight: 700; flex: none; }
+  .alert.critical .alert-sev { color: var(--critical-ink); }
+  .alert.warning .alert-sev { color: #9a6a00; }
+  .alert.serious .alert-sev { color: #b0552c; }
+  .alert.good .alert-sev { color: var(--good-ink); }
+  :root[data-theme="dark"] .alert.warning .alert-sev, :root:not([data-theme="light"]) .alert.warning .alert-sev { color: #f0c04d; }
+  :root[data-theme="dark"] .alert.serious .alert-sev, :root:not([data-theme="light"]) .alert.serious .alert-sev { color: #f0a077; }
+  .alert-b { font-size: 12.5px; color: var(--ink-2); line-height: 1.55; }
+  .alert-b b { color: var(--ink); font-weight: 600; }
+  .alert-meta { margin-top: 8px; font-size: 11.5px; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 4px 12px; }
+  .alert-meta b { color: var(--ink-2); font-weight: 500; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 11px; }
+  .lead { background: var(--surface); border: 1px solid var(--rule); border-radius: 9px; padding: 12px 14px; box-shadow: var(--shadow); }
+  .lead-l { font-size: 10.5px; text-transform: uppercase; letter-spacing: .085em; color: var(--ink-3); font-weight: 600; margin-bottom: 4px; }
+  .lead-v { font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+  .lead-s { font-size: 12px; color: var(--ink-2); margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+  .empty { padding: 40px 20px; text-align: center; color: var(--ink-3); font-size: 13.5px; }
+
+  footer { border-top: 1px solid var(--rule); padding-top: 18px; margin-top: 40px; font-size: 12px; color: var(--ink-3); line-height: 1.65; }
+  footer h3 { font-size: 12px; color: var(--ink-2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .085em; }
+  footer ul { margin: 0 0 14px; padding-left: 17px; }
+  footer li { margin-bottom: 4px; max-width: 92ch; }
+  footer code { font-family: var(--mono); font-size: 11px; background: var(--surface-2); padding: 1px 5px; border-radius: 3px; }
+
+  @media (max-width: 860px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .detail-in { grid-template-columns: 1fr; }
+    .kpi.wide { grid-column: span 1; }
+    .controls { position: static; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <div>
+      <div class="eyebrow">Simply Elsie &middot; Operations &amp; Customer Support</div>
+      <h1>Customer Issue Analytics</h1>
+    </div>
+    <div class="mast-meta">
+      <b id="m-count">0</b> tickets pulled from Commslayer<br>
+      <span id="m-range"></span><br>
+      <span id="m-gaps"></span>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="ctl-row">
+      <div class="ctl">
+        <label for="f-date">Date range</label>
+        <select id="f-date">
+          <option value="all">All retrieved data</option>
+          <option value="today">Today</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="7">Last 7 days</option>
+          <option value="14">Last 14 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="thisweek">This week</option>
+          <option value="prevweek">Previous week</option>
+          <option value="thismonth">This month</option>
+          <option value="prevmonth">Previous month</option>
+          <option value="custom">Custom range&hellip;</option>
+        </select>
+      </div>
+      <div class="ctl custom-range" id="cr">
+        <div class="ctl"><label for="f-from">From</label><input type="date" id="f-from"></div>
+        <div class="ctl"><label for="f-to">To</label><input type="date" id="f-to"></div>
+      </div>
+      <div class="ctl">
+        <label for="f-store">Store / channel</label>
+        <select id="f-store"><option value="">All stores</option></select>
+      </div>
+      <div class="ctl">
+        <label for="f-status">Status</label>
+        <select id="f-status"><option value="">All statuses</option></select>
+      </div>
+      <div class="ctl">
+        <label for="f-agent">Agent</label>
+        <select id="f-agent"><option value="">All agents</option></select>
+      </div>
+      <div class="ctl">
+        <label for="f-search">Search</label>
+        <input type="search" id="f-search" placeholder="Message, name, order&hellip;" style="min-width:210px">
+      </div>
+      <div class="ctl">
+        <label>&nbsp;</label>
+        <button class="btn" id="f-reset">Reset all filters</button>
+      </div>
+    </div>
+    <div class="active-filters" id="chips"></div>
+  </div>
+
+  <section id="kpi">
+    <div class="sec-head">
+      <h2><span class="sec-num">01</span>Key performance indicators</h2>
+      <span class="sec-note" id="kpi-note"></span>
+    </div>
+    <div class="kpis" id="kpi-grid"></div>
+  </section>
+
+  <section id="exec">
+    <div class="sec-head">
+      <h2><span class="sec-num">02</span>Executive summary</h2>
+      <span class="sec-note">Regenerates on every filter change</span>
+    </div>
+    <div class="card pad summary" id="exec-body"></div>
+  </section>
+
+  <section id="trend">
+    <div class="sec-head">
+      <h2><span class="sec-num">03</span>Customer issue trend</h2>
+      <div class="seg" id="gran">
+        <button class="btn on" data-g="day">Daily</button>
+        <button class="btn" data-g="week">Weekly</button>
+        <button class="btn" data-g="month">Monthly</button>
+      </div>
+    </div>
+    <div class="card pad">
+      <div class="chart-box">
+        <svg id="trend-svg" height="290" role="img" aria-label="Customer complaints over time by issue category"></svg>
+        <div class="tip" id="trend-tip"></div>
+      </div>
+      <div class="legend" id="trend-legend"></div>
+      <p class="sec-note" style="margin:12px 0 0">Click a category to show or hide it. Categories ranked by volume in the current filter; everything beyond the top six is grouped as <em>Other</em>. <span id="trend-partial"></span></p>
+    </div>
+  </section>
+
+  <section id="breakdown">
+    <div class="sec-head">
+      <h2><span class="sec-num">04</span>Issue breakdown</h2>
+      <span class="sec-note">Click any issue to filter the whole dashboard</span>
+    </div>
+    <div class="grid-2">
+      <div class="card pad">
+        <div class="detail-h">Primary issue category &middot; issue rate</div>
+        <div class="ib" id="ib-cat"></div>
+      </div>
+      <div class="card pad">
+        <div class="detail-h" id="sub-title">Sub-issue detail</div>
+        <div class="ib" id="ib-sub"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="product">
+    <div class="sec-head">
+      <h2><span class="sec-num">05</span>Product, variant &amp; SKU analysis</h2>
+      <span class="sec-note">Only tickets where the customer or order data named a variant</span>
+    </div>
+    <div class="grid-3" id="prod-leads" style="margin-bottom:14px"></div>
+    <div class="card">
+      <div class="tbl-scroll">
+        <table id="prod-tbl">
+          <thead><tr>
+            <th>Product / variant</th><th class="num">Tickets</th><th class="num">Sizing</th>
+            <th class="num">Quality</th><th class="num">Colour</th><th class="num">Shipping</th>
+            <th class="num">Refund</th><th class="num">Replace</th><th>Main issue</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="emerging">
+    <div class="sec-head">
+      <h2><span class="sec-num">06</span>Emerging issues &amp; root-cause insights</h2>
+      <span class="sec-note">Theme detection over customer message text</span>
+    </div>
+    <div class="alerts" id="alert-grid"></div>
+  </section>
+
+  <section id="resolution">
+    <div class="sec-head">
+      <h2><span class="sec-num">07</span>Resolution performance</h2>
+      <span class="sec-note">Ageing measured against the latest activity in the dataset</span>
+    </div>
+    <div class="grid-3" id="res-grid"></div>
+  </section>
+
+  <section id="tickets">
+    <div class="sec-head">
+      <h2><span class="sec-num">08</span>Ticket investigation</h2>
+      <span class="sec-note" id="tk-note"></span>
+    </div>
+    <div class="ctl-row" style="margin-bottom:12px">
+      <div class="ctl"><label for="f-issue">Issue</label><select id="f-issue"><option value="">All issues</option></select></div>
+      <div class="ctl"><label for="f-sub">Sub-issue</label><select id="f-sub"><option value="">All sub-issues</option></select></div>
+      <div class="ctl"><label for="f-size">Size</label><select id="f-size"><option value="">All sizes</option></select></div>
+      <div class="ctl"><label for="f-color">Colour</label><select id="f-color"><option value="">All colours</option></select></div>
+      <div class="ctl"><label for="f-product">Product</label><select id="f-product"><option value="">All products</option></select></div>
+    </div>
+    <div class="card">
+      <div class="tbl-scroll">
+        <table id="tk-tbl">
+          <thead><tr>
+            <th data-s="created">Date</th><th data-s="t">Ticket</th><th>Order</th><th>Product</th>
+            <th>Size / colour</th><th data-s="cat">Issue</th><th>Sub-issue</th>
+            <th>Customer message</th><th data-s="status">Status</th><th>Action taken</th><th data-s="agent">Agent</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="empty" id="tk-empty" style="display:none">No tickets match the current filters.</div>
+    </div>
+  </section>
+
+  <footer>
+    <h3>About this data</h3>
+    <ul>
+      <li><b>Source.</b> Every ticket, message, status, label and agent assignment on this page was pulled live from the Commslayer account <code>Simply Elsie</code> (account 7356) via the Commslayer MCP API. Nothing is simulated.</li>
+      <li><b>Coverage.</b> <span id="foot-cov"></span> Commslayer's list endpoint caps out well below the account's full history, so tickets were fetched individually by conversation ID to guarantee an unbroken block rather than a scattered sample. Every count, rate and trend on this page is a true count within that window.</li>
+      <li><b>Classification.</b> Primary issue category and sub-issue were assigned by reading each customer's actual message text, not by reusing Commslayer's labels. Categories beyond the requested list were added where the data demanded them &mdash; <em>Product Usage / Difficult to Put On</em>, <em>Brand Trust / Provenance Doubt</em>, <em>Order Lookup / Account Data Error</em> and <em>Spam / Solicitation</em> each recur often enough to stand alone.</li>
+      <li><b>Fields shown as "Not Available".</b> Commslayer exposes no SKU field, and its conversation custom-attribute store is empty for this account, so SKU is unavailable for every ticket. Product, variant, size and colour are populated only where the customer stated them or where an order-confirmation or refund email was quoted inside the thread. Nothing has been inferred.</li>
+      <li><b>Resolution timing.</b> Commslayer's API returns <code>created_at</code> and <code>last_activity_at</code>, but no explicit resolved-at timestamp. Resolution time and "date resolved" therefore use last activity on tickets whose status is <em>resolved</em>, which is an upper bound on the true handling time.</li>
+      <li><b>Statuses.</b> Commslayer uses open, pending, snoozed and resolved. This account currently runs zero pending tickets; <em>snoozed</em> is the state the AI agent parks a thread in while waiting on a customer, so snoozed tickets are counted as unresolved throughout.</li>
+      <li><b>Date presets.</b> "Today" is anchored to the most recent ticket in the dataset (<span id="foot-today"></span>), in UTC, matching the account's timezone. Period-over-period comparisons are suppressed rather than estimated when the prior period falls outside the retrieved window.</li>
+    </ul>
+  </footer>
+</div>
+
+<script>
+const RAW = /*__DATA__*/[];
+
+/* ============ normalisation ============ */
+const SIZING = ["Sizing Issue"];
+const QUALITY = ["Product Quality", "Product Not as Described", "Product Usage / Difficult to Put On"];
+const SHIPPING = ["Shipping Delay", "Fulfilment Delay", "Tracking Issue", "Order Not Received", "Incorrect Address"];
+
+const RX_REFUND = /\brefund|money back|reimburs/i;
+const RX_REPLACE = /\breplac|exchang|next size up|larger size|size up\b|swap/i;
+
+const T = RAW.map(r => {
+  const created = new Date(r.created), updated = new Date(r.updated);
+  const tags = r.tags || [];
+  const hay = (r.msg || "") + " " + (r.action || "");
+  return Object.assign({}, r, {
+    d: created, u: updated,
+    day: r.created.slice(0, 10),
+    unresolved: r.status !== "resolved",
+    hours: Math.max(0, (updated - created) / 36e5),
+    refund: RX_REFUND.test(hay) || tags.includes("refund-approved") || r.cat === "Refund Request",
+    replace: RX_REPLACE.test(hay) || tags.includes("pfg-ready"),
+    risk: tags.includes("pre-chargeback-risk") || tags.includes("chargeback"),
+    isSizing: SIZING.includes(r.cat),
+    isQuality: QUALITY.includes(r.cat),
+    isShipping: SHIPPING.includes(r.cat)
+  });
+});
+T.sort((a, b) => b.d - a.d);
+
+const MAXD = new Date(Math.max(...T.map(t => t.d)));
+const MIND = new Date(Math.min(...T.map(t => t.d)));
+const NUMS = T.map(t => t.t).sort((a, b) => a - b);
+const GAPS = [];
+for (let i = NUMS[0]; i <= NUMS[NUMS.length - 1]; i++) if (!NUMS.includes(i)) GAPS.push(i);
+
+/* ============ date helpers (UTC) ============ */
+const D = n => new Date(n);
+const utc = (y, m, d) => Date.UTC(y, m, d);
+const dayStart = dt => utc(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate());
+const dayEnd = ms => ms + 864e5 - 1;
+const isoDay = ms => new Date(ms).toISOString().slice(0, 10);
+const fmtD = ms => new Date(ms).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+const fmtDT = s => new Date(s).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "UTC" });
+// ISO weeks start Monday
+const weekStart = ms => { const dt = D(ms); const dow = (dt.getUTCDay() + 6) % 7; return dayStart(dt) - dow * 864e5; };
+const monthStart = ms => { const dt = D(ms); return utc(dt.getUTCFullYear(), dt.getUTCMonth(), 1); };
+
+function resolveRange(preset, from, to) {
+  const today = dayStart(MAXD);
+  switch (preset) {
+    case "today": return [today, dayEnd(today)];
+    case "yesterday": return [today - 864e5, dayEnd(today - 864e5)];
+    case "7": return [today - 6 * 864e5, dayEnd(today)];
+    case "14": return [today - 13 * 864e5, dayEnd(today)];
+    case "30": return [today - 29 * 864e5, dayEnd(today)];
+    case "thisweek": return [weekStart(today), dayEnd(today)];
+    case "prevweek": { const w = weekStart(today) - 7 * 864e5; return [w, dayEnd(w + 6 * 864e5)]; }
+    case "thismonth": return [monthStart(today), dayEnd(today)];
+    case "prevmonth": {
+      const dt = D(monthStart(today));
+      const s = utc(dt.getUTCFullYear(), dt.getUTCMonth() - 1, 1);
+      return [s, monthStart(today) - 1];
+    }
+    case "custom": {
+      const a = from ? Date.parse(from + "T00:00:00Z") : dayStart(MIND);
+      const b = to ? dayEnd(Date.parse(to + "T00:00:00Z")) : dayEnd(today);
+      return [a, b];
+    }
+    default: return [dayStart(MIND), dayEnd(today)];
+  }
+}
+
+/* ============ state ============ */
+const S = { preset: "all", from: "", to: "", store: "", status: "", agent: "", search: "", cat: "", sub: "", size: "", color: "", product: "", gran: "day", hidden: new Set(), open: new Set() };
+
+function inRange(list, a, b) { return list.filter(t => +t.d >= a && +t.d <= b); }
+
+function applyDims(list) {
+  return list.filter(t =>
+    (!S.store || t.store === S.store) &&
+    (!S.status || t.status === S.status) &&
+    (!S.agent || t.agent === S.agent) &&
+    (!S.cat || t.cat === S.cat) &&
+    (!S.sub || t.sub === S.sub) &&
+    (!S.size || t.size === S.size) &&
+    (!S.color || (t.color || "").split(", ").includes(S.color)) &&
+    (!S.product || t.product === S.product) &&
+    (!S.search || (t.msg + " " + t.name + " " + t.email + " " + t.order + " " + t.action + " " + t.t)
+      .toLowerCase().includes(S.search.toLowerCase()))
+  );
+}
+
+function currentView() {
+  const [a, b] = resolveRange(S.preset, S.from, S.to);
+  const span = b - a + 1;
+  const cur = applyDims(inRange(T, a, b));
+  const prev = applyDims(inRange(T, a - span, a - 1));
+  // prior period is only meaningful if the retrieved window actually covers it
+  const prevValid = (a - span) >= dayStart(MIND);
+  return { a, b, span, cur, prev, prevValid };
+}
+
+/* ============ small utils ============ */
+const el = (tag, cls, txt) => { const n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const pct = (n, d) => d ? (n / d * 100) : 0;
+const p1 = v => (Math.round(v * 10) / 10).toFixed(1);
+const NAV = '<span class="na">Not Available</span>';
+const cell = v => (!v || v === "Not Available") ? NAV : esc(v);
+
+function tally(list, key) {
+  const m = new Map();
+  list.forEach(t => { const k = typeof key === "function" ? key(t) : t[key]; if (k && k !== "Not Available") m.set(k, (m.get(k) || 0) + 1); });
+  return [...m.entries()].sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0]));
+}
+
+const SERIES = ["--s1", "--s2", "--s3", "--s4", "--s5", "--s6"];
+function catColors(list) {
+  const ranked = tally(list, "cat");
+  const m = new Map();
+  ranked.slice(0, 6).forEach(([c], i) => m.set(c, `var(${SERIES[i]})`));
+  return { map: m, color: c => m.get(c) || "var(--other)", top: ranked.slice(0, 6).map(r => r[0]) };
+}
+
+/* ============ KPI ============ */
+function renderKPI(v) {
+  const { cur, prev, prevValid } = v;
+  const n = cur.length;
+  const by = s => cur.filter(t => t.status === s).length;
+  const resolved = by("resolved");
+  const ranked = tally(cur, "cat");
+  const top = ranked[0];
+
+  // fastest growing: largest absolute rise vs previous equal-length period
+  let grow = null;
+  if (prevValid && prev.length) {
+    const pm = new Map(tally(prev, "cat"));
+    ranked.forEach(([c, k]) => {
+      const was = pm.get(c) || 0, diff = k - was;
+      if (diff > 0 && (!grow || diff > grow.diff)) grow = { c, k, was, diff, pctv: was ? (diff / was * 100) : null };
+    });
+  }
+
+  const sizing = cur.filter(t => t.isSizing).length;
+  const quality = cur.filter(t => t.isQuality).length;
+  const ship = cur.filter(t => t.isShipping).length;
+  const refunds = cur.filter(t => t.refund).length;
+  const repl = cur.filter(t => t.replace).length;
+
+  const K = (label, val, sub, cls, stripe) => {
+    const d = el("div", "kpi" + (cls ? " " + cls : ""));
+    if (stripe) { const s = el("div", "kpi-stripe"); s.style.background = stripe; d.appendChild(s); }
+    d.appendChild(el("div", "kpi-label", label));
+    const vv = el("div", "kpi-val" + (cls === "wide" ? " sm" : ""));
+    vv.innerHTML = val;
+    d.appendChild(vv);
+    if (sub) { const s = el("div", "kpi-sub"); s.innerHTML = sub; d.appendChild(s); }
+    return d;
+  };
+
+  const g = document.getElementById("kpi-grid");
+  g.replaceChildren(
+    K("Total tickets", n, `${p1(n / Math.max(1, (v.b - v.a) / 864e5))}/day average`),
+    K("Open", by("open"), `${p1(pct(by("open"), n))}% of tickets`, "", "var(--critical)"),
+    K("Snoozed", by("snoozed"), "awaiting customer reply", "", "var(--warning)"),
+    K("Pending", by("pending"), "no tickets in this state", "", "var(--other)"),
+    K("Resolved", resolved, `${p1(pct(resolved, n))}% of tickets`, "", "var(--good)"),
+    K("Resolution rate", p1(pct(resolved, n)) + "%", `${n - resolved} still unresolved`),
+    K("Sizing complaints", sizing, `Issue rate <b>${p1(pct(sizing, n))}%</b>`, "", "var(--s1)"),
+    K("Quality complaints", quality, `Issue rate <b>${p1(pct(quality, n))}%</b>`, "", "var(--s2)"),
+    K("Shipping & fulfilment", ship, `Issue rate <b>${p1(pct(ship, n))}%</b>`, "", "var(--s3)"),
+    K("Refund requests", refunds, `Issue rate <b>${p1(pct(refunds, n))}%</b>`),
+    K("Replacement requests", repl, `Issue rate <b>${p1(pct(repl, n))}%</b>`),
+    K("Most common issue", top ? esc(top[0]) : "&mdash;", top ? `<b>${top[1]}</b> tickets &middot; ${p1(pct(top[1], n))}% of all` : "", "wide"),
+    K("Fastest growing issue",
+      grow ? esc(grow.c) : "&mdash;",
+      grow ? `<span class="up">+${grow.diff}</span> vs previous period (${grow.was} &rarr; ${grow.k})`
+           : (prevValid ? "No category grew this period" : "Prior period outside retrieved window"),
+      "wide")
+  );
+
+  document.getElementById("kpi-note").textContent =
+    `Quality group = ${QUALITY.join(", ")}. Shipping group = ${SHIPPING.slice(0, 4).join(", ")}.`;
+}
+
+/* ============ executive summary ============ */
+function renderExec(v) {
+  const { cur, prev, prevValid, a, b } = v;
+  const n = cur.length;
+  const box = document.getElementById("exec-body");
+  if (!n) { box.innerHTML = "<p>No tickets fall inside the current filters, so there is nothing to summarise.</p>"; return; }
+
+  const ranked = tally(cur, "cat");
+  const pm = new Map(tally(prev, "cat"));
+  const days = Math.max(1, Math.round((b - a + 1) / 864e5));
+  const label = `${fmtD(a)} to ${fmtD(b)}`;
+  const t3 = ranked.slice(0, 3).map(([c, k]) => `<b>${esc(c)}</b> at ${p1(pct(k, n))}% (${k})`);
+
+  const P = [];
+  P.push(`<p>Across <b>${label}</b> (${days} day${days > 1 ? "s" : ""}) Simply Elsie received <b>${n}</b> customer tickets, an average of <b>${p1(n / days)}</b> a day. The largest issue was ${t3[0]}${t3[1] ? `, followed by ${t3[1]}` : ""}${t3[2] ? ` and ${t3[2]}` : ""}.</p>`);
+
+  // movement
+  if (prevValid && prev.length) {
+    const moves = ranked.slice(0, 6).map(([c, k]) => {
+      const was = pm.get(c) || 0;
+      return { c, k, was, d: k - was, p: was ? ((k - was) / was * 100) : null };
+    }).filter(m => Math.abs(m.d) >= 2).sort((x, y) => Math.abs(y.d) - Math.abs(x.d)).slice(0, 3);
+    if (moves.length) {
+      P.push("<p>" + moves.map(m =>
+        `<b>${esc(m.c)}</b> ${m.d > 0 ? "rose" : "fell"} from ${m.was} to ${m.k}` +
+        (m.p !== null ? ` (${m.d > 0 ? "+" : ""}${Math.round(m.p)}%)` : "") +
+        " against the previous comparable period"
+      ).join("; ") + ".</p>");
+    } else {
+      P.push(`<p>No issue category moved by more than one ticket against the previous ${days}-day period, so the mix is stable rather than trending.</p>`);
+    }
+  } else {
+    P.push(`<p>A like-for-like comparison with the previous ${days}-day period is not shown: that window falls outside the block of tickets retrieved from Commslayer, and estimating it would be guesswork.</p>`);
+  }
+
+  // sizing detail
+  const sz = cur.filter(t => t.isSizing);
+  if (sz.length) {
+    const subs = tally(sz, "sub");
+    const sizes = tally(sz, "size");
+    P.push(`<p>Sizing accounts for <b>${sz.length}</b> tickets (${p1(pct(sz.length, n))}% of all contacts). The dominant sub-issue is <b>${esc(subs[0][0])}</b> with ${subs[0][1]} of them` +
+      (subs[1] ? `, then ${esc(subs[1][0])} with ${subs[1][1]}` : "") + "." +
+      (sizes.length ? ` Where the customer named a size, <b>${esc(sizes[0][0])}</b> appears most often (${sizes[0][1]} ticket${sizes[0][1] > 1 ? "s" : ""}).` : " No ticket in this selection named a size.") +
+      "</p>");
+  }
+
+  // risk + resolution
+  const risky = cur.filter(t => t.risk);
+  const unres = cur.filter(t => t.unresolved);
+  const old72 = unres.filter(t => (MAXD - t.d) / 36e5 > 72);
+  P.push(`<p><b>${unres.length}</b> tickets are still unresolved (${p1(pct(unres.length, n))}%)` +
+    (old72.length ? `, of which <b>${old72.length}</b> have been open more than 72 hours` : "") +
+    `. Commslayer has flagged <b>${risky.length}</b> as pre-chargeback or chargeback risk, and <b>${cur.filter(t => t.refund).length}</b> tickets carry an explicit refund request.</p>`);
+
+  box.innerHTML = P.join("");
+}
+
+/* ============ trend chart ============ */
+function bucketKey(ms, g) { return g === "day" ? dayStart(D(ms)) : g === "week" ? weekStart(ms) : monthStart(ms); }
+function bucketLabel(ms, g) {
+  if (g === "month") return new Date(ms).toLocaleDateString("en-GB", { month: "short", year: "numeric", timeZone: "UTC" });
+  if (g === "week") return "w/c " + fmtD(ms);
+  return fmtD(ms);
+}
+
+function renderTrend(v) {
+  const svg = document.getElementById("trend-svg");
+  const tip = document.getElementById("trend-tip");
+  const { cur } = v;
+  svg.replaceChildren();
+  if (!cur.length) { document.getElementById("trend-legend").replaceChildren(); return; }
+
+  const cc = catColors(cur);
+  const keyOf = t => cc.top.includes(t.cat) ? t.cat : "Other";
+  const names = cc.top.slice();
+  if (cur.some(t => !cc.top.includes(t.cat))) names.push("Other");
+
+  // buckets across the selected range
+  const g = S.gran;
+  const set = new Set(cur.map(t => bucketKey(+t.d, g)));
+  const buckets = [...set].sort((a, b) => a - b);
+  const data = names.map(nm => ({
+    name: nm,
+    color: nm === "Other" ? "var(--other)" : cc.color(nm),
+    vals: buckets.map(bk => cur.filter(t => bucketKey(+t.d, g) === bk && keyOf(t) === nm).length)
+  }));
+  const shown = data.filter(d => !S.hidden.has(d.name));
+  const peak = Math.max(1, ...shown.flatMap(d => d.vals));
+  // round the axis up to a value that divides into whole-number ticks
+  const step = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500].find(s => peak / s <= 5) || 1000;
+  const maxY = step * Math.ceil(peak / step);
+  const nTicks = Math.round(maxY / step);
+
+  const W = svg.clientWidth || 900, H = 290;
+  const M = { t: 14, r: 16, b: 34, l: 34 };
+  const iw = Math.max(10, W - M.l - M.r), ih = H - M.t - M.b;
+  const X = i => buckets.length === 1 ? M.l + iw / 2 : M.l + (i / (buckets.length - 1)) * iw;
+  const Y = val => M.t + ih - (val / maxY) * ih;
+  const NS = "http://www.w3.org/2000/svg";
+  const mk = (t, at) => { const n = document.createElementNS(NS, t); for (const k in at) n.setAttribute(k, at[k]); return n; };
+
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
+  // partial trailing bucket: the last period is still in progress at the data cut-off
+  const lastEnd = g === "day" ? buckets[buckets.length - 1] + 864e5
+    : g === "week" ? buckets[buckets.length - 1] + 7 * 864e5
+    : monthStart(new Date(D(buckets[buckets.length - 1])).setUTCMonth(D(buckets[buckets.length - 1]).getUTCMonth() + 1));
+  const partial = buckets.length > 1 && lastEnd > +MAXD;
+  if (partial) {
+    const x0 = (X(buckets.length - 1) + X(buckets.length - 2)) / 2;
+    svg.appendChild(mk("rect", {
+      x: x0, y: M.t, width: M.l + iw - x0, height: ih,
+      fill: "var(--ink-3)", opacity: .07
+    }));
+  }
+
+  // gridlines + y ticks
+  const steps = nTicks;
+  for (let i = 0; i <= steps; i++) {
+    const val = Math.round(maxY * i / steps), y = Y(val);
+    svg.appendChild(mk("line", { x1: M.l, x2: M.l + iw, y1: y, y2: y, stroke: "var(--rule)", "stroke-width": 1 }));
+    const tx = mk("text", { x: M.l - 8, y: y + 4, "text-anchor": "end", fill: "var(--ink-3)", "font-size": 11 });
+    tx.textContent = val; svg.appendChild(tx);
+  }
+  // x labels (thinned to fit)
+  const every = Math.ceil(buckets.length / Math.max(2, Math.floor(iw / 74)));
+  buckets.forEach((bk, i) => {
+    if (i % every && i !== buckets.length - 1) return;
+    const tx = mk("text", { x: X(i), y: H - 12, "text-anchor": "middle", fill: "var(--ink-3)", "font-size": 11 });
+    tx.textContent = bucketLabel(bk, g); svg.appendChild(tx);
+  });
+
+  // series lines
+  shown.forEach(d => {
+    const pts = d.vals.map((val, i) => [X(i), Y(val)]);
+    if (pts.length > 1) {
+      svg.appendChild(mk("path", {
+        d: pts.map((p, i) => (i ? "L" : "M") + p[0] + " " + p[1]).join(" "),
+        fill: "none", stroke: d.color, "stroke-width": 2,
+        "stroke-linejoin": "round", "stroke-linecap": "round"
+      }));
+    }
+    pts.forEach(p => {
+      svg.appendChild(mk("circle", { cx: p[0], cy: p[1], r: 4.5, fill: d.color, stroke: "var(--surface)", "stroke-width": 2 }));
+    });
+  });
+
+  // crosshair + hover
+  const cross = mk("line", { y1: M.t, y2: M.t + ih, stroke: "var(--rule-strong)", "stroke-width": 1, opacity: 0 });
+  svg.appendChild(cross);
+  const hit = mk("rect", { x: M.l, y: M.t, width: iw, height: ih, fill: "transparent" });
+  svg.appendChild(hit);
+  const box = svg.parentElement;
+  hit.addEventListener("pointermove", e => {
+    const r = svg.getBoundingClientRect();
+    const rel = (e.clientX - r.left) * (W / r.width);
+    let bi = 0, best = Infinity;
+    buckets.forEach((_, i) => { const dd = Math.abs(X(i) - rel); if (dd < best) { best = dd; bi = i; } });
+    cross.setAttribute("x1", X(bi)); cross.setAttribute("x2", X(bi)); cross.setAttribute("opacity", 1);
+    const rows = shown.map(d => `<div class="tip-r"><span style="display:flex;gap:7px;align-items:center"><i style="background:${d.color}"></i>${esc(d.name)}</span><b>${d.vals[bi]}</b></div>`).join("");
+    tip.innerHTML = `<div class="tip-h">${bucketLabel(buckets[bi], g)}</div>${rows}`;
+    tip.classList.add("show");
+    const px = (X(bi) / W) * box.clientWidth;
+    tip.style.left = Math.min(Math.max(6, px + 14), box.clientWidth - tip.offsetWidth - 6) + "px";
+    tip.style.top = "8px";
+  });
+  hit.addEventListener("pointerleave", () => { tip.classList.remove("show"); cross.setAttribute("opacity", 0); });
+
+  document.getElementById("trend-partial").textContent = partial
+    ? `The shaded final ${g} is still in progress at the data cut-off (${fmtDT(MAXD.toISOString())} UTC), so its fall is incomplete data rather than a real decline.`
+    : "";
+
+  // legend
+  const lg = document.getElementById("trend-legend");
+  lg.replaceChildren(...data.map(d => {
+    const b = el("button", "lg" + (S.hidden.has(d.name) ? " off" : ""));
+    const i = el("i"); i.style.background = d.color;
+    b.append(i, document.createTextNode(`${d.name} (${d.vals.reduce((x, y) => x + y, 0)})`));
+    b.onclick = () => { S.hidden.has(d.name) ? S.hidden.delete(d.name) : S.hidden.add(d.name); render(); };
+    return b;
+  }));
+}
+
+/* ============ issue breakdown ============ */
+function bars(host, rows, total, colorFn, onClick, selected) {
+  host.replaceChildren();
+  if (!rows.length) { host.appendChild(el("div", "empty", "Nothing to show for the current filters.")); return; }
+  const max = rows[0][1];
+  rows.forEach(([name, k]) => {
+    const row = el("button", "ib-row" + (selected === name ? " sel" : ""));
+    row.appendChild(el("div", "ib-name", name)).title = name;
+    const track = el("div", "ib-track"), bar = el("div", "ib-bar");
+    bar.style.width = Math.max(2, (k / max) * 100) + "%";
+    bar.style.background = colorFn(name);
+    track.appendChild(bar); row.appendChild(track);
+    const fig = el("div", "ib-fig");
+    fig.innerHTML = `<b>${k}</b> &middot; ${p1(pct(k, total))}%`;
+    row.appendChild(fig);
+    row.onclick = () => onClick(name);
+    host.appendChild(row);
+  });
+}
+
+function renderBreakdown(v) {
+  const { cur } = v;
+  // category bars are computed before the category filter is applied, so clicking one never empties the chart
+  const baseList = inRange(T, v.a, v.b).filter(t =>
+    (!S.store || t.store === S.store) && (!S.status || t.status === S.status) &&
+    (!S.agent || t.agent === S.agent) && (!S.size || t.size === S.size) &&
+    (!S.color || (t.color || "").split(", ").includes(S.color)) &&
+    (!S.product || t.product === S.product) &&
+    (!S.search || (t.msg + " " + t.name + " " + t.email + " " + t.order + " " + t.action + " " + t.t).toLowerCase().includes(S.search.toLowerCase()))
+  );
+  const cc = catColors(baseList);
+  bars(document.getElementById("ib-cat"), tally(baseList, "cat"), baseList.length,
+    n => cc.color(n), n => { S.cat = S.cat === n ? "" : n; S.sub = ""; render(); }, S.cat);
+
+  const subSrc = S.cat ? baseList.filter(t => t.cat === S.cat) : cur;
+  document.getElementById("sub-title").textContent = S.cat ? `Sub-issue detail · ${S.cat}` : "Sub-issue detail · all categories with sub-classification";
+  const subRows = tally(subSrc, "sub");
+  bars(document.getElementById("ib-sub"), subRows, subSrc.length,
+    () => "var(--s2)", n => { S.sub = S.sub === n ? "" : n; render(); }, S.sub);
+}
+
+/* ============ product / SKU ============ */
+function renderProduct(v) {
+  const { cur } = v;
+  const named = cur.filter(t => (t.variant && t.variant !== "Not Available") || (t.product && t.product !== "Not Available"));
+
+  const lead = (l, val, sub) => {
+    const d = el("div", "lead");
+    d.appendChild(el("div", "lead-l", l));
+    const x = el("div", "lead-v"); x.innerHTML = val; d.appendChild(x);
+    if (sub) d.appendChild(el("div", "lead-s", sub));
+    return d;
+  };
+  const first = (rows, list, dim) => {
+    if (!rows.length) return ["No data", "Not named on any ticket in range"];
+    const [nm, k] = rows[0];
+    const sub = list.filter(t => dim(t) === nm || (dim(t) || "").split(", ").includes(nm));
+    const mi = tally(sub, "cat")[0];
+    return [esc(nm), `${k} ticket${k > 1 ? "s" : ""}` + (mi ? ` · mainly ${mi[0]}` : "")];
+  };
+
+  const prodRows = tally(cur, "product");
+  const sizeRows = tally(cur, "size");
+  const colSplit = new Map();
+  cur.forEach(t => { if (t.color && t.color !== "Not Available") t.color.split(", ").forEach(c => colSplit.set(c, (colSplit.get(c) || 0) + 1)); });
+  const colorRanked = [...colSplit.entries()].sort((a, b) => b[1] - a[1]);
+  const varRows = tally(cur, "variant");
+
+  const [pN, pS] = first(prodRows, cur, t => t.product);
+  const [sN, sS] = first(sizeRows, cur, t => t.size);
+  const [cN, cS] = first(colorRanked, cur, t => t.color);
+  const [vN, vS] = first(varRows, cur, t => t.variant);
+
+  document.getElementById("prod-leads").replaceChildren(
+    lead("Product with most complaints", pN, pS),
+    lead("Variant / SKU with most complaints", vN, vS),
+    lead("Size with most complaints", sN, sS),
+    lead("Colour with most complaints", cN, cS),
+    lead("Tickets carrying variant data", `${named.length} of ${cur.length}`,
+      `${p1(pct(named.length, cur.length))}% — SKU field unavailable in Commslayer`)
+  );
+
+  // table keyed on product + variant
+  const rows = new Map();
+  cur.forEach(t => {
+    const prod = (t.product && t.product !== "Not Available") ? t.product : null;
+    const varn = (t.variant && t.variant !== "Not Available") ? t.variant : null;
+    if (!prod && !varn) return;
+    const key = (prod || "Unnamed product") + " · " + (varn || "variant Not Available");
+    if (!rows.has(key)) rows.set(key, []);
+    rows.get(key).push(t);
+  });
+  const body = document.querySelector("#prod-tbl tbody");
+  body.replaceChildren();
+  if (!rows.size) {
+    const tr = el("tr"); const td = el("td", "empty", "No ticket in this selection names a product or variant.");
+    td.colSpan = 9; tr.appendChild(td); body.appendChild(tr); return;
+  }
+  [...rows.entries()].sort((a, b) => b[1].length - a[1].length).forEach(([key, list]) => {
+    const tr = el("tr");
+    const main = tally(list, "cat")[0];
+    const c = n => list.filter(n).length;
+    const cols = [
+      `<span class="mono">${esc(key)}</span>`,
+      list.length,
+      c(t => t.isSizing), c(t => t.isQuality),
+      c(t => t.cat === "Wrong Color" || /wrong colou?r|colou?r.{0,25}(mark|stain|fade|fading|wrong)|mark on it/i.test(t.msg)),
+      c(t => t.isShipping), c(t => t.refund), c(t => t.replace),
+      main ? esc(main[0]) : NAV
+    ];
+    cols.forEach((val, i) => {
+      const td = el("td", i > 0 && i < 8 ? "num" : "");
+      td.innerHTML = val;
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+}
+
+/* ============ emerging issues & insights ============ */
+const THEMES = [
+  { id: "puton", name: "Garment is a struggle to get on", rx: /(hard|difficult|struggle|tricky|cannot get|can't get|dare not).{0,40}(get|put|on|over my head|arms through)|rolls? up|unfurl|over my head/i, why: "Customers describe the vest as physically difficult to pull on over the head or get their arms through, independent of whether the size was right." },
+  { id: "uk", name: "Doubt that stock ships from the UK", rx: /from china|not.{0,20}sent from uk|miami|florida|overseas|indeed a company in the uk|produced in the uk/i, why: "Customers are inspecting tracking and payment descriptors and concluding the order did not originate in the UK. This directly contradicts the brand's UK-warehouse messaging and is appearing alongside refund demands." },
+  { id: "evri", name: "Parcels not arriving, including false delivered scans", rx: /delivered to the wrong address|(has |had )?not been delivered|hasn'?t arrived|has not arrived|still hasn'?t|even though evri|say it has|marked as delivered|never arrived/i, why: "Parcels are failing at the final delivery step, and in several cases the carrier has recorded the parcel as delivered when the customer never received it." },
+  { id: "chart", name: "Size chart does not match real bra sizes", rx: /size chart|sizing chart|size guide|cusp between|bra size is|checked the siz|f cup|g cup|38j|42d|40 ?d|40 ?e/i, why: "Customers who followed the published size chart still received a garment that did not fit, and several report the chart has no answer for larger cup sizes." },
+  { id: "paperwork", name: "No order confirmation or returns paperwork", rx: /no confirmation|no email to confirm|no paperwork|without.{0,15}paperwork|heard absolutely nothing|no response|sent you three messages/i, why: "Orders arriving with no confirmation email and no returns instructions, then no reply to a website contact form, is escalating straight to chargeback language." }
+];
+
+function renderAlerts(v) {
+  const { cur, prev, prevValid } = v;
+  const host = document.getElementById("alert-grid");
+  const out = [];
+  const n = cur.length;
+
+  // --- theme detection
+  THEMES.forEach(th => {
+    const hits = cur.filter(t => th.rx.test(t.msg));
+    if (hits.length < 2) return;
+    const prevHits = prevValid ? prev.filter(t => th.rx.test(t.msg)).length : null;
+    const people = new Set(hits.map(t => t.email !== "Not Available" ? t.email : t.name)).size;
+    const firstT = hits.reduce((a, b) => a.d < b.d ? a : b);
+    const skus = [...new Set(hits.map(t => t.variant).filter(x => x && x !== "Not Available"))];
+    const sizes = [...new Set(hits.map(t => t.size).filter(x => x && x !== "Not Available"))];
+    const sev = hits.length >= 6 ? "critical" : hits.length >= 4 ? "serious" : "warning";
+    let trend = "No prior period available for comparison";
+    if (prevHits !== null) trend = prevHits === 0 ? `New this period (0 in the previous period)`
+      : hits.length > prevHits ? `Rising: ${prevHits} → ${hits.length}`
+      : hits.length < prevHits ? `Falling: ${prevHits} → ${hits.length}` : `Flat at ${hits.length}`;
+    out.push({
+      sev, title: th.name,
+      body: `<b>${hits.length}</b> tickets (${p1(pct(hits.length, n))}% of the period) from <b>${people}</b> distinct customers. ${th.why}`,
+      meta: [
+        ["Customers affected", people],
+        ["First detected", fmtDT(firstT.created) + ` (C-${firstT.t})`],
+        ["Variants affected", skus.length ? skus.join("; ") : "None named"],
+        ["Sizes affected", sizes.length ? sizes.join(", ") : "None named"],
+        ["Example tickets", hits.slice(0, 4).map(t => "C-" + t.t).join(", ")],
+        ["Trend", trend]
+      ]
+    });
+  });
+
+  // --- sizing direction insight
+  const sz = cur.filter(t => t.isSizing);
+  if (sz.length >= 3) {
+    const small = sz.filter(t => /Too Small|Tight/i.test(t.sub)).length;
+    const large = sz.filter(t => t.sub === "Too Large").length;
+    out.push({
+      sev: small / Math.max(1, sz.length) > .6 ? "critical" : "warning",
+      title: "Sizing complaints run overwhelmingly one direction",
+      body: `Of <b>${sz.length}</b> sizing tickets, <b>${small}</b> say the garment is too small or too tight and only <b>${large}</b> say it is too large. A one-directional split of this size points at the garment or the published chart, not at customer error.`,
+      meta: [["Too small / too tight", `${small} (${p1(pct(small, sz.length))}%)`], ["Too large", `${large} (${p1(pct(large, sz.length))}%)`],
+      ["Sizes named", tally(sz, "size").map(([s, k]) => `${s}×${k}`).join(", ") || "None named"]]
+    });
+  }
+
+  // --- chargeback risk
+  const risky = cur.filter(t => t.risk);
+  if (risky.length) {
+    const openRisk = risky.filter(t => t.unresolved);
+    out.push({
+      sev: openRisk.length ? "critical" : "serious",
+      title: "Chargeback and pre-chargeback exposure",
+      body: `Commslayer has flagged <b>${risky.length}</b> tickets as chargeback or pre-chargeback risk this period, <b>${openRisk.length}</b> of which are still unresolved.`,
+      meta: [["Tickets", risky.slice(0, 6).map(t => "C-" + t.t).join(", ")],
+      ["Still unresolved", openRisk.length ? openRisk.map(t => "C-" + t.t).join(", ") : "None"]]
+    });
+  }
+
+  // --- unresolved replacement backlog
+  const replUnres = cur.filter(t => t.replace && t.unresolved);
+  if (replUnres.length >= 2) {
+    out.push({
+      sev: "warning",
+      title: "Replacement requests waiting on a human",
+      body: `<b>${replUnres.length}</b> tickets asking for a replacement or exchange are still unresolved. These are Perfect Fit Guarantee cases that need someone to raise the replacement order.`,
+      meta: [["Tickets", replUnres.slice(0, 8).map(t => "C-" + t.t).join(", ")]]
+    });
+  }
+
+  // --- good news
+  const pos = cur.filter(t => t.cat === "Positive Feedback");
+  if (pos.length) {
+    out.push({
+      sev: "good", title: "Positive feedback in the same window",
+      body: `<b>${pos.length}</b> tickets (${p1(pct(pos.length, n))}%) were unprompted praise, several of them from customers who had just had a delivery problem solved.`,
+      meta: [["Tickets", pos.map(t => "C-" + t.t).join(", ")]]
+    });
+  }
+
+  const order = { critical: 0, serious: 1, warning: 2, good: 3 };
+  out.sort((a, b) => order[a.sev] - order[b.sev]);
+
+  host.replaceChildren();
+  if (!out.length) { host.appendChild(el("div", "empty", "No recurring theme reached the detection threshold for this selection.")); return; }
+  out.forEach(o => {
+    const d = el("div", "alert " + o.sev);
+    d.innerHTML = `<div class="alert-h"><span class="alert-sev">${o.sev}</span><span>${esc(o.title)}</span></div>
+      <div class="alert-b">${o.body}</div>
+      <div class="alert-meta">${o.meta.map(([k, val]) => `<span><b>${esc(k)}:</b> ${esc(String(val))}</span>`).join("")}</div>`;
+    host.appendChild(d);
+  });
+}
+
+/* ============ resolution ============ */
+function renderResolution(v) {
+  const { cur } = v;
+  const res = cur.filter(t => !t.unresolved), un = cur.filter(t => t.unresolved);
+  const avg = res.length ? res.reduce((s, t) => s + t.hours, 0) / res.length : 0;
+  const older = h => un.filter(t => (MAXD - t.d) / 36e5 > h);
+  const o24 = older(24), o48 = older(48), o72 = older(72);
+  const riskOld = o48.filter(t => t.risk || t.refund);
+
+  const L = (l, val, sub, tone) => {
+    const d = el("div", "lead");
+    if (tone) d.style.borderLeft = "3px solid " + tone;
+    d.appendChild(el("div", "lead-l", l));
+    const x = el("div", "lead-v"); x.innerHTML = val; d.appendChild(x);
+    if (sub) { const s = el("div", "lead-s"); s.innerHTML = sub; d.appendChild(s); }
+    return d;
+  };
+
+  document.getElementById("res-grid").replaceChildren(
+    L("Total resolved", res.length, `${p1(pct(res.length, cur.length))}% of tickets`, "var(--good)"),
+    L("Total unresolved", un.length, `${p1(pct(un.length, cur.length))}% — open + snoozed`, "var(--critical)"),
+    L("Resolution rate", p1(pct(res.length, cur.length)) + "%", `${cur.length} tickets in range`),
+    L("Average resolution time", res.length ? p1(avg) + " h" : "&mdash;", res.length ? "created → last activity" : "no resolved tickets"),
+    L("Unresolved over 24 h", o24.length, o24.length ? o24.slice(0, 6).map(t => "C-" + t.t).join(", ") : "none", o24.length ? "var(--warning)" : null),
+    L("Unresolved over 48 h", o48.length, o48.length ? o48.slice(0, 6).map(t => "C-" + t.t).join(", ") : "none", o48.length ? "var(--serious)" : null),
+    L("Unresolved over 72 h", o72.length, o72.length ? o72.slice(0, 6).map(t => "C-" + t.t).join(", ") : "none", o72.length ? "var(--critical)" : null),
+    L("Ageing with money at stake", riskOld.length,
+      riskOld.length ? "unresolved over 48 h with a refund request or chargeback flag" : "no ageing ticket carries refund or chargeback risk",
+      riskOld.length ? "var(--critical)" : null)
+  );
+}
+
+/* ============ ticket table ============ */
+function renderTable(v) {
+  const { cur } = v;
+  const body = document.querySelector("#tk-tbl tbody");
+  body.replaceChildren();
+  document.getElementById("tk-empty").style.display = cur.length ? "none" : "block";
+  document.getElementById("tk-note").textContent =
+    `${cur.length} of ${T.length} retrieved tickets · click a row for the full message`;
+
+  cur.forEach(t => {
+    const tr = el("tr", "tk");
+    tr.tabIndex = 0;
+    const sizeCol = [t.size, t.color].filter(x => x && x !== "Not Available").join(" / ");
+    tr.innerHTML = `
+      <td class="mono" style="white-space:nowrap">${fmtDT(t.created)}</td>
+      <td class="mono">C-${t.t}</td>
+      <td class="mono">${cell(t.order)}</td>
+      <td>${cell(t.product)}</td>
+      <td>${sizeCol ? esc(sizeCol) : NAV}</td>
+      <td>${esc(t.cat)}</td>
+      <td>${cell(t.sub)}</td>
+      <td class="msg-cell"><div class="clamp">${esc(t.msg)}</div></td>
+      <td><span class="pill p-${t.status}">${t.status}</span>${t.risk ? '<br><span class="tag risk">risk</span>' : ""}</td>
+      <td style="max-width:180px;font-size:12.5px">${cell(t.action)}</td>
+      <td>${cell(t.agent)}</td>`;
+    const toggle = () => { S.open.has(t.t) ? S.open.delete(t.t) : S.open.add(t.t); render(); };
+    tr.onclick = toggle;
+    tr.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } };
+    body.appendChild(tr);
+
+    if (S.open.has(t.t)) {
+      const dr = el("tr", "detail"), td = el("td");
+      td.colSpan = 11;
+      td.innerHTML = `<div class="detail-in">
+        <div>
+          <div class="detail-h">Ticket record</div>
+          <dl class="dl">
+            <dt>Conversation</dt><dd class="mono">C-${t.t}</dd>
+            <dt>Created</dt><dd>${fmtDT(t.created)}</dd>
+            <dt>Last updated</dt><dd>${fmtDT(t.updated)}</dd>
+            <dt>Date resolved</dt><dd>${t.status === "resolved" ? fmtDT(t.updated) + " <span class='na'>(last activity)</span>" : NAV}</dd>
+            <dt>Customer</dt><dd>${cell(t.name)}</dd>
+            <dt>Email</dt><dd class="mono">${cell(t.email)}</dd>
+            <dt>Order number</dt><dd class="mono">${cell(t.order)}</dd>
+            <dt>Store / channel</dt><dd>${cell(t.store)}</dd>
+            <dt>Product</dt><dd>${cell(t.product)}</dd>
+            <dt>SKU</dt><dd>${NAV}</dd>
+            <dt>Variant</dt><dd>${cell(t.variant)}</dd>
+            <dt>Size</dt><dd>${cell(t.size)}</dd>
+            <dt>Colour</dt><dd>${cell(t.color)}</dd>
+            <dt>Status</dt><dd><span class="pill p-${t.status}">${t.status}</span></dd>
+            <dt>Assigned agent</dt><dd>${cell(t.agent)}</dd>
+            <dt>Tags</dt><dd>${t.tags.length ? t.tags.map(x => `<span class="tag${/chargeback/.test(x) ? " risk" : ""}">${esc(x)}</span>`).join("") : NAV}</dd>
+            <dt>Issue</dt><dd>${esc(t.cat)}${t.sub && t.sub !== "Not Available" ? " &rarr; " + esc(t.sub) : ""}</dd>
+            <dt>Resolution</dt><dd>${cell(t.action)}</dd>
+          </dl>
+        </div>
+        <div>
+          <div class="detail-h">Customer's message as received</div>
+          <div class="quote">${esc(t.msg)}</div>
+          <p class="sec-note" style="margin:9px 0 0">Commslayer holds the complete multi-message thread for this conversation under <span class="mono">C-${t.t}</span>. The text above is the customer's own message content captured from that thread.</p>
+        </div>
+      </div>`;
+      dr.appendChild(td);
+      body.appendChild(dr);
+    }
+  });
+}
+
+/* ============ filter plumbing ============ */
+function fillSelect(id, values, keep) {
+  const s = document.getElementById(id);
+  const first = s.querySelector("option").cloneNode(true);
+  s.replaceChildren(first);
+  values.forEach(val => { const o = el("option", null, val); o.value = val; s.appendChild(o); });
+  s.value = keep || "";
+}
+
+function renderChips() {
+  const host = document.getElementById("chips");
+  const items = [];
+  const add = (k, label) => items.push([k, label]);
+  if (S.preset !== "all") add("preset", "Range: " + document.getElementById("f-date").selectedOptions[0].textContent);
+  if (S.store) add("store", "Store: " + S.store);
+  if (S.status) add("status", "Status: " + S.status);
+  if (S.agent) add("agent", "Agent: " + S.agent);
+  if (S.cat) add("cat", "Issue: " + S.cat);
+  if (S.sub) add("sub", "Sub-issue: " + S.sub);
+  if (S.size) add("size", "Size: " + S.size);
+  if (S.color) add("color", "Colour: " + S.color);
+  if (S.product) add("product", "Product: " + S.product);
+  if (S.search) add("search", 'Search: "' + S.search + '"');
+  host.replaceChildren(...items.map(([k, label]) => {
+    const c = el("button", "chip");
+    c.append(document.createTextNode(label), el("span", null, "×"));
+    c.onclick = () => {
+      if (k === "preset") { S.preset = "all"; document.getElementById("f-date").value = "all"; document.getElementById("cr").classList.remove("show"); }
+      else S[k] = "";
+      render();
+    };
+    return c;
+  }));
+}
+
+function render() {
+  const v = currentView();
+  // dimension option lists follow the date range only, so they never dead-end
+  const scope = inRange(T, v.a, v.b);
+  fillSelect("f-store", [...new Set(scope.map(t => t.store))].sort(), S.store);
+  fillSelect("f-status", [...new Set(scope.map(t => t.status))].sort(), S.status);
+  fillSelect("f-agent", [...new Set(scope.map(t => t.agent))].sort(), S.agent);
+  fillSelect("f-issue", [...new Set(scope.map(t => t.cat))].sort(), S.cat);
+  fillSelect("f-sub", [...new Set(scope.map(t => t.sub))].filter(x => x !== "Not Available").sort(), S.sub);
+  fillSelect("f-size", [...new Set(scope.map(t => t.size))].filter(x => x !== "Not Available").sort(), S.size);
+  fillSelect("f-color", [...new Set(scope.flatMap(t => (t.color || "").split(", ")))].filter(x => x && x !== "Not Available").sort(), S.color);
+  fillSelect("f-product", [...new Set(scope.map(t => t.product))].filter(x => x !== "Not Available").sort(), S.product);
+
+  renderChips();
+  renderKPI(v);
+  renderExec(v);
+  renderTrend(v);
+  renderBreakdown(v);
+  renderProduct(v);
+  renderAlerts(v);
+  renderResolution(v);
+  renderTable(v);
+}
+
+/* ============ wiring ============ */
+document.getElementById("f-date").onchange = e => {
+  S.preset = e.target.value;
+  document.getElementById("cr").classList.toggle("show", S.preset === "custom");
+  render();
+};
+document.getElementById("f-from").onchange = e => { S.from = e.target.value; render(); };
+document.getElementById("f-to").onchange = e => { S.to = e.target.value; render(); };
+["store", "status", "agent", "size", "color", "product"].forEach(k => {
+  document.getElementById("f-" + k).onchange = e => { S[k] = e.target.value; render(); };
+});
+document.getElementById("f-issue").onchange = e => { S.cat = e.target.value; S.sub = ""; render(); };
+document.getElementById("f-sub").onchange = e => { S.sub = e.target.value; render(); };
+let sdeb;
+document.getElementById("f-search").oninput = e => {
+  clearTimeout(sdeb);
+  sdeb = setTimeout(() => { S.search = e.target.value.trim(); render(); }, 180);
+};
+document.getElementById("f-reset").onclick = () => {
+  Object.assign(S, { preset: "all", from: "", to: "", store: "", status: "", agent: "", search: "", cat: "", sub: "", size: "", color: "", product: "" });
+  S.hidden.clear(); S.open.clear();
+  document.getElementById("f-date").value = "all";
+  document.getElementById("f-search").value = "";
+  document.getElementById("cr").classList.remove("show");
+  render();
+};
+document.querySelectorAll("#gran .btn").forEach(b => {
+  b.onclick = () => {
+    S.gran = b.dataset.g;
+    document.querySelectorAll("#gran .btn").forEach(x => x.classList.toggle("on", x === b));
+    render();
+  };
+});
+let rz;
+addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => renderTrend(currentView()), 140); });
+
+/* masthead + footer facts */
+document.getElementById("m-count").textContent = T.length;
+document.getElementById("m-range").textContent =
+  `C-${NUMS[0]} – C-${NUMS[NUMS.length - 1]} · ${fmtDT(MIND.toISOString())} – ${fmtDT(MAXD.toISOString())} UTC`;
+document.getElementById("m-gaps").textContent =
+  GAPS.length ? `${GAPS.length} conversation IDs missing in range` : "Unbroken conversation-ID range — no sampling";
+document.getElementById("foot-cov").textContent =
+  `${T.length} consecutive conversations, C-${NUMS[0]} through C-${NUMS[NUMS.length - 1]}, covering ${fmtDT(MIND.toISOString())} to ${fmtDT(MAXD.toISOString())} UTC${GAPS.length ? ` (${GAPS.length} IDs missing)` : " with no gaps"}.`;
+document.getElementById("foot-today").textContent = isoDay(dayStart(MAXD));
+document.getElementById("f-from").value = isoDay(dayStart(MIND));
+document.getElementById("f-to").value = isoDay(dayStart(MAXD));
+
+render();
+</script>
