@@ -1,0 +1,16 @@
+{
+  "note": "July-onward per-issue counts from Commslayer reports_contact_reasons, one call per period per account. Simply Elsie is resolved weekly from its account creation (14 Jul 2026); the other three are resolved as a July block plus 1-10 Aug, because their taxonomies are far larger and a weekly pull across all of them was not affordable in one pass. 'created' comes from reports_overview daily arrays for Simply Elsie and from the period total for the rest.",
+  "brands": {
+    "Simply Elsie": [
+      {"from": "2026-07-14", "to": "2026-07-20", "kind": "block", "created": 58,
+       "g": {"Returns & Exchanges": 1, "Order Issue": 6, "Shipping & Delivery": 13, "Product Question": 23, "Order Status": 0, "Billing & Payments": 4, "General / Other": 8, "Subscription": 3},
+       "s": {"sizeExchange": 0, "delayed": 0, "tracking": 2, "lostPackage": 2, "wrongAddress": 0, "wrongItem": 0, "damagedItem": 0, "refundRequest": 0, "cancelOrder": 1, "editOrder": 2, "productDetails": 6, "scamAccusation": 0, "negativeFeedback": 0, "positiveFeedback": 0}},
+      {"from": "2026-07-21", "to": "2026-07-27", "kind": "block", "created": 153,
+       "g": {"Returns & Exchanges": 5, "Order Issue": 7, "Shipping & Delivery": 32, "Product Question": 20, "Order Status": 0, "Billing & Payments": 3, "General / Other": 25, "Subscription": 0},
+       "s": {"sizeExchange": 4, "delayed": 9, "tracking": 4, "lostPackage": 0, "wrongAddress": 1, "wrongItem": 0, "damagedItem": 0, "refundRequest": 2, "cancelOrder": 2, "editOrder": 2, "productDetails": 10, "scamAccusation": 0, "negativeFeedback": 0, "positiveFeedback": 0}},
+      {"from": "2026-07-28", "to": "2026-08-10", "kind": "block", "created": 576,
+       "g": {"Returns & Exchanges": 108, "Order Issue": 77, "Shipping & Delivery": 127, "Product Question": 82, "Order Status": 0, "Billing & Payments": 30, "General / Other": 36, "Subscription": 0},
+       "s": {"sizeExchange": 48, "delayed": 43, "tracking": 35, "lostPackage": 13, "wrongAddress": 5, "wrongItem": 2, "damagedItem": 3, "refundRequest": 26, "cancelOrder": 15, "editOrder": 5, "productDetails": 45, "scamAccusation": 9, "negativeFeedback": 0, "positiveFeedback": 0}}
+    ]
+  }
+}

@@ -380,14 +380,14 @@
       <h2><span class="sec-num">01</span>Brand comparison &mdash; complete population</h2>
       <div class="ctl-row" style="gap:10px 14px">
         <div class="seg" id="bperiod">
-          <button class="btn" data-p="2026-08-17:2026-08-17">Today</button>
-          <button class="btn" data-p="2026-08-16:2026-08-16">Yesterday</button>
-          <button class="btn on" data-p="2026-08-11:2026-08-17">Full week</button>
+          <button class="btn on" data-p="2026-08-11:2026-08-17">This week</button>
+          <button class="btn" data-p="2026-07-01:2026-07-31">July</button>
+          <button class="btn" data-p="2026-07-01:2026-08-17">Everything</button>
           <button class="btn" data-p="custom">Custom&hellip;</button>
         </div>
         <div class="ctl custom-range" id="bcr">
-          <div class="ctl"><label for="b-from">From</label><input type="date" id="b-from" min="2026-08-11" max="2026-08-17"></div>
-          <div class="ctl"><label for="b-to">To</label><input type="date" id="b-to" min="2026-08-11" max="2026-08-17"></div>
+          <div class="ctl"><label for="b-from">From</label><input type="date" id="b-from" min="2026-07-01" max="2026-08-17"></div>
+          <div class="ctl"><label for="b-to">To</label><input type="date" id="b-to" min="2026-07-01" max="2026-08-17"></div>
         </div>
       </div>
     </div>
@@ -436,19 +436,21 @@
       <div class="daterow">
         <div class="ctl">
           <label for="m-from">From</label>
-          <input type="date" id="m-from" min="2026-08-11" max="2026-08-17">
+          <input type="date" id="m-from" min="2026-07-01" max="2026-08-17">
         </div>
         <div class="ctl">
           <label for="m-to">To</label>
-          <input type="date" id="m-to" min="2026-08-11" max="2026-08-17">
+          <input type="date" id="m-to" min="2026-07-01" max="2026-08-17">
         </div>
         <div class="ctl">
           <label>Quick ranges</label>
           <div class="seg" id="mixperiod">
             <button class="btn" data-p="2026-08-17:2026-08-17">Today</button>
             <button class="btn" data-p="2026-08-16:2026-08-16">Yesterday</button>
-            <button class="btn" data-p="2026-08-15:2026-08-17">Last 3 days</button>
-            <button class="btn on" data-p="2026-08-11:2026-08-17">Full week</button>
+            <button class="btn on" data-p="2026-08-11:2026-08-17">This week</button>
+            <button class="btn" data-p="2026-08-01:2026-08-17">August</button>
+            <button class="btn" data-p="2026-07-01:2026-07-31">July</button>
+            <button class="btn" data-p="2026-07-01:2026-08-17">Everything</button>
           </div>
         </div>
         <div class="daterow-note" id="mix-range-note"></div>
@@ -623,6 +625,7 @@ function periodSlice(brandName, from, to) {
       out.used.push(p);
       if (p.partial) out.partial = true;
       if (p.derived) out.derived = true;
+      if (p.created == null) out.noTotal = true;
     } else if (p.to >= from && p.from <= to) {
       out.clipped.push(p);
     }
@@ -905,8 +908,9 @@ function renderBrands() {
   const LBL = [["size_issue", "Tagged size_issue"], ["refund-approved", "Refund approved, awaiting processing"], ["chargeback", "Chargeback"]];
 
   const mode = S.mixMode;
-  const fmtCell = (n, brandTotal) => {
+  const fmtCell = (n, brandTotal, noShare) => {
     if (n == null) return NAV;
+    if (noShare || !brandTotal) return `<b>${n.toLocaleString()}</b>`;
     const share = pct(n, brandTotal);
     if (mode === "count") return `<b>${n.toLocaleString()}</b>`;
     if (mode === "pct") return `${p1(share)}%`;
@@ -936,7 +940,7 @@ function renderBrands() {
     const sum = known.length ? known.reduce((a, c) => a + c, 0) : null;
     const one = (v2, b) => raw
       ? (v2 == null ? NAV : `<b>${v2.toLocaleString()}</b>`)
-      : fmtCell(v2, b ? b.created : 0);
+      : fmtCell(v2, b ? b.created : 0, b && b._slice.noTotal);
     tr.innerHTML = `<td>${esc(label)}</td>` +
       B.map((b, i) => {
         const v2 = vals[i];
@@ -945,7 +949,9 @@ function renderBrands() {
       }).join("") +
       `<td class="num">${sum == null ? NAV
         : raw ? `<b>${sum.toLocaleString()}</b>`
-        : fmtCell(sum, known.length === B.length ? totalAll : B.filter((b, i) => vals[i] != null).reduce((s, b) => s + b.created, 0))}</td>`;
+        : fmtCell(sum,
+            B.filter((b, i) => vals[i] != null).reduce((s, b) => s + b.created, 0),
+            B.some((b, i) => vals[i] != null && b._slice.noTotal))}</td>`;
     mb.appendChild(tr);
   };
 
@@ -981,11 +987,17 @@ function renderBrands() {
   const tot = avail.reduce((s, b) => s + b.created, 0), totSz = avail.reduce((s, b) => s + (b.sub.sizeExchange || 0), 0);
   const withLabel = avail.filter(b => b.labels.size_issue != null);
   const totalDays = dayCount(S.bfrom, S.bto);
+  const withTotal = avail.filter(b => !b._slice.noTotal);
+  const totKnown = withTotal.reduce((s, b) => s + b.created, 0);
   document.getElementById("mix-range-note").innerHTML =
     `Counting <b>${esc(fmtD(Date.parse(S.bfrom + "T00:00:00Z")))} &ndash; ${esc(fmtD(Date.parse(S.bto + "T00:00:00Z")))}</b>` +
-    ` &middot; <b>${tot.toLocaleString()}</b> tickets across ${avail.length} brand${avail.length === 1 ? "" : "s"}` +
-    (B.length - avail.length ? `, ${B.length - avail.length} unavailable at this range` : "") +
-    `. Every figure below recalculates with these dates.`;
+    ` &middot; issue counts for <b>${avail.length}</b> of ${B.length} brand${B.length === 1 ? "" : "s"}` +
+    (B.length - avail.length ? ` (${B.filter(b => b._slice.unavailable).map(b => esc(b.name)).join(", ")} unavailable at this range)` : "") +
+    (withTotal.length === avail.length
+      ? ` &middot; <b>${totKnown.toLocaleString()}</b> tickets received.`
+      : ` &middot; ticket totals exist for ${withTotal.length ? withTotal.map(b => esc(b.name)).join(", ") : "no brand"} only` +
+        `, so shares are hidden for the rest and counts are shown alone.`) +
+    ` Every figure below recalculates with these dates.`;
   document.getElementById("brand-size-note").innerHTML =
     `Across ${avail.length === B.length ? "all four brands" : avail.length + " of the four brands"}, <b>${totSz.toLocaleString()}</b> of <b>${tot.toLocaleString()}</b> tickets (${p1(pct(totSz, tot))}%) are size exchanges &mdash; ` +
     `the single largest driver in the business, and the only issue that ranks near the top in every market. ` +
@@ -1700,7 +1712,7 @@ document.getElementById("f-reset").onclick = () => {
 /* One period drives all of section 1. Two controls edit it — the one in the
    section header and the one sitting on the tickets-per-issue table — so they
    are kept in sync from the same state rather than holding separate values. */
-const PERIOD_MIN = "2026-08-11", PERIOD_MAX = "2026-08-17";
+const PERIOD_MIN = "2026-07-01", PERIOD_MAX = "2026-08-17";
 function setPeriod(from, to) {
   S.bfrom = from < PERIOD_MIN ? PERIOD_MIN : from > PERIOD_MAX ? PERIOD_MAX : from;
   S.bto = to < PERIOD_MIN ? PERIOD_MIN : to > PERIOD_MAX ? PERIOD_MAX : to;

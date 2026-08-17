@@ -1,0 +1,12 @@
+{
+  "brands": {
+    "Lyn's Tanks": [
+      {"from": "2026-07-01", "to": "2026-07-31", "kind": "block", "created": null,
+       "g": {"Returns & Exchanges": 311, "Order Issue": 516, "Shipping & Delivery": 129, "Product Question": 529, "Order Status": 0, "Billing & Payments": 145, "General / Other": 185, "Subscription": 1},
+       "s": {"sizeExchange": 244, "delayed": 39, "tracking": 33, "lostPackage": 13, "wrongAddress": 5, "wrongItem": 13, "damagedItem": 3, "refundRequest": 118, "cancelOrder": 28, "editOrder": 90, "productDetails": 166, "scamAccusation": 0, "negativeFeedback": 0, "positiveFeedback": 73}},
+      {"from": "2026-08-01", "to": "2026-08-10", "kind": "block", "created": null,
+       "g": {"Returns & Exchanges": 53, "Order Issue": 84, "Shipping & Delivery": 50, "Product Question": 79, "Order Status": 0, "Billing & Payments": 18, "General / Other": 25, "Subscription": 0},
+       "s": {"sizeExchange": 45, "delayed": 24, "tracking": 15, "lostPackage": 1, "wrongAddress": 0, "wrongItem": 0, "damagedItem": 0, "refundRequest": 5, "cancelOrder": 3, "editOrder": 13, "productDetails": 33, "scamAccusation": 0, "negativeFeedback": 0, "positiveFeedback": 3}}
+    ]
+  }
+}

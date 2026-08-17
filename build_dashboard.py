@@ -39,9 +39,11 @@ def main():
     brands = json.loads((ROOT / "data" / "brands.json").read_text(encoding="utf-8"))
 
     daily = json.loads((ROOT / "data" / "daily_issues.json").read_text(encoding="utf-8"))
-    for extra in ("daily_mary.json",):
+    for extra in ("daily_mary.json", "july_issues.json", "july_maggie.json",
+                  "july_lyn.json", "july_mary.json"):
         more = json.loads((ROOT / "data" / extra).read_text(encoding="utf-8"))
-        daily["brands"].update(more["brands"])
+        for name, periods in more["brands"].items():
+            daily["brands"].setdefault(name, []).extend(periods)
     for name, periods in daily["brands"].items():
         periods.sort(key=lambda p: p["from"])
 

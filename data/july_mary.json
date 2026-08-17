@@ -1,0 +1,9 @@
+{
+  "brands": {
+    "Mary's Tanks": [
+      {"from": "2026-07-01", "to": "2026-07-31", "kind": "block", "created": null,
+       "g": {"Returns & Exchanges": 1858, "Order Issue": 1982, "Shipping & Delivery": 717, "Product Question": 1046, "Order Status": 0, "Billing & Payments": 554, "General / Other": 356, "Subscription": 0},
+       "s": {"sizeExchange": 768, "delayed": 268, "tracking": 117, "lostPackage": 44, "wrongAddress": 34, "wrongItem": 25, "damagedItem": 11, "refundRequest": 289, "cancelOrder": 79, "editOrder": 214, "productDetails": 940, "scamAccusation": 72, "negativeFeedback": 0, "positiveFeedback": 0}}
+    ]
+  }
+}

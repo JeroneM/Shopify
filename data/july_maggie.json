@@ -1,0 +1,12 @@
+{
+  "brands": {
+    "Maggies Tanks": [
+      {"from": "2026-07-01", "to": "2026-07-31", "kind": "block", "created": null,
+       "g": {"Returns & Exchanges": 1956, "Order Issue": 1597, "Shipping & Delivery": 755, "Product Question": 1074, "Order Status": 849, "Billing & Payments": 551, "General / Other": 1789, "Subscription": 7},
+       "s": {"sizeExchange": 1062, "delayed": 270, "tracking": 84, "lostPackage": 84, "wrongAddress": 163, "wrongItem": 72, "damagedItem": 22, "refundRequest": 471, "cancelOrder": 362, "editOrder": 362, "productDetails": 979, "scamAccusation": 96, "negativeFeedback": 240, "positiveFeedback": 0}},
+      {"from": "2026-08-01", "to": "2026-08-10", "kind": "block", "created": null,
+       "g": {"Returns & Exchanges": 1671, "Order Issue": 1433, "Shipping & Delivery": 1477, "Product Question": 761, "Order Status": 1457, "Billing & Payments": 370, "General / Other": 1342, "Subscription": 0},
+       "s": {"sizeExchange": 1228, "delayed": 791, "tracking": 324, "lostPackage": 80, "wrongAddress": 106, "wrongItem": 62, "damagedItem": 9, "refundRequest": 280, "cancelOrder": 215, "editOrder": 266, "productDetails": 503, "scamAccusation": 139, "negativeFeedback": 120, "positiveFeedback": 59}}
+    ]
+  }
+}
