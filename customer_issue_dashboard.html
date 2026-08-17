@@ -277,6 +277,13 @@
     background: color-mix(in srgb, var(--warning) 12%, transparent);
     border-color: color-mix(in srgb, var(--warning) 45%, transparent);
   }
+  .daterow {
+    display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: flex-end;
+    padding: 11px 13px; margin-bottom: 13px;
+    background: var(--surface-2); border: 1px solid var(--rule); border-radius: 8px;
+  }
+  .daterow-note { font-size: 12px; color: var(--ink-2); flex: 1 1 260px; min-width: 220px; line-height: 1.5; }
+  .daterow-note b { color: var(--ink); font-weight: 600; }
   .brand-dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; flex: none; }
   td.brand-cell { white-space: nowrap; }
   td.brand-cell span.nm { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; }
@@ -418,13 +425,33 @@
       </div>
     </div>
     <div class="card pad" style="margin-top:14px">
-      <div class="sec-head" style="border:0;padding:0;margin-bottom:11px">
+      <div class="sec-head" style="border:0;padding:0;margin-bottom:6px">
         <div class="detail-h" style="margin:0">Tickets per issue, by brand</div>
         <div class="seg" id="mixmode">
           <button class="btn on" data-m="both">Count + %</button>
           <button class="btn" data-m="count">Count</button>
           <button class="btn" data-m="pct">% of brand</button>
         </div>
+      </div>
+      <div class="daterow">
+        <div class="ctl">
+          <label for="m-from">From</label>
+          <input type="date" id="m-from" min="2026-08-11" max="2026-08-17">
+        </div>
+        <div class="ctl">
+          <label for="m-to">To</label>
+          <input type="date" id="m-to" min="2026-08-11" max="2026-08-17">
+        </div>
+        <div class="ctl">
+          <label>Quick ranges</label>
+          <div class="seg" id="mixperiod">
+            <button class="btn" data-p="2026-08-17:2026-08-17">Today</button>
+            <button class="btn" data-p="2026-08-16:2026-08-16">Yesterday</button>
+            <button class="btn" data-p="2026-08-15:2026-08-17">Last 3 days</button>
+            <button class="btn on" data-p="2026-08-11:2026-08-17">Full week</button>
+          </div>
+        </div>
+        <div class="daterow-note" id="mix-range-note"></div>
       </div>
       <div class="tbl-scroll"><table id="brand-mix"><thead></thead><tbody></tbody></table></div>
       <p class="sec-note" style="margin:11px 0 0">
@@ -901,18 +928,24 @@ function renderBrands() {
     tr.innerHTML = `<td colspan="${B.length + 2}" style="background:var(--surface-2);font-size:10.5px;text-transform:uppercase;letter-spacing:.085em;color:var(--ink-3);font-weight:600">${esc(txt)}</td>`;
     mb.appendChild(tr);
   };
-  const dataRow = (label, get) => {
+  // raw rows carry a count that is not period-sliced, so no share is shown for them
+  const dataRow = (label, get, raw) => {
     const tr = el("tr");
     const vals = B.map(b => get(b));
     const known = vals.filter(v => v != null);
     const sum = known.length ? known.reduce((a, c) => a + c, 0) : null;
+    const one = (v2, b) => raw
+      ? (v2 == null ? NAV : `<b>${v2.toLocaleString()}</b>`)
+      : fmtCell(v2, b ? b.created : 0);
     tr.innerHTML = `<td>${esc(label)}</td>` +
       B.map((b, i) => {
         const v2 = vals[i];
-        const strength = v2 == null ? 0 : Math.min(1, pct(v2, b.created) / 25);
-        return `<td class="num" style="background:color-mix(in srgb, ${BRAND_COLOR[b.name]} ${Math.round(strength * 26)}%, transparent)">${fmtCell(v2, b.created)}</td>`;
+        const strength = (v2 == null || raw) ? 0 : Math.min(1, pct(v2, b.created) / 25);
+        return `<td class="num" style="background:color-mix(in srgb, ${BRAND_COLOR[b.name]} ${Math.round(strength * 26)}%, transparent)">${one(v2, b)}</td>`;
       }).join("") +
-      `<td class="num">${sum == null ? NAV : fmtCell(sum, known.length === B.length ? totalAll : B.filter((b, i) => vals[i] != null).reduce((s, b) => s + b.created, 0))}</td>`;
+      `<td class="num">${sum == null ? NAV
+        : raw ? `<b>${sum.toLocaleString()}</b>`
+        : fmtCell(sum, known.length === B.length ? totalAll : B.filter((b, i) => vals[i] != null).reduce((s, b) => s + b.created, 0))}</td>`;
     mb.appendChild(tr);
   };
 
@@ -921,8 +954,8 @@ function renderBrands() {
   dataRow("Total tickets received", b => b._slice.unavailable ? null : b.created);
   sectionRow("Detailed reasons (subsets of the groups above)");
   DETAIL.forEach(([k, label]) => dataRow(label, b => b._slice.unavailable ? null : (b.sub[k] || 0)));
-  sectionRow("Commslayer labels");
-  LBL.forEach(([k, label]) => dataRow(label, b => b.labels[k] == null ? null : b.labels[k]));
+  sectionRow("Commslayer labels — whole week 11–17 Aug, not sliced by the dates above");
+  LBL.forEach(([k, label]) => dataRow(label, b => b.labels[k] == null ? null : b.labels[k], true));
 
   // sizing pressure
   const sizeHost = document.getElementById("brand-size");
@@ -947,6 +980,12 @@ function renderBrands() {
   const avail = B.filter(b => !b._slice.unavailable);
   const tot = avail.reduce((s, b) => s + b.created, 0), totSz = avail.reduce((s, b) => s + (b.sub.sizeExchange || 0), 0);
   const withLabel = avail.filter(b => b.labels.size_issue != null);
+  const totalDays = dayCount(S.bfrom, S.bto);
+  document.getElementById("mix-range-note").innerHTML =
+    `Counting <b>${esc(fmtD(Date.parse(S.bfrom + "T00:00:00Z")))} &ndash; ${esc(fmtD(Date.parse(S.bto + "T00:00:00Z")))}</b>` +
+    ` &middot; <b>${tot.toLocaleString()}</b> tickets across ${avail.length} brand${avail.length === 1 ? "" : "s"}` +
+    (B.length - avail.length ? `, ${B.length - avail.length} unavailable at this range` : "") +
+    `. Every figure below recalculates with these dates.`;
   document.getElementById("brand-size-note").innerHTML =
     `Across ${avail.length === B.length ? "all four brands" : avail.length + " of the four brands"}, <b>${totSz.toLocaleString()}</b> of <b>${tot.toLocaleString()}</b> tickets (${p1(pct(totSz, tot))}%) are size exchanges &mdash; ` +
     `the single largest driver in the business, and the only issue that ranks near the top in every market. ` +
@@ -1658,24 +1697,52 @@ document.getElementById("f-reset").onclick = () => {
   document.getElementById("cr").classList.remove("show");
   render();
 };
-document.querySelectorAll("#bperiod .btn").forEach(b => {
+/* One period drives all of section 1. Two controls edit it — the one in the
+   section header and the one sitting on the tickets-per-issue table — so they
+   are kept in sync from the same state rather than holding separate values. */
+const PERIOD_MIN = "2026-08-11", PERIOD_MAX = "2026-08-17";
+function setPeriod(from, to) {
+  S.bfrom = from < PERIOD_MIN ? PERIOD_MIN : from > PERIOD_MAX ? PERIOD_MAX : from;
+  S.bto = to < PERIOD_MIN ? PERIOD_MIN : to > PERIOD_MAX ? PERIOD_MAX : to;
+  if (S.bto < S.bfrom) S.bto = S.bfrom;
+  syncPeriodControls();
+  render();
+}
+function syncPeriodControls() {
+  ["b-from", "m-from"].forEach(id => { const n = document.getElementById(id); if (n) n.value = S.bfrom; });
+  ["b-to", "m-to"].forEach(id => { const n = document.getElementById(id); if (n) n.value = S.bto; });
+  const tag = S.bfrom + ":" + S.bto;
+  ["#bperiod", "#mixperiod"].forEach(sel => {
+    let matched = false;
+    document.querySelectorAll(sel + " .btn").forEach(x => {
+      const on = x.dataset.p === tag;
+      x.classList.toggle("on", on);
+      if (on) matched = true;
+    });
+    if (!matched) {
+      const custom = document.querySelector(sel + ' .btn[data-p="custom"]');
+      if (custom) custom.classList.add("on");
+    }
+  });
+  document.getElementById("bcr").classList.toggle("show",
+    !document.querySelector('#bperiod .btn[data-p="' + tag + '"]'));
+}
+document.querySelectorAll("#bperiod .btn, #mixperiod .btn").forEach(b => {
   b.onclick = () => {
-    document.querySelectorAll("#bperiod .btn").forEach(x => x.classList.toggle("on", x === b));
-    const custom = b.dataset.p === "custom";
-    document.getElementById("bcr").classList.toggle("show", custom);
-    if (!custom) { const [f, t] = b.dataset.p.split(":"); S.bfrom = f; S.bto = t; }
-    else { S.bfrom = document.getElementById("b-from").value || "2026-08-11"; S.bto = document.getElementById("b-to").value || "2026-08-17"; }
-    render();
+    if (b.dataset.p === "custom") {
+      document.getElementById("bcr").classList.add("show");
+      document.querySelectorAll("#bperiod .btn").forEach(x => x.classList.toggle("on", x === b));
+      return;
+    }
+    const [f, t] = b.dataset.p.split(":");
+    setPeriod(f, t);
   };
 });
-["b-from", "b-to"].forEach(id => {
-  document.getElementById(id).onchange = () => {
-    const f = document.getElementById("b-from").value, t = document.getElementById("b-to").value;
-    if (f) S.bfrom = f;
-    if (t) S.bto = t;
-    if (S.bto < S.bfrom) S.bto = S.bfrom;
-    render();
-  };
+["b-from", "m-from"].forEach(id => {
+  document.getElementById(id).onchange = e => setPeriod(e.target.value || PERIOD_MIN, S.bto);
+});
+["b-to", "m-to"].forEach(id => {
+  document.getElementById(id).onchange = e => setPeriod(S.bfrom, e.target.value || PERIOD_MAX);
 });
 document.querySelectorAll("#mixmode .btn").forEach(b => {
   b.onclick = () => {
@@ -1712,8 +1779,7 @@ document.getElementById("foot-cov").innerHTML =
     return `${b} <b>${rows.length}</b> (C-${rows[0]}–C-${rows[rows.length - 1]}${gaps.length ? "" : ", contiguous"})`;
   }).join("; ") + ".";
 document.getElementById("foot-today").textContent = isoDay(dayStart(MAXD));
-document.getElementById("b-from").value = S.bfrom;
-document.getElementById("b-to").value = S.bto;
+syncPeriodControls();
 document.getElementById("f-from").value = isoDay(dayStart(MIND));
 document.getElementById("f-to").value = isoDay(dayStart(MAXD));
 
