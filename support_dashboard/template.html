@@ -168,6 +168,16 @@ tr td:first-child{padding-left:10px}
 #tip b{font-family:var(--mono); font-variant-numeric:tabular-nums}
 #tip .r{display:flex; justify-content:space-between; gap:16px; color:var(--ink-2)}
 
+.quotes{display:grid; gap:14px}
+.quote{display:grid; grid-template-columns:132px 1fr; gap:16px; padding-top:14px;
+  border-top:1px solid var(--rule)}
+.quote:first-child{border-top:none; padding-top:0}
+.quote .meta{font-size:11.5px; color:var(--ink-2); line-height:1.6}
+.quote .meta b{display:block; font-family:var(--mono); font-size:13px; color:var(--ink)}
+.quote blockquote{margin:0; font-size:13px; line-height:1.6; color:var(--ink);
+  border-left:2px solid var(--rule-strong); padding-left:14px}
+.quote .why{font-size:11.5px; color:var(--ink-2); margin-top:7px}
+@media (max-width:700px){ .quote{grid-template-columns:1fr; gap:6px} }
 .notes{font-size:12px; color:var(--ink-2); display:grid; gap:9px; max-width:92ch}
 .notes b{color:var(--ink); font-weight:600}
 footer{border-top:1px solid var(--rule); padding:22px 0 46px; font-size:11.5px; color:var(--ink-3)}
@@ -197,6 +207,7 @@ footer{border-top:1px solid var(--rule); padding:22px 0 46px; font-size:11.5px; 
       <div>Reporting period<b id="m-period"></b></div>
       <div>Compared with<b id="m-prev"></b></div>
       <div>Data pulled<b id="m-gen"></b></div>
+      <div>Backlog counts<b id="m-live"></b></div>
     </div>
   </div>
 </header>
@@ -347,6 +358,13 @@ footer{border-top:1px solid var(--rule); padding:22px 0 46px; font-size:11.5px; 
         <div class="pills" id="unres-pills"></div>
       </div>
       <div class="tscroll" id="t-unres"></div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="chart-head">
+        <h3>What the oldest tickets actually say</h3>
+        <span class="sub">Read from the message bodies, not inferred from labels</span>
+      </div>
+      <div id="quotes"></div>
     </div>
   </section>
 
@@ -1156,12 +1174,12 @@ function renderUnresolved(){
 
   $('#unres-title').innerHTML = `${fmt(rows.length)} shown`;
   $('#unres-scope').innerHTML = `Mary&rsquo;s Tanks has <b class="num">${fmt(D.unresolved_meta.total_open)}</b>
-    open tickets; the <b class="num">${fmt(D.unresolved_meta.captured)}</b> below are the most
-    recently active plus the entire stale tail, so nothing old is missing. A red stripe means
-    no action is recorded against the ticket; amber means an action was agreed but is still
-    waiting to be carried out. Order numbers and the free-text action notes live inside the
-    message bodies, which the Commslayer message API would not release today — see the method
-    note at the foot of the page.`;
+    open tickets, up from 247 two days ago. The <b class="num">${fmt(D.unresolved_meta.captured)}</b>
+    below are the entire stale tail plus every aged ticket found on the middle pages, so nothing
+    old is missing — the recent, still-being-worked ones are the part not listed. A red stripe
+    means no action is recorded against the ticket; amber means an action was agreed but is
+    still waiting to be carried out. Order numbers were read from the message bodies for the
+    oldest and highest-priority tickets, quoted in full below the table.`;
 
   const body = rows.map(r => {
     const sev = r.action_state === 'none' && r.age_days > 3 ? 'sev-crit'
@@ -1171,8 +1189,12 @@ function renderUnresolved(){
       {none:'No action', pending:'Action pending', assigned:'Assigned', ai:'AI only'}[r.action_state]}</span>`;
     return {sev, cells:[
       `<span class="tk">#${r.ticket}</span>`,
+      r.order ? `<span class="tk">#${esc(r.order)}</span>`
+              : '<span style="color:var(--ink-3)">—</span>',
       esc(r.customer),
-      esc(r.issue),
+      esc(r.issue) + (r.from_text
+        ? ' <span class="scoped" title="Read from the conversation, not the label">from text</span>'
+        : ''),
       r.agent === 'UNASSIGNED' ? '<span style="color:var(--crit-ink);font-weight:600">Unassigned</span>' : esc(r.agent),
       esc(r.action) + '<br>' + tag,
       r.channel,
@@ -1181,8 +1203,8 @@ function renderUnresolved(){
     ]};
   });
   $('#t-unres').innerHTML = tableHTML(
-    ['Ticket','Customer','Issue','Assigned agent','Action taken','Channel','Age','Idle'],
-    body.map(b => b.cells), [6,7], i => body[i].sev);
+    ['Ticket','Order','Customer','Issue','Assigned agent','Action taken','Channel','Age','Idle'],
+    body.map(b => b.cells), [7,8], i => body[i].sev);
 
   const counts = {
     all: all.length,
@@ -1198,6 +1220,35 @@ function renderUnresolved(){
     b.onclick = () => { unresFilter = k; renderUnresolved(); };
     $('#unres-pills').append(b);
   });
+}
+
+/* ---------------- verbatim quotes from the oldest tickets ---------------- */
+function renderQuotes(){
+  const rows = D.unresolved.filter(r => r.says)
+    .sort((a,b) => b.age_days - a.age_days);
+  const host = $('#quotes');
+  if (!rows.length){ host.innerHTML = ''; return; }
+  const wrap = el('div','quotes');
+  rows.forEach(r => {
+    const q = el('div','quote');
+    q.innerHTML = `<div class="meta">
+        <b>#${esc(r.ticket)}</b>
+        ${esc(r.customer)}<br>
+        ${r.order ? 'Order #' + esc(r.order) + '<br>' : ''}
+        <span class="num">${r.age_days.toFixed(0)} days old</span><br>
+        ${r.agent === 'UNASSIGNED'
+          ? '<span style="color:var(--crit-ink);font-weight:600">Unassigned</span>'
+          : esc(r.agent)}
+      </div>
+      <div>
+        <blockquote>${esc(r.says)}</blockquote>
+        <p class="why">${esc(r.issue)} &middot; ${esc(r.action)}${
+          r.why ? '<br><span style="color:var(--crit-ink)">Re-classified: ' + esc(r.why) + '</span>' : ''}</p>
+      </div>`;
+    wrap.append(q);
+  });
+  host.innerHTML = '';
+  host.append(wrap);
 }
 
 /* ---------------- stores ---------------- */
@@ -1463,14 +1514,15 @@ function renderMethod(){
      a refund, a replacement or a shipment, and they are reported separately as a live count
      rather than folded into a rate.`,
 
-    `<b>What is not here, and why.</b> Order numbers, agent notes and the free-text action
-     recorded on each ticket live inside message bodies. The Commslayer message endpoint
-     returned "daily message access limit reached (20,000 messages/day)" for the whole of this
-     session, so per-ticket order numbers and action text could not be read. The unresolved
-     table therefore infers action from the workflow labels the team applies — pfg-ready,
-     refund-approved, ai-size-swap and so on — which record what was agreed, not what was
-     said. Re-running this build tomorrow, when the message quota resets, would fill those two
-     columns in.`,
+    `<b>Order numbers and what customers actually wrote.</b> These live inside message bodies.
+     The Commslayer message endpoint was over its 20,000-a-day cap when this dashboard was
+     first built on 15 August; the cap has since reset, so the oldest and highest-priority open
+     tickets were read in full and their order numbers and opening words appear below the
+     unresolved table. The rest of the table still infers action from the workflow labels the
+     team applies — pfg-ready, refund-approved, ai-size-swap and so on — which record what was
+     agreed rather than what was said. Reading all ${fmt(D.unresolved_meta.total_open)} open
+     tickets would exhaust the daily message quota, so it is deliberately limited to the ones
+     that need a decision.`,
 
     `<b>What the date picker actually re-slices.</b> Tickets created, tickets closed and
      average resolution time are stored as day-by-day arrays covering
@@ -1518,7 +1570,7 @@ function renderMethod(){
 function renderAll(){
   renderSummary(); renderKPIs(); renderResolution(); renderIssues();
   renderVolume(); renderLines(); renderDelta(); renderUnresolved();
-  renderEmail(); renderStores(); renderMethod();
+  renderQuotes(); renderEmail(); renderStores(); renderMethod();
   $('#d-from').value = HIST[R.a];
   $('#d-to').value = HIST[R.b];
   const pr = prevRange();
@@ -1598,6 +1650,7 @@ document.addEventListener('click', e => {
 $('#m-period').textContent = shortDate(D.period.cur[0]) + ' – ' + shortDate(D.period.cur[1]);
 $('#m-prev').textContent = shortDate(D.period.prev[0]) + ' – ' + shortDate(D.period.prev[1]);
 $('#m-gen').textContent = D.generated;
+$('#m-live').textContent = 'live at ' + D.unresolved_meta.as_of.slice(11,16) + ' UTC';
 $('#f-gen').textContent = D.generated;
 buildPills();
 renderAll();

@@ -1,8 +1,8 @@
 {
-"_comment": "Daily created / closed / avg-resolution-seconds per store, 2026-05-24 to 2026-08-15 (84 days). Pulled from Commslayer reports_overview chart_data. The first 54 values come from the 2026-05-24..2026-07-16 call, the last 30 from the 2026-07-17..2026-08-15 call. A zero before an account's launch date means the account did not exist yet, not that nothing happened.",
+"_comment": "Daily created / closures / avg-resolution-seconds per store, 2026-05-24 to 2026-08-17 (86 days), from Commslayer reports_overview chart_data. A zero before an account's launch date means the account did not exist yet. The final day is a part-day - data pulled 2026-08-17 06:15 UTC.",
 "from": "2026-05-24",
-"to": "2026-08-15",
-"days": 84,
+"to": "2026-08-17",
+"days": 86,
 "stores": {
 "maggies": {
 "created": [
@@ -89,7 +89,9 @@
 1516,
 1560,
 1578,
-256
+256,
+1452,
+243
 ],
 "closed": [
 0,
@@ -175,7 +177,9 @@
 1516,
 1551,
 1806,
-496
+496,
+1583,
+348
 ],
 "res": [
 0,
@@ -261,7 +265,9 @@
 63827,
 135034,
 172877,
-174391
+174391,
+172862,
+172848
 ]
 },
 "marys": {
@@ -349,7 +355,9 @@
 446,
 346,
 318,
-192
+192,
+283,
+200
 ],
 "closed": [
 28,
@@ -435,7 +443,9 @@
 516,
 387,
 561,
-444
+444,
+336,
+180
 ],
 "res": [
 4351,
@@ -521,7 +531,9 @@
 110526,
 173115,
 184062,
-176733
+176733,
+173161,
+278759
 ]
 },
 "mj": {
@@ -609,7 +621,9 @@
 34,
 30,
 45,
-11
+11,
+22,
+6
 ],
 "closed": [
 0,
@@ -695,7 +709,9 @@
 45,
 45,
 45,
-14
+14,
+63,
+3
 ],
 "res": [
 0,
@@ -781,7 +797,9 @@
 86424,
 83765,
 86477,
-86444
+86444,
+57074,
+34250
 ]
 },
 "lyns": {
@@ -869,7 +887,9 @@
 35,
 31,
 29,
-11
+11,
+32,
+17
 ],
 "closed": [
 0,
@@ -955,7 +975,9 @@
 46,
 58,
 11,
-23
+23,
+23,
+15
 ],
 "res": [
 0,
@@ -1041,7 +1063,9 @@
 10382,
 177934,
 334,
-72854
+72854,
+22373,
+215899
 ]
 },
 "elsie": {
@@ -1129,7 +1153,9 @@
 46,
 65,
 42,
-14
+14,
+47,
+2
 ],
 "closed": [
 0,
@@ -1215,7 +1241,9 @@
 53,
 83,
 28,
-34
+34,
+36,
+17
 ],
 "res": [
 0,
@@ -1301,7 +1329,9 @@
 48135,
 11706,
 2555,
-189531
+189531,
+6086,
+330495
 ]
 }
 },

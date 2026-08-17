@@ -1,10 +1,19 @@
 # Where every number came from
 
-All figures were pulled from Commslayer on **2026-08-15** via the Commslayer MCP
+Last refreshed **2026-08-17 06:20 UTC**. Figures come from the Commslayer MCP
 tools, plus one Shopify Admin API call.
 
-- **Daily history: 2026-05-24 → 2026-08-15 (84 days).** This is what the dashboard's
+Refreshed on 2026-08-17: daily history extended by two days, live backlog counts
+re-read on all five stores, Mary's Tanks open-ticket list re-pulled, and — the
+message quota having reset — order numbers and verbatim customer text read for
+the oldest and highest-priority open tickets. The issue breakdown, the email
+buckets and the Shopify order counts still carry their 15 August windows and are
+labelled as such on the page.
+
+- **Daily history: 2026-05-24 → 2026-08-17 (86 days).** This is what the dashboard's
   date picker slices; any range inside it is summed exactly.
+- **Backlog counts (open / pending / snoozed): live at 2026-08-17 06:20 UTC.** Not
+  date-scoped — they are a snapshot of the queue right now.
 - **Issue breakdown: 2026-07-17 → 2026-08-15**, compared with 2026-06-17 → 2026-07-16.
   Fixed windows — the issue charts do not follow the date picker.
 - **Email / channel volume: three 28-day buckets** — May 24–Jun 20, Jun 21–Jul 18,
@@ -28,7 +37,8 @@ tools, plus one Shopify Admin API call.
 | Per-inbox tickets, inbound messages, replies sent, resolution time | `reports_inboxes` | Per store, per 28-day bucket (15 calls). This is the source of the email-volume section and of the unanswered-Facebook finding. It has no daily series, which is why email figures are bucketed rather than daily. |
 | Issue categories | `reports_contact_reasons` | Per account. Commslayer derives a contact reason per conversation **from the message text**, not from agent tags. Mary's Tanks was pulled for both 30-day periods and for each of the four weeks 19 Jul – 15 Aug; the other four for the current period only. |
 | Open / snoozed / resolved counts, inbox and label config | `account_overview` | Live account state at pull time. |
-| Open ticket rows | `conversations_list` (status=open) | Mary's Tanks. Capped at 500 rows / 30 days by the API; pages 1, 4 and 5 of 5 were taken so the whole stale tail is present — 147 of 247 open tickets. |
+| Open ticket rows | `conversations_list` (status=open) | Mary's Tanks, re-pulled 2026-08-17. Now 529 open across 10 pages, capped at 500 rows by the API. Page 10 (the least-recently-active 50) plus every aged ticket on page 4 were taken, so the whole stale tail is present — 70 rows. |
+| Order numbers, customer's own words | `conversations_get` | The oldest and highest-priority open tickets only. Reading all 529 would exhaust the 20,000-message daily quota. |
 | Agent performance | `reports_agents` | Current period, Mary's Tanks. |
 | Shopify order counts | `GET /admin/api/2024-01/orders/count.json` | Lyn's Tanks only — the one store whose API token is present in this environment. 1,376 orders this period, 3,972 the previous one. |
 
@@ -85,9 +95,21 @@ period figure for the same window is about 5 hours. The dashboard uses the
 daily-derived figure so the headline and the chart agree with each other, and
 says so on the page.
 
-## Rebuilding after the message quota resets
+## Where the auto-labels are wrong
 
-`conversations_get` was capped for this whole session, so order numbers and
-free-text action notes are still missing from the unresolved table. Re-running
-`build_data.py` with a `conversations_get` pass over the open tickets would fill
-both columns; nothing else about the build needs to change.
+Reading the message bodies turned up tickets whose Commslayer auto-label does not
+match what the customer wrote. Two are corrected in the dashboard and marked
+"from text" in the unresolved table:
+
+- **#41452** is labelled `fulfilment-error`, but Debra Murray is reporting size
+  inconsistency between three garments she ordered, not a picking mistake. Filed
+  as Sizing & Fit.
+- **#44182** is labelled `product-question`, but Jennifer Phillips is reporting
+  that the garment does not support or shape as sold — and is flagged
+  pre-chargeback-risk. Filed as Product Quality.
+
+Both were auto-labelled, and the label is what the issue charts count. The
+group-level issue mix comes from Commslayer's contact reasons, which read the
+message text rather than the label, so it is not affected by this — but the
+unresolved table is, and any future pass should re-check labels against text on
+the tickets that matter.

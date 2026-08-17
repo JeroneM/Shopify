@@ -413,7 +413,7 @@ STORES = {
         "region": "US",
         "created_cur": 25884, "created_prev": 4088,
         "closed_cur": 21513,
-        "open": 1383, "pending": 2, "snoozed": 4358, "resolved_lifetime": 25593,
+        "open": 1735, "pending": 2, "snoozed": 4235, "resolved_lifetime": 28277,
         "res_time_s": 18315,
         "email_created": 22072, "email_res_s": 8381,
         "fb_created": 3812, "fb_replies": 212, "fb_res_s": 172880,
@@ -435,7 +435,7 @@ STORES = {
         "region": "AU",
         "created_cur": 9362, "created_prev": 6348,
         "closed_cur": 8756,
-        "open": 247, "pending": 0, "snoozed": 1402, "resolved_lifetime": 19528,
+        "open": 529, "pending": 0, "snoozed": 1136, "resolved_lifetime": 20074,
         "res_time_s": 14369,
         "email_created": 8661, "email_res_s": 10615,
         "fb_created": 702, "fb_replies": 121, "fb_res_s": 170000,
@@ -457,7 +457,7 @@ STORES = {
         "region": "US",
         "created_cur": 2215, "created_prev": None,
         "closed_cur": 2265,
-        "open": 44, "pending": 14, "snoozed": 19, "resolved_lifetime": 4266,
+        "open": 19, "pending": 14, "snoozed": 21, "resolved_lifetime": 4342,
         "res_time_s": 25475,
         "email_created": 1763, "email_res_s": 9989,
         "fb_created": 452, "fb_replies": 11, "fb_res_s": 86500,
@@ -470,7 +470,7 @@ STORES = {
         "region": "US/NZ",
         "created_cur": 1252, "created_prev": 3308,
         "closed_cur": 1028,
-        "open": 18, "pending": 0, "snoozed": 506, "resolved_lifetime": 6531,
+        "open": 30, "pending": 0, "snoozed": 515, "resolved_lifetime": 6566,
         "res_time_s": 13837,
         "email_created": 1252, "email_res_s": 13837,
         "fb_created": 0, "fb_replies": 0, "fb_res_s": None,
@@ -492,7 +492,7 @@ STORES = {
         "region": "UK",
         "created_cur": 976, "created_prev": None,
         "closed_cur": 862,
-        "open": 73, "pending": 0, "snoozed": 85, "resolved_lifetime": 852,
+        "open": 91, "pending": 0, "snoozed": 105, "resolved_lifetime": 904,
         "res_time_s": 15899,
         "email_created": 976, "email_res_s": 15899,
         "fb_created": 0, "fb_replies": 0, "fb_res_s": None,
@@ -567,7 +567,7 @@ ACTION_LABELS = {
     "pre-chargeback-risk": "Flagged as chargeback risk",
     "priority-refunds": "Queued for priority refund processing",
 }
-NOW = "2026-08-15T11:00"
+NOW = "2026-08-17T06:20"
 
 
 def to_min(ts):
@@ -597,7 +597,12 @@ for tk, created, last, prio, inbox, cust, agent, labels in open_raw["tickets"]:
         action, action_state = "AI agent handling, no human action recorded", "ai"
     else:
         action, action_state = f"Assigned to {agent}", "assigned"
+    enr = open_raw.get("enriched", {}).get(tk, {})
+    if enr.get("issue_from_text"):
+        issue = enr["issue_from_text"]
     rows.append({
+        "order": enr.get("order"), "says": enr.get("says"),
+        "from_text": bool(enr.get("issue_from_text")), "why": enr.get("why"),
         "ticket": tk, "created": created, "last": last, "priority": prio,
         "channel": inbox, "customer": cust, "agent": agent, "issue": issue,
         "labels": ls, "action": action, "action_state": action_state,
@@ -656,7 +661,7 @@ totals["resolution"] = {
 }
 
 OUT = {
-    "generated": "2026-08-15",
+    "generated": "2026-08-17",
     "period": {"cur": CUR, "prev": PREV},
     "daily_dates": DAILY_DATES,
     "history": {
@@ -674,7 +679,9 @@ OUT = {
     "marys_weeks": mt_weeks,
     "unresolved": rows,
     "unresolved_meta": {"total_open": open_raw["total_open"],
-                        "captured": len(rows)},
+                        "captured": len(rows),
+                        "as_of": open_raw["as_of"]},
+    "enriched": open_raw.get("enriched", {}),
 }
 
 (HERE / "data" / "dashboard_data.json").write_text(json.dumps(OUT, indent=1))

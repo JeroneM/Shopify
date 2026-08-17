@@ -168,6 +168,16 @@ tr td:first-child{padding-left:10px}
 #tip b{font-family:var(--mono); font-variant-numeric:tabular-nums}
 #tip .r{display:flex; justify-content:space-between; gap:16px; color:var(--ink-2)}
 
+.quotes{display:grid; gap:14px}
+.quote{display:grid; grid-template-columns:132px 1fr; gap:16px; padding-top:14px;
+  border-top:1px solid var(--rule)}
+.quote:first-child{border-top:none; padding-top:0}
+.quote .meta{font-size:11.5px; color:var(--ink-2); line-height:1.6}
+.quote .meta b{display:block; font-family:var(--mono); font-size:13px; color:var(--ink)}
+.quote blockquote{margin:0; font-size:13px; line-height:1.6; color:var(--ink);
+  border-left:2px solid var(--rule-strong); padding-left:14px}
+.quote .why{font-size:11.5px; color:var(--ink-2); margin-top:7px}
+@media (max-width:700px){ .quote{grid-template-columns:1fr; gap:6px} }
 .notes{font-size:12px; color:var(--ink-2); display:grid; gap:9px; max-width:92ch}
 .notes b{color:var(--ink); font-weight:600}
 footer{border-top:1px solid var(--rule); padding:22px 0 46px; font-size:11.5px; color:var(--ink-3)}
@@ -197,6 +207,7 @@ footer{border-top:1px solid var(--rule); padding:22px 0 46px; font-size:11.5px; 
       <div>Reporting period<b id="m-period"></b></div>
       <div>Compared with<b id="m-prev"></b></div>
       <div>Data pulled<b id="m-gen"></b></div>
+      <div>Backlog counts<b id="m-live"></b></div>
     </div>
   </div>
 </header>
@@ -348,6 +359,13 @@ footer{border-top:1px solid var(--rule); padding:22px 0 46px; font-size:11.5px; 
       </div>
       <div class="tscroll" id="t-unres"></div>
     </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="chart-head">
+        <h3>What the oldest tickets actually say</h3>
+        <span class="sub">Read from the message bodies, not inferred from labels</span>
+      </div>
+      <div id="quotes"></div>
+    </div>
   </section>
 
   <section class="band">
@@ -418,7 +436,7 @@ footer{border-top:1px solid var(--rule); padding:22px 0 46px; font-size:11.5px; 
 
 <script>
 const D = {
- "generated": "2026-08-15",
+ "generated": "2026-08-17",
  "period": {
   "cur": [
    "2026-07-17",
@@ -546,10 +564,12 @@ const D = {
    "2026-08-12",
    "2026-08-13",
    "2026-08-14",
-   "2026-08-15"
+   "2026-08-15",
+   "2026-08-16",
+   "2026-08-17"
   ],
   "from": "2026-05-24",
-  "to": "2026-08-15",
+  "to": "2026-08-17",
   "launched": {
    "maggies": "2026-05-26",
    "marys": null,
@@ -643,7 +663,9 @@ const D = {
      1516,
      1560,
      1578,
-     256
+     256,
+     1452,
+     243
     ],
     "closed": [
      0,
@@ -729,7 +751,9 @@ const D = {
      1516,
      1551,
      1806,
-     496
+     496,
+     1583,
+     348
     ],
     "res": [
      0,
@@ -815,7 +839,9 @@ const D = {
      63827,
      135034,
      172877,
-     174391
+     174391,
+     172862,
+     172848
     ]
    },
    "marys": {
@@ -903,7 +929,9 @@ const D = {
      446,
      346,
      318,
-     192
+     192,
+     283,
+     200
     ],
     "closed": [
      28,
@@ -989,7 +1017,9 @@ const D = {
      516,
      387,
      561,
-     444
+     444,
+     336,
+     180
     ],
     "res": [
      4351,
@@ -1075,7 +1105,9 @@ const D = {
      110526,
      173115,
      184062,
-     176733
+     176733,
+     173161,
+     278759
     ]
    },
    "mj": {
@@ -1163,7 +1195,9 @@ const D = {
      34,
      30,
      45,
-     11
+     11,
+     22,
+     6
     ],
     "closed": [
      0,
@@ -1249,7 +1283,9 @@ const D = {
      45,
      45,
      45,
-     14
+     14,
+     63,
+     3
     ],
     "res": [
      0,
@@ -1335,7 +1371,9 @@ const D = {
      86424,
      83765,
      86477,
-     86444
+     86444,
+     57074,
+     34250
     ]
    },
    "lyns": {
@@ -1423,7 +1461,9 @@ const D = {
      35,
      31,
      29,
-     11
+     11,
+     32,
+     17
     ],
     "closed": [
      0,
@@ -1509,7 +1549,9 @@ const D = {
      46,
      58,
      11,
-     23
+     23,
+     23,
+     15
     ],
     "res": [
      0,
@@ -1595,7 +1637,9 @@ const D = {
      10382,
      177934,
      334,
-     72854
+     72854,
+     22373,
+     215899
     ]
    },
    "elsie": {
@@ -1683,7 +1727,9 @@ const D = {
      46,
      65,
      42,
-     14
+     14,
+     47,
+     2
     ],
     "closed": [
      0,
@@ -1769,7 +1815,9 @@ const D = {
      53,
      83,
      28,
-     34
+     34,
+     36,
+     17
     ],
     "res": [
      0,
@@ -1855,7 +1903,9 @@ const D = {
      48135,
      11706,
      2555,
-     189531
+     189531,
+     6086,
+     330495
     ]
    }
   }
@@ -2132,10 +2182,10 @@ const D = {
    "created_cur": 25884,
    "created_prev": 4088,
    "closed_cur": 21513,
-   "open": 1383,
+   "open": 1735,
    "pending": 2,
-   "snoozed": 4358,
-   "resolved_lifetime": 25593,
+   "snoozed": 4235,
+   "resolved_lifetime": 28277,
    "res_time_s": 18315,
    "email_created": 22072,
    "email_res_s": 8381,
@@ -2268,10 +2318,10 @@ const D = {
    "created_cur": 9362,
    "created_prev": 6348,
    "closed_cur": 8756,
-   "open": 247,
+   "open": 529,
    "pending": 0,
-   "snoozed": 1402,
-   "resolved_lifetime": 19528,
+   "snoozed": 1136,
+   "resolved_lifetime": 20074,
    "res_time_s": 14369,
    "email_created": 8661,
    "email_res_s": 10615,
@@ -2651,10 +2701,10 @@ const D = {
    "created_cur": 2215,
    "created_prev": null,
    "closed_cur": 2265,
-   "open": 44,
+   "open": 19,
    "pending": 14,
-   "snoozed": 19,
-   "resolved_lifetime": 4266,
+   "snoozed": 21,
+   "resolved_lifetime": 4342,
    "res_time_s": 25475,
    "email_created": 1763,
    "email_res_s": 9989,
@@ -2694,10 +2744,10 @@ const D = {
    "created_cur": 1252,
    "created_prev": 3308,
    "closed_cur": 1028,
-   "open": 18,
+   "open": 30,
    "pending": 0,
-   "snoozed": 506,
-   "resolved_lifetime": 6531,
+   "snoozed": 515,
+   "resolved_lifetime": 6566,
    "res_time_s": 13837,
    "email_created": 1252,
    "email_res_s": 13837,
@@ -2830,10 +2880,10 @@ const D = {
    "created_cur": 976,
    "created_prev": null,
    "closed_cur": 862,
-   "open": 73,
+   "open": 91,
    "pending": 0,
-   "snoozed": 85,
-   "resolved_lifetime": 852,
+   "snoozed": 105,
+   "resolved_lifetime": 904,
    "res_time_s": 15899,
    "email_created": 976,
    "email_res_s": 15899,
@@ -2984,9 +3034,9 @@ const D = {
  "totals": {
   "created_cur": 39689,
   "closed_cur": 34424,
-  "open": 1765,
+  "open": 2404,
   "pending": 16,
-  "snoozed": 6370,
+  "snoozed": 6012,
   "created_prev": 13744,
   "fb_created": 4966,
   "fb_replies": 344,
@@ -3000,8 +3050,8 @@ const D = {
    "closed_no_reply": 4622,
    "repeat_contact": 686,
    "genuinely_resolved": 29116,
-   "still_open": 1781,
-   "parked_snoozed": 6370,
+   "still_open": 2420,
+   "parked_snoozed": 6012,
    "nominal_rate": 86.7,
    "actual_rate": 73.4
   }
@@ -3102,51 +3152,17 @@ const D = {
  ],
  "unresolved": [
   {
-   "ticket": "31088",
-   "created": "2026-06-30T23:19",
-   "last": "2026-08-14T00:10",
+   "order": "17755",
+   "says": "Thank you for my order no: 17755 but I need to exchange the nude and white cami for the next size down to a L as the XL is too big. I have worn the black cami so will keep that. Please advise how to send back to exchange for a smaller size.",
+   "from_text": false,
+   "why": null,
+   "ticket": "33880",
+   "created": "2026-07-13T05:14",
+   "last": "2026-08-17T03:56",
    "priority": null,
    "channel": "Email",
-   "customer": "Fabienne Hayes",
-   "agent": "Raiza",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "return-exchange",
-    "refund-request",
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 46.5,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "32224",
-   "created": "2026-07-05T23:51",
-   "last": "2026-08-14T03:08",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Alison Fitzgerald",
-   "agent": "Sarah",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "return-exchange",
-    "refund-request",
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 40.5,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "33142",
-   "created": "2026-07-09T13:52",
-   "last": "2026-08-14T00:30",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Lawri Bryden",
-   "agent": "UNASSIGNED",
+   "customer": "Liss-Tove Guest",
+   "agent": "Rose",
    "issue": "Replacement / Exchange",
    "labels": [
     "return-exchange",
@@ -3154,408 +3170,188 @@ const D = {
    ],
    "action": "Replacement approved, awaiting fulfilment",
    "action_state": "pending",
-   "age_days": 36.9,
-   "idle_days": 1.4
+   "age_days": 35.0,
+   "idle_days": 0.1
   },
   {
-   "ticket": "34701",
-   "created": "2026-07-16T02:18",
-   "last": "2026-08-14T00:51",
+   "order": null,
+   "says": "Regrettably, my tanks are too big for me. Can I please exchange them for XXL? Can you advise a return address?",
+   "from_text": false,
+   "why": null,
+   "ticket": "35183",
+   "created": "2026-07-17T13:26",
+   "last": "2026-08-17T03:51",
    "priority": null,
    "channel": "Email",
-   "customer": "Donna Coe",
-   "agent": "UNASSIGNED",
+   "customer": "Judy Tonini",
+   "agent": "Rose",
    "issue": "Replacement / Exchange",
    "labels": [
     "return-exchange",
-    "refund-request",
+    "pfg-ready"
+   ],
+   "action": "Replacement approved, awaiting fulfilment",
+   "action_state": "pending",
+   "age_days": 30.7,
+   "idle_days": 0.1
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "35203",
+   "created": "2026-07-17T20:58",
+   "last": "2026-08-17T03:44",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Dianne Bryant",
+   "agent": "Rose",
+   "issue": "Replacement / Exchange",
+   "labels": [
+    "return-exchange",
     "pfg-ready"
    ],
    "action": "Replacement approved, awaiting fulfilment",
    "action_state": "pending",
    "age_days": 30.4,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "34731",
-   "created": "2026-07-16T03:43",
-   "last": "2026-08-15T10:42",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Jenny Trad",
-   "agent": "Rose",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "return-exchange",
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 30.3,
-   "idle_days": 0.0
-  },
-  {
-   "ticket": "35894",
-   "created": "2026-07-21T01:27",
-   "last": "2026-08-15T09:32",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Jenny Lawrence",
-   "agent": "Rose",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "return-exchange",
-    "refund-request",
-    "thank-you",
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 25.4,
    "idle_days": 0.1
   },
   {
-   "ticket": "36811",
-   "created": "2026-07-24T01:34",
-   "last": "2026-08-15T10:14",
+   "order": null,
+   "says": "Thankyou for my order but they are very tight across my bust can I return for next size up, please",
+   "from_text": false,
+   "why": null,
+   "ticket": "36492",
+   "created": "2026-07-23T01:50",
+   "last": "2026-08-15T19:22",
    "priority": null,
    "channel": "Email",
-   "customer": "cold-shadow-746",
-   "agent": "Rose",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status",
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 22.4,
-   "idle_days": 0.0
-  },
-  {
-   "ticket": "37398",
-   "created": "2026-07-26T10:47",
-   "last": "2026-08-15T09:09",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Sandy Paris",
-   "agent": "Rose",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "return-exchange",
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 20.0,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "37928",
-   "created": "2026-07-28T01:11",
-   "last": "2026-08-15T09:09",
-   "priority": null,
-   "channel": "Email",
-   "customer": "aged-thunder-14",
-   "agent": "Rose",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "return-exchange",
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 18.4,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "37961",
-   "created": "2026-07-28T02:41",
-   "last": "2026-08-14T07:20",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Deborah Kakoschke",
-   "agent": "Raiza",
-   "issue": "Billing & Payments",
-   "labels": [
-    "payment-issue"
-   ],
-   "action": "Assigned to Raiza",
-   "action_state": "assigned",
-   "age_days": 18.3,
-   "idle_days": 1.2
-  },
-  {
-   "ticket": "38022",
-   "created": "2026-07-28T06:11",
-   "last": "2026-08-14T06:05",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Shirley",
-   "agent": "Jomalyn",
-   "issue": "Product Question",
-   "labels": [
-    "product-question"
-   ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 18.2,
-   "idle_days": 1.2
-  },
-  {
-   "ticket": "38105",
-   "created": "2026-07-28T11:00",
-   "last": "2026-08-14T01:17",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Cynthia Impey",
+   "customer": "Debbie Tinsley",
    "agent": "UNASSIGNED",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status",
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 18.0,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "38397",
-   "created": "2026-07-29T06:34",
-   "last": "2026-08-14T03:41",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Jen Arnall",
-   "agent": "UNASSIGNED",
-   "issue": "Refund",
-   "labels": [
-    "refund-request",
-    "thank-you"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 17.2,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "38715",
-   "created": "2026-07-30T04:51",
-   "last": "2026-08-13T23:04",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Tracie",
-   "agent": "Raiza",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "Assigned to Raiza",
-   "action_state": "assigned",
-   "age_days": 16.3,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "38685",
-   "created": "2026-07-30T03:41",
-   "last": "2026-08-13T20:40",
-   "priority": null,
-   "channel": "Email",
-   "customer": "misty-cloud-477",
-   "agent": "Raiza",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status",
-    "refund-request"
-   ],
-   "action": "Assigned to Raiza",
-   "action_state": "assigned",
-   "age_days": 16.3,
-   "idle_days": 1.6
-  },
-  {
-   "ticket": "38916",
-   "created": "2026-07-30T20:15",
-   "last": "2026-08-13T22:41",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Jill Pregnell",
-   "agent": "Raiza",
-   "issue": "Refund",
-   "labels": [
-    "refund-request"
-   ],
-   "action": "Assigned to Raiza",
-   "action_state": "assigned",
-   "age_days": 15.6,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "39820",
-   "created": "2026-08-02T12:02",
-   "last": "2026-08-15T10:40",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Karen Thompson",
-   "agent": "Rose",
-   "issue": "Product Quality",
-   "labels": [
-    "damaged-item",
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 13.0,
-   "idle_days": 0.0
-  },
-  {
-   "ticket": "39962",
-   "created": "2026-08-03T01:20",
-   "last": "2026-08-15T09:19",
-   "priority": "high",
-   "channel": "Email",
-   "customer": "Annie",
-   "agent": "Rose",
-   "issue": "Wrong Item",
-   "labels": [
-    "fulfilment-error",
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 12.4,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "40069",
-   "created": "2026-08-03T05:27",
-   "last": "2026-08-13T22:12",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Janese Williamson",
-   "agent": "UNASSIGNED",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "return-exchange",
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 12.2,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "40533",
-   "created": "2026-08-04T09:18",
-   "last": "2026-08-15T09:11",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Elaine Hall",
-   "agent": "Rose",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "return-exchange",
-    "refund-request",
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 11.1,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "40594",
-   "created": "2026-08-04T15:09",
-   "last": "2026-08-13T22:18",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Julie",
-   "agent": "Raiza",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "Assigned to Raiza",
-   "action_state": "assigned",
-   "age_days": 10.8,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "40988",
-   "created": "2026-08-05T22:09",
-   "last": "2026-08-13T22:35",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Mandy",
-   "agent": "Raiza",
-   "issue": "Refund",
-   "labels": [
-    "refund-request",
-    "product-question"
-   ],
-   "action": "Assigned to Raiza",
-   "action_state": "assigned",
-   "age_days": 9.5,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "41067",
-   "created": "2026-08-06T01:31",
-   "last": "2026-08-13T23:29",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Barb Campbell",
-   "agent": "Raiza",
    "issue": "Replacement / Exchange",
    "labels": [
     "return-exchange"
    ],
-   "action": "Assigned to Raiza",
-   "action_state": "assigned",
-   "age_days": 9.4,
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 25.2,
    "idle_days": 1.5
   },
   {
-   "ticket": "41172",
-   "created": "2026-08-06T05:35",
-   "last": "2026-08-14T03:48",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "36556",
+   "created": "2026-07-23T05:10",
+   "last": "2026-08-15T22:03",
    "priority": null,
    "channel": "Email",
-   "customer": "janine mulder",
-   "agent": "UNASSIGNED",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "return-exchange",
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 9.2,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "41344",
-   "created": "2026-08-06T22:12",
-   "last": "2026-08-15T09:26",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Judith White",
+   "customer": "Susan Whitworth",
    "agent": "Raiza",
-   "issue": "Order Status & Changes",
+   "issue": "Product Question",
    "labels": [
-    "order-status",
-    "refund-request"
+    "product-question"
    ],
    "action": "Assigned to Raiza",
    "action_state": "assigned",
-   "age_days": 8.5,
-   "idle_days": 0.1
+   "age_days": 25.0,
+   "idle_days": 1.3
   },
   {
-   "ticket": "41548",
-   "created": "2026-08-07T06:13",
-   "last": "2026-08-15T09:05",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "36628",
+   "created": "2026-07-23T08:56",
+   "last": "2026-08-15T22:07",
    "priority": null,
    "channel": "Email",
-   "customer": "Lesley Williamson",
+   "customer": "Janelle",
+   "agent": "Raiza",
+   "issue": "Unclassified (no label)",
+   "labels": [],
+   "action": "Assigned to Raiza",
+   "action_state": "assigned",
+   "age_days": 24.9,
+   "idle_days": 1.3
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "39545",
+   "created": "2026-08-01T14:09",
+   "last": "2026-08-16T00:16",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Samantha Mackay",
+   "agent": "UNASSIGNED",
+   "issue": "Replacement / Exchange",
+   "labels": [
+    "return-exchange"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 15.7,
+   "idle_days": 1.3
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "41445",
+   "created": "2026-08-07T02:16",
+   "last": "2026-08-15T19:37",
+   "priority": null,
+   "channel": "Email",
+   "customer": "sparkling-wave-490",
+   "agent": "UNASSIGNED",
+   "issue": "Feedback",
+   "labels": [
+    "positive-feedback"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 10.2,
+   "idle_days": 1.4
+  },
+  {
+   "order": null,
+   "says": "I ordered a brown 3xl love love it fits perfectly! I ordered a 4xl white because I was unsure of sizing ITS TOO SMALL!!! And I ordered a black ribbed tank 3xl again too small. I'm very disappointed... there seems to be inconsistency with sizing.",
+   "from_text": true,
+   "why": "auto-labelled fulfilment-error, but she is reporting size inconsistency between garments, not a picking mistake",
+   "ticket": "41452",
+   "created": "2026-08-07T02:24",
+   "last": "2026-08-15T19:41",
+   "priority": "high",
+   "channel": "Email",
+   "customer": "Debra Murray",
+   "agent": "UNASSIGNED",
+   "issue": "Sizing & Fit",
+   "labels": [
+    "fulfilment-error"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 10.2,
+   "idle_days": 1.4
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "41732",
+   "created": "2026-08-07T23:06",
+   "last": "2026-08-17T04:01",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Wendy Purdie",
    "agent": "Rose",
    "issue": "Replacement / Exchange",
    "labels": [
@@ -3564,271 +3360,287 @@ const D = {
    ],
    "action": "Replacement approved, awaiting fulfilment",
    "action_state": "pending",
-   "age_days": 8.2,
+   "age_days": 9.3,
    "idle_days": 0.1
   },
   {
-   "ticket": "41704",
-   "created": "2026-08-07T22:17",
-   "last": "2026-08-15T08:57",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Christine",
-   "agent": "UNASSIGNED",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 7.5,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "41747",
-   "created": "2026-08-07T23:56",
-   "last": "2026-08-15T08:38",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Elaine Williamson",
-   "agent": "Jomalyn",
-   "issue": "Product Question",
-   "labels": [
-    "product-question"
-   ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 7.5,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "41846",
-   "created": "2026-08-08T04:30",
-   "last": "2026-08-13T23:02",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Lynette Nolan",
-   "agent": "Raiza",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status",
-    "refund-request"
-   ],
-   "action": "Assigned to Raiza",
-   "action_state": "assigned",
-   "age_days": 7.3,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "41884",
-   "created": "2026-08-08T06:39",
-   "last": "2026-08-14T03:28",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Kim Pinfold",
-   "agent": "Raiza",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "Assigned to Raiza",
-   "action_state": "assigned",
-   "age_days": 7.2,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "42179",
-   "created": "2026-08-09T10:30",
-   "last": "2026-08-13T22:58",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Rosalie Tasker",
-   "agent": "Joyce",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "Assigned to Joyce",
-   "action_state": "assigned",
-   "age_days": 6.0,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "42267",
-   "created": "2026-08-09T22:59",
-   "last": "2026-08-14T01:24",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Paula",
-   "agent": "Raiza",
-   "issue": "Refund",
-   "labels": [
-    "refund-request"
-   ],
-   "action": "Assigned to Raiza",
-   "action_state": "assigned",
-   "age_days": 5.5,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "42242",
-   "created": "2026-08-09T21:56",
-   "last": "2026-08-13T23:59",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Anne MacDonald",
-   "agent": "Joyce",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "Assigned to Joyce",
-   "action_state": "assigned",
-   "age_days": 5.5,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "42319",
-   "created": "2026-08-10T01:01",
-   "last": "2026-08-14T04:19",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "41766",
+   "created": "2026-08-08T00:48",
+   "last": "2026-08-17T03:45",
    "priority": null,
    "channel": "Facebook",
-   "customer": "Margaret Wood",
+   "customer": "Wendy Evans",
    "agent": "UNASSIGNED",
    "issue": "Unclassified (no label)",
    "labels": [],
    "action": "No action recorded",
    "action_state": "none",
-   "age_days": 5.4,
-   "idle_days": 1.3
+   "age_days": 9.2,
+   "idle_days": 0.1
   },
   {
-   "ticket": "42532",
-   "created": "2026-08-10T09:07",
-   "last": "2026-08-15T10:00",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "41773",
+   "created": "2026-08-08T01:05",
+   "last": "2026-08-17T03:51",
    "priority": null,
    "channel": "Email",
-   "customer": "Jennifer",
-   "agent": "Raiza",
-   "issue": "Refund",
-   "labels": [
-    "refund-request",
-    "payment-issue",
-    "pre-chargeback-risk"
-   ],
-   "action": "Flagged as chargeback risk",
-   "action_state": "pending",
-   "age_days": 5.1,
-   "idle_days": 0.0
-  },
-  {
-   "ticket": "42555",
-   "created": "2026-08-10T10:07",
-   "last": "2026-08-13T23:17",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Jan Arnold",
-   "agent": "Raiza",
+   "customer": "Kaye Randerson",
+   "agent": "Joyce",
    "issue": "Order Status & Changes",
    "labels": [
     "order-status"
    ],
-   "action": "Assigned to Raiza",
+   "action": "Assigned to Joyce",
    "action_state": "assigned",
-   "age_days": 5.0,
-   "idle_days": 1.5
+   "age_days": 9.2,
+   "idle_days": 0.1
   },
   {
-   "ticket": "42717",
-   "created": "2026-08-11T01:47",
-   "last": "2026-08-13T23:39",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "42146",
+   "created": "2026-08-09T07:57",
+   "last": "2026-08-15T20:46",
    "priority": null,
    "channel": "Email",
-   "customer": "Jill",
-   "agent": "Raiza",
+   "customer": "Lyn",
+   "agent": "UNASSIGNED",
    "issue": "Order Status & Changes",
    "labels": [
     "order-status"
    ],
-   "action": "Assigned to Raiza",
-   "action_state": "assigned",
-   "age_days": 4.4,
-   "idle_days": 1.5
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 7.9,
+   "idle_days": 1.4
   },
   {
-   "ticket": "42765",
-   "created": "2026-08-11T03:32",
-   "last": "2026-08-15T09:05",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "42312",
+   "created": "2026-08-10T00:52",
+   "last": "2026-08-17T04:37",
    "priority": null,
    "channel": "Email",
-   "customer": "Alison Wheeler",
-   "agent": "Jomalyn",
+   "customer": "Naree Shields",
+   "agent": "AI (Lovely)",
+   "issue": "Feedback",
+   "labels": [
+    "positive-feedback"
+   ],
+   "action": "AI agent handling, no human action recorded",
+   "action_state": "ai",
+   "age_days": 7.2,
+   "idle_days": 0.1
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "42392",
+   "created": "2026-08-10T03:46",
+   "last": "2026-08-17T04:00",
+   "priority": null,
+   "channel": "Facebook",
+   "customer": "Cathy BennettWhite",
+   "agent": "UNASSIGNED",
+   "issue": "Unclassified (no label)",
+   "labels": [],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 7.1,
+   "idle_days": 0.1
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "43435",
+   "created": "2026-08-12T11:04",
+   "last": "2026-08-15T22:14",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Helaine Freeman",
+   "agent": "Raiza",
    "issue": "Refund",
    "labels": [
     "refund-request"
    ],
-   "action": "Assigned to Jomalyn",
+   "action": "Assigned to Raiza",
    "action_state": "assigned",
+   "age_days": 4.8,
+   "idle_days": 1.3
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "43438",
+   "created": "2026-08-12T11:12",
+   "last": "2026-08-16T00:21",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Jamie Lancova",
+   "agent": "UNASSIGNED",
+   "issue": "Shipping Delay",
+   "labels": [
+    "shipping-issue"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 4.8,
+   "idle_days": 1.2
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "43570",
+   "created": "2026-08-12T22:42",
+   "last": "2026-08-17T04:26",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Perry Burns",
+   "agent": "AI (Lovely)",
+   "issue": "Order Status & Changes",
+   "labels": [
+    "order-status"
+   ],
+   "action": "AI agent handling, no human action recorded",
+   "action_state": "ai",
    "age_days": 4.3,
    "idle_days": 0.1
   },
   {
-   "ticket": "42944",
-   "created": "2026-08-11T11:17",
-   "last": "2026-08-15T08:39",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "43621",
+   "created": "2026-08-13T00:23",
+   "last": "2026-08-15T21:24",
    "priority": null,
    "channel": "Email",
-   "customer": "lyn wood",
-   "agent": "Jomalyn",
-   "issue": "Product Quality",
+   "customer": "Victoria Gittins-Abood",
+   "agent": "UNASSIGNED",
+   "issue": "Replacement / Exchange",
    "labels": [
-    "damaged-item"
+    "return-exchange"
    ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 4.2,
+   "idle_days": 1.4
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "43634",
+   "created": "2026-08-13T00:51",
+   "last": "2026-08-15T22:18",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Valerie Lisle",
+   "agent": "UNASSIGNED",
+   "issue": "Replacement / Exchange",
+   "labels": [
+    "return-exchange"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 4.2,
+   "idle_days": 1.3
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "43783",
+   "created": "2026-08-13T06:51",
+   "last": "2026-08-16T00:09",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Sandy Bramley",
+   "agent": "UNASSIGNED",
+   "issue": "Order Status & Changes",
+   "labels": [
+    "order-status"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
    "age_days": 4.0,
-   "idle_days": 0.1
+   "idle_days": 1.3
   },
   {
-   "ticket": "43006",
-   "created": "2026-08-11T13:11",
-   "last": "2026-08-13T11:39",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "43787",
+   "created": "2026-08-13T06:54",
+   "last": "2026-08-15T23:57",
    "priority": null,
    "channel": "Email",
-   "customer": "Cheryl McGuren",
-   "agent": "Sarah",
+   "customer": "debbie westacott",
+   "agent": "UNASSIGNED",
    "issue": "Unclassified (no label)",
    "labels": [],
-   "action": "Assigned to Sarah",
-   "action_state": "assigned",
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 4.0,
+   "idle_days": 1.3
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "43819",
+   "created": "2026-08-13T08:19",
+   "last": "2026-08-17T04:27",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Sandra Hilton",
+   "agent": "UNASSIGNED",
+   "issue": "Replacement / Exchange",
+   "labels": [
+    "return-exchange"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
    "age_days": 3.9,
-   "idle_days": 2.0
+   "idle_days": 0.1
   },
   {
-   "ticket": "43093",
-   "created": "2026-08-11T21:40",
-   "last": "2026-08-13T23:15",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "43927",
+   "created": "2026-08-13T22:33",
+   "last": "2026-08-15T22:56",
    "priority": null,
    "channel": "Email",
-   "customer": "Julie Davies",
-   "agent": "UNASSIGNED",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status",
-    "refund-request"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 3.6,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "43086",
-   "created": "2026-08-11T21:22",
-   "last": "2026-08-13T21:48",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Mandy McGill",
+   "customer": "Janet Grieve",
    "agent": "UNASSIGNED",
    "issue": "Order Status & Changes",
    "labels": [
@@ -3836,826 +3648,17 @@ const D = {
    ],
    "action": "No action recorded",
    "action_state": "none",
-   "age_days": 3.6,
-   "idle_days": 1.6
-  },
-  {
-   "ticket": "43149",
-   "created": "2026-08-11T23:36",
-   "last": "2026-08-13T21:36",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Josephine Murphy",
-   "agent": "UNASSIGNED",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "return-exchange"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 3.5,
-   "idle_days": 1.6
-  },
-  {
-   "ticket": "43117",
-   "created": "2026-08-11T22:36",
-   "last": "2026-08-13T21:18",
-   "priority": null,
-   "channel": "Email",
-   "customer": "proud-dream-214",
-   "agent": "UNASSIGNED",
-   "issue": "Product Question",
-   "labels": [
-    "product-question"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 3.5,
-   "idle_days": 1.6
-  },
-  {
-   "ticket": "43188",
-   "created": "2026-08-12T00:36",
-   "last": "2026-08-14T05:38",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Robyn",
-   "agent": "Joyce",
-   "issue": "Refund",
-   "labels": [
-    "refund-request",
-    "product-question"
-   ],
-   "action": "Assigned to Joyce",
-   "action_state": "assigned",
-   "age_days": 3.4,
-   "idle_days": 1.2
-  },
-  {
-   "ticket": "43242",
-   "created": "2026-08-12T03:19",
-   "last": "2026-08-13T23:50",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Sue Piggott",
-   "agent": "Joyce",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "Assigned to Joyce",
-   "action_state": "assigned",
    "age_days": 3.3,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "43305",
-   "created": "2026-08-12T06:10",
-   "last": "2026-08-14T04:46",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Carol McMillan",
-   "agent": "Joyce",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "return-exchange",
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 3.2,
    "idle_days": 1.3
   },
   {
-   "ticket": "43338",
-   "created": "2026-08-12T07:11",
-   "last": "2026-08-14T03:13",
-   "priority": null,
-   "channel": "Email",
-   "customer": "J M Robinson",
-   "agent": "Sarah",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "Assigned to Sarah",
-   "action_state": "assigned",
-   "age_days": 3.2,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "43335",
-   "created": "2026-08-12T07:11",
-   "last": "2026-08-13T11:10",
-   "priority": null,
-   "channel": "Email",
-   "customer": "sue richards",
-   "agent": "Sarah",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "Assigned to Sarah",
-   "action_state": "assigned",
-   "age_days": 3.2,
-   "idle_days": 2.0
-  },
-  {
-   "ticket": "43391",
-   "created": "2026-08-12T09:18",
-   "last": "2026-08-14T00:27",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Eleni",
-   "agent": "Joyce",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "Assigned to Joyce",
-   "action_state": "assigned",
-   "age_days": 3.1,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "43385",
-   "created": "2026-08-12T09:12",
-   "last": "2026-08-14T00:24",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Cynthia Impey",
-   "agent": "Jomalyn",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 3.1,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "43417",
-   "created": "2026-08-12T10:23",
-   "last": "2026-08-13T23:04",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Chris",
-   "agent": "UNASSIGNED",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 3.0,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "43528",
-   "created": "2026-08-12T20:15",
-   "last": "2026-08-14T03:35",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Susan Hackett",
-   "agent": "Sarah",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "Assigned to Sarah",
-   "action_state": "assigned",
-   "age_days": 2.6,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "43525",
-   "created": "2026-08-12T20:13",
-   "last": "2026-08-14T02:24",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Annette Cronin",
-   "agent": "Sarah",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "Assigned to Sarah",
-   "action_state": "assigned",
-   "age_days": 2.6,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "43530",
-   "created": "2026-08-12T20:16",
-   "last": "2026-08-13T21:06",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Beverley Austin",
-   "agent": "Sarah",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "Assigned to Sarah",
-   "action_state": "assigned",
-   "age_days": 2.6,
-   "idle_days": 1.6
-  },
-  {
-   "ticket": "43587",
-   "created": "2026-08-12T23:10",
-   "last": "2026-08-13T23:42",
-   "priority": "high",
-   "channel": "Email",
-   "customer": "Jenny Jaap",
-   "agent": "UNASSIGNED",
-   "issue": "Wrong Item",
-   "labels": [
-    "fulfilment-error",
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 2.5,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "43627",
-   "created": "2026-08-13T00:34",
-   "last": "2026-08-15T08:39",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Maxine Mamo",
-   "agent": "Jomalyn",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "return-exchange"
-   ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 2.4,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "43681",
-   "created": "2026-08-13T02:22",
-   "last": "2026-08-14T01:59",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Lynda Casey",
-   "agent": "Joyce",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "Assigned to Joyce",
-   "action_state": "assigned",
-   "age_days": 2.4,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "43724",
-   "created": "2026-08-13T03:57",
-   "last": "2026-08-13T23:12",
-   "priority": null,
-   "channel": "Email",
-   "customer": "andrea douglasa",
-   "agent": "UNASSIGNED",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 2.3,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "43785",
-   "created": "2026-08-13T06:52",
-   "last": "2026-08-14T00:28",
-   "priority": null,
-   "channel": "Email",
-   "customer": "MARGARET CURTIS",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 2.2,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "43788",
-   "created": "2026-08-13T06:55",
-   "last": "2026-08-13T23:32",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Margaret Ford",
-   "agent": "UNASSIGNED",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 2.2,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "43807",
-   "created": "2026-08-13T07:40",
-   "last": "2026-08-15T08:38",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Jayne Thomson",
-   "agent": "Jomalyn",
-   "issue": "Product Quality",
-   "labels": [
-    "damaged-item"
-   ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 2.1,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "43820",
-   "created": "2026-08-13T08:20",
-   "last": "2026-08-14T01:50",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Jackie",
-   "agent": "Joyce",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "Assigned to Joyce",
-   "action_state": "assigned",
-   "age_days": 2.1,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "43867",
-   "created": "2026-08-13T12:05",
-   "last": "2026-08-13T12:05",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Karin McKay",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 2.0,
-   "idle_days": 2.0
-  },
-  {
-   "ticket": "43859",
-   "created": "2026-08-13T11:21",
-   "last": "2026-08-13T11:21",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Lynn Homann",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 2.0,
-   "idle_days": 2.0
-  },
-  {
-   "ticket": "43852",
-   "created": "2026-08-13T10:49",
-   "last": "2026-08-13T10:49",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Joukje Mulder",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 2.0,
-   "idle_days": 2.0
-  },
-  {
-   "ticket": "43881",
-   "created": "2026-08-13T13:33",
-   "last": "2026-08-13T13:33",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Debbie Anne",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.9,
-   "idle_days": 1.9
-  },
-  {
-   "ticket": "43879",
-   "created": "2026-08-13T13:26",
-   "last": "2026-08-13T13:26",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Sue Jacobi",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.9,
-   "idle_days": 1.9
-  },
-  {
-   "ticket": "43878",
-   "created": "2026-08-13T13:25",
-   "last": "2026-08-13T13:25",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Sue Jacobi",
-   "agent": "UNASSIGNED",
-   "issue": "Refund",
-   "labels": [
-    "refund-request"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.9,
-   "idle_days": 1.9
-  },
-  {
-   "ticket": "43877",
-   "created": "2026-08-13T13:25",
-   "last": "2026-08-13T13:25",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Sue Jacobi",
-   "agent": "UNASSIGNED",
-   "issue": "Refund",
-   "labels": [
-    "refund-request"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.9,
-   "idle_days": 1.9
-  },
-  {
-   "ticket": "43871",
-   "created": "2026-08-13T12:28",
-   "last": "2026-08-13T12:28",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Anne Holz",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.9,
-   "idle_days": 1.9
-  },
-  {
-   "ticket": "43868",
-   "created": "2026-08-13T12:15",
-   "last": "2026-08-13T12:15",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Tina Flegg",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.9,
-   "idle_days": 1.9
-  },
-  {
-   "ticket": "43886",
-   "created": "2026-08-13T15:51",
-   "last": "2026-08-13T15:50",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Delana Healey",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.8,
-   "idle_days": 1.8
-  },
-  {
-   "ticket": "43918",
-   "created": "2026-08-13T21:48",
-   "last": "2026-08-14T03:32",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Rachel",
-   "agent": "UNASSIGNED",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.6,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "43914",
-   "created": "2026-08-13T21:24",
-   "last": "2026-08-13T21:46",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Malcolm",
-   "agent": "UNASSIGNED",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.6,
-   "idle_days": 1.6
-  },
-  {
-   "ticket": "43900",
-   "created": "2026-08-13T20:43",
-   "last": "2026-08-13T20:50",
-   "priority": "high",
-   "channel": "Email",
-   "customer": "sandraaxleby",
-   "agent": "UNASSIGNED",
-   "issue": "Wrong Item",
-   "labels": [
-    "fulfilment-error"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.6,
-   "idle_days": 1.6
-  },
-  {
-   "ticket": "43897",
-   "created": "2026-08-13T20:28",
-   "last": "2026-08-13T20:27",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Joanne Rac",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.6,
-   "idle_days": 1.6
-  },
-  {
-   "ticket": "43892",
-   "created": "2026-08-13T20:02",
-   "last": "2026-08-13T20:12",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Cheryl Woods",
-   "agent": "UNASSIGNED",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "return-exchange",
-    "ai-size-swap"
-   ],
-   "action": "Size swapped by AI agent",
-   "action_state": "pending",
-   "age_days": 1.6,
-   "idle_days": 1.6
-  },
-  {
-   "ticket": "43942",
-   "created": "2026-08-13T23:14",
-   "last": "2026-08-15T08:39",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Lyndis Zirbel",
-   "agent": "Jomalyn",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 1.5,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "43948",
-   "created": "2026-08-13T23:38",
-   "last": "2026-08-14T06:59",
-   "priority": null,
-   "channel": "Email",
-   "customer": "George Stolz",
-   "agent": "Joyce",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "Assigned to Joyce",
-   "action_state": "assigned",
-   "age_days": 1.5,
-   "idle_days": 1.2
-  },
-  {
-   "ticket": "43960",
-   "created": "2026-08-14T00:04",
-   "last": "2026-08-14T00:09",
-   "priority": null,
-   "channel": "Email",
-   "customer": "morning-frog-430",
-   "agent": "UNASSIGNED",
-   "issue": "Billing & Payments",
-   "labels": [
-    "payment-issue"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.5,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "43947",
-   "created": "2026-08-13T23:28",
-   "last": "2026-08-13T23:31",
-   "priority": null,
-   "channel": "Email",
-   "customer": "black-log-144",
-   "agent": "UNASSIGNED",
-   "issue": "Product Question",
-   "labels": [
-    "product-question"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.5,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "43945",
-   "created": "2026-08-13T23:25",
-   "last": "2026-08-13T23:29",
-   "priority": null,
-   "channel": "Email",
-   "customer": "autumn-resonance-159",
-   "agent": "UNASSIGNED",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.5,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "43936",
-   "created": "2026-08-13T22:55",
-   "last": "2026-08-13T23:17",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Belinda Signorelli",
-   "agent": "UNASSIGNED",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status",
-    "refund-request"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.5,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "43941",
-   "created": "2026-08-13T23:13",
-   "last": "2026-08-13T23:13",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Lyn Dal Bianco",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.5,
-   "idle_days": 1.5
-  },
-  {
-   "ticket": "44007",
-   "created": "2026-08-14T02:12",
-   "last": "2026-08-14T02:28",
-   "priority": null,
-   "channel": "Email",
-   "customer": "wandering-bird-39",
-   "agent": "UNASSIGNED",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.4,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "43989",
-   "created": "2026-08-14T01:16",
-   "last": "2026-08-14T02:23",
-   "priority": null,
-   "channel": "Email",
-   "customer": "andrea prescott",
-   "agent": "UNASSIGNED",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "return-exchange",
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 1.4,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "44008",
-   "created": "2026-08-14T02:18",
-   "last": "2026-08-14T02:18",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Jacky Weber",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.4,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "44001",
-   "created": "2026-08-14T01:54",
-   "last": "2026-08-14T02:11",
-   "priority": "high",
-   "channel": "Email",
-   "customer": "Kym Hunter",
-   "agent": "UNASSIGNED",
-   "issue": "Refund",
-   "labels": [
-    "refund-request",
-    "fulfilment-error"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.4,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "43986",
-   "created": "2026-08-14T01:05",
-   "last": "2026-08-14T02:06",
-   "priority": null,
-   "channel": "Email",
-   "customer": "wendy juleff",
-   "agent": "UNASSIGNED",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "return-exchange"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.4,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "44000",
-   "created": "2026-08-14T01:54",
-   "last": "2026-08-14T01:58",
-   "priority": null,
-   "channel": "Email",
-   "customer": "fiona cottingham",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.4,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "43974",
-   "created": "2026-08-14T00:32",
-   "last": "2026-08-14T01:50",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Margaret Livingstone",
-   "agent": "UNASSIGNED",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.4,
-   "idle_days": 1.4
-  },
-  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
    "ticket": "43994",
    "created": "2026-08-14T01:33",
-   "last": "2026-08-14T01:47",
+   "last": "2026-08-17T03:47",
    "priority": null,
    "channel": "Email",
    "customer": "Ron Rodie",
@@ -4667,69 +3670,20 @@ const D = {
    ],
    "action": "No action recorded",
    "action_state": "none",
-   "age_days": 1.4,
-   "idle_days": 1.4
+   "age_days": 3.2,
+   "idle_days": 0.1
   },
   {
-   "ticket": "43993",
-   "created": "2026-08-14T01:32",
-   "last": "2026-08-14T01:35",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44114",
+   "created": "2026-08-14T06:35",
+   "last": "2026-08-15T19:44",
    "priority": null,
    "channel": "Email",
-   "customer": "Nola Jones",
-   "agent": "UNASSIGNED",
-   "issue": "Product Question",
-   "labels": [
-    "product-question"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.4,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "43973",
-   "created": "2026-08-14T00:31",
-   "last": "2026-08-14T01:33",
-   "priority": null,
-   "channel": "Email",
-   "customer": "long-voice-732",
-   "agent": "UNASSIGNED",
-   "issue": "Shipping Delay",
-   "labels": [
-    "shipping-issue"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.4,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "43991",
-   "created": "2026-08-14T01:28",
-   "last": "2026-08-14T01:33",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Nola Jones",
-   "agent": "UNASSIGNED",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "return-exchange",
-    "ai-size-swap",
-    "ai-edited-order"
-   ],
-   "action": "Size swapped by AI agent; Order edited by AI agent",
-   "action_state": "pending",
-   "age_days": 1.4,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "43980",
-   "created": "2026-08-14T00:43",
-   "last": "2026-08-14T00:46",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Elizabeth Chapman",
+   "customer": "frosty-grass-274",
    "agent": "UNASSIGNED",
    "issue": "Replacement / Exchange",
    "labels": [
@@ -4737,392 +3691,290 @@ const D = {
    ],
    "action": "No action recorded",
    "action_state": "none",
-   "age_days": 1.4,
+   "age_days": 3.0,
    "idle_days": 1.4
   },
   {
-   "ticket": "43976",
-   "created": "2026-08-14T00:37",
-   "last": "2026-08-14T00:37",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Mary's Tanks Customer care",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.4,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "43966",
-   "created": "2026-08-14T00:20",
-   "last": "2026-08-14T00:24",
+   "order": null,
+   "says": "I don't find they hold me sufficiently in a shape that doesn't sag or flatten out the breast profile shape. I don't feel adequately supported or held up, and the shape is not flattering... I've taken out the cups and just wear them over my existing bra, not what I was hoping for, sadly.",
+   "from_text": true,
+   "why": "auto-labelled product-question, but she is reporting the garment does not support or shape as sold",
+   "ticket": "44182",
+   "created": "2026-08-14T11:05",
+   "last": "2026-08-17T04:04",
    "priority": null,
    "channel": "Email",
-   "customer": "black-log-144",
-   "agent": "UNASSIGNED",
-   "issue": "Billing & Payments",
-   "labels": [
-    "payment-issue"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.4,
-   "idle_days": 1.4
-  },
-  {
-   "ticket": "44070",
-   "created": "2026-08-14T04:51",
-   "last": "2026-08-14T04:51",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Sharon Halliday",
-   "agent": "UNASSIGNED",
-   "issue": "Refund",
-   "labels": [
-    "refund-request"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.3,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "44068",
-   "created": "2026-08-14T04:48",
-   "last": "2026-08-14T04:48",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Sharon Halliday",
-   "agent": "UNASSIGNED",
-   "issue": "Refund",
-   "labels": [
-    "refund-request"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.3,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "44051",
-   "created": "2026-08-14T03:53",
-   "last": "2026-08-14T03:53",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Jenny Alexander",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.3,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "44044",
-   "created": "2026-08-14T03:38",
-   "last": "2026-08-14T03:43",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Linda Tucker",
+   "customer": "Jennifer Phillips",
    "agent": "UNASSIGNED",
    "issue": "Product Quality",
    "labels": [
-    "damaged-item"
+    "product-question",
+    "pre-chargeback-risk"
    ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.3,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "44035",
-   "created": "2026-08-14T03:15",
-   "last": "2026-08-14T03:17",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Ann",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.3,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "44020",
-   "created": "2026-08-14T02:41",
-   "last": "2026-08-14T03:08",
-   "priority": null,
-   "channel": "Email",
-   "customer": "lingering-voice-550",
-   "agent": "UNASSIGNED",
-   "issue": "Cancellation",
-   "labels": [
-    "cancel-order"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.3,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "44032",
-   "created": "2026-08-14T03:08",
-   "last": "2026-08-14T03:08",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Rhonda Pattrick",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.3,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "44031",
-   "created": "2026-08-14T03:04",
-   "last": "2026-08-14T03:07",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Bee Louie",
-   "agent": "UNASSIGNED",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.3,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "44026",
-   "created": "2026-08-14T02:59",
-   "last": "2026-08-14T03:06",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Hilary Grunthal",
-   "agent": "UNASSIGNED",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.3,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "44030",
-   "created": "2026-08-14T03:03",
-   "last": "2026-08-14T03:05",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Mandy McGill",
-   "agent": "UNASSIGNED",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status",
-    "refund-request"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.3,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "44029",
-   "created": "2026-08-14T03:02",
-   "last": "2026-08-14T03:04",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Mandy McGill",
-   "agent": "UNASSIGNED",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status",
-    "refund-request"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.3,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "44021",
-   "created": "2026-08-14T02:42",
-   "last": "2026-08-14T02:42",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Cecilia Moretti",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.3,
-   "idle_days": 1.3
-  },
-  {
-   "ticket": "44098",
-   "created": "2026-08-14T05:57",
-   "last": "2026-08-15T09:14",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Gail",
-   "agent": "Jomalyn",
-   "issue": "Refund",
-   "labels": [
-    "refund-request",
-    "payment-issue"
-   ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 1.2,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "44109",
-   "created": "2026-08-14T06:25",
-   "last": "2026-08-14T06:24",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "LC Bowen",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.2,
-   "idle_days": 1.2
-  },
-  {
-   "ticket": "44102",
-   "created": "2026-08-14T06:09",
-   "last": "2026-08-14T06:08",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Jackie Davis",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.2,
-   "idle_days": 1.2
-  },
-  {
-   "ticket": "44095",
-   "created": "2026-08-14T05:50",
-   "last": "2026-08-14T05:50",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Megan Edwards",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.2,
-   "idle_days": 1.2
-  },
-  {
-   "ticket": "44090",
-   "created": "2026-08-14T05:39",
-   "last": "2026-08-14T05:38",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Christine Storrie",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 1.2,
-   "idle_days": 1.2
-  },
-  {
-   "ticket": "44143",
-   "created": "2026-08-14T08:39",
-   "last": "2026-08-15T08:39",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Lynn",
-   "agent": "Jomalyn",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 1.1,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "44192",
-   "created": "2026-08-14T11:38",
-   "last": "2026-08-15T09:27",
-   "priority": "high",
-   "channel": "Email",
-   "customer": "Eva",
-   "agent": "Ruby",
-   "issue": "Wrong Item",
-   "labels": [
-    "fulfilment-error",
-    "ai-size-swap",
-    "ai-edited-order"
-   ],
-   "action": "Size swapped by AI agent; Order edited by AI agent",
+   "action": "Flagged as chargeback risk",
    "action_state": "pending",
-   "age_days": 1.0,
+   "age_days": 2.8,
    "idle_days": 0.1
   },
   {
-   "ticket": "44314",
-   "created": "2026-08-15T01:40",
-   "last": "2026-08-15T08:38",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44263",
+   "created": "2026-08-14T23:31",
+   "last": "2026-08-15T21:42",
    "priority": null,
    "channel": "Email",
-   "customer": "Elizabeth Sands",
-   "agent": "Jomalyn",
-   "issue": "Refund",
+   "customer": "Ann Eishauer",
+   "agent": "Raiza",
+   "issue": "Order Status & Changes",
    "labels": [
-    "refund-request"
+    "order-status"
    ],
-   "action": "Assigned to Jomalyn",
+   "action": "Assigned to Raiza",
    "action_state": "assigned",
-   "age_days": 0.4,
-   "idle_days": 0.1
+   "age_days": 2.3,
+   "idle_days": 1.4
   },
   {
-   "ticket": "44305",
-   "created": "2026-08-15T01:17",
-   "last": "2026-08-15T08:38",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44264",
+   "created": "2026-08-14T23:31",
+   "last": "2026-08-16T00:32",
    "priority": null,
    "channel": "Email",
-   "customer": "Trish Lampert",
-   "agent": "Jomalyn",
+   "customer": "morning-grass-902",
+   "agent": "UNASSIGNED",
+   "issue": "Product Question",
+   "labels": [
+    "product-question"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 2.3,
+   "idle_days": 1.2
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44283",
+   "created": "2026-08-15T00:15",
+   "last": "2026-08-15T22:23",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Aly Hay",
+   "agent": "UNASSIGNED",
    "issue": "Replacement / Exchange",
    "labels": [
     "return-exchange",
-    "pfg-ready"
+    "refund-request"
    ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 0.4,
-   "idle_days": 0.1
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 2.3,
+   "idle_days": 1.3
   },
   {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44292",
+   "created": "2026-08-15T00:44",
+   "last": "2026-08-15T23:08",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Loretta",
+   "agent": "Raiza",
+   "issue": "Replacement / Exchange",
+   "labels": [
+    "return-exchange"
+   ],
+   "action": "Assigned to Raiza",
+   "action_state": "assigned",
+   "age_days": 2.2,
+   "idle_days": 1.3
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44333",
+   "created": "2026-08-15T02:28",
+   "last": "2026-08-15T19:44",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Evelyn Junghans",
+   "agent": "UNASSIGNED",
+   "issue": "Order Status & Changes",
+   "labels": [
+    "order-status"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 2.2,
+   "idle_days": 1.4
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44339",
+   "created": "2026-08-15T02:51",
+   "last": "2026-08-15T23:16",
+   "priority": null,
+   "channel": "Email",
+   "customer": "falling-fire-140",
+   "agent": "UNASSIGNED",
+   "issue": "Product Question",
+   "labels": [
+    "product-question"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 2.1,
+   "idle_days": 1.3
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44344",
+   "created": "2026-08-15T03:06",
+   "last": "2026-08-15T19:25",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Marion Allwood",
+   "agent": "UNASSIGNED",
+   "issue": "Product Question",
+   "labels": [
+    "product-question"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 2.1,
+   "idle_days": 1.5
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44350",
+   "created": "2026-08-15T03:25",
+   "last": "2026-08-15T19:50",
+   "priority": null,
+   "channel": "Email",
+   "customer": "still-grass-468",
+   "agent": "UNASSIGNED",
+   "issue": "Product Question",
+   "labels": [
+    "product-question"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 2.1,
+   "idle_days": 1.4
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44352",
+   "created": "2026-08-15T03:34",
+   "last": "2026-08-15T19:49",
+   "priority": null,
+   "channel": "Email",
+   "customer": "winter-pond-184",
+   "agent": "UNASSIGNED",
+   "issue": "Product Question",
+   "labels": [
+    "product-question"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 2.1,
+   "idle_days": 1.4
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44362",
+   "created": "2026-08-15T04:06",
+   "last": "2026-08-15T20:22",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Kris Jones",
+   "agent": "UNASSIGNED",
+   "issue": "Product Question",
+   "labels": [
+    "product-question"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 2.1,
+   "idle_days": 1.4
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44365",
+   "created": "2026-08-15T04:13",
+   "last": "2026-08-15T20:30",
+   "priority": null,
+   "channel": "Email",
+   "customer": "black-frog-397",
+   "agent": "UNASSIGNED",
+   "issue": "Product Question",
+   "labels": [
+    "product-question"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 2.1,
+   "idle_days": 1.4
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44375",
+   "created": "2026-08-15T04:42",
+   "last": "2026-08-15T20:51",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Elizabeth Ho",
+   "agent": "UNASSIGNED",
+   "issue": "Unclassified (no label)",
+   "labels": [],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 2.1,
+   "idle_days": 1.4
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
    "ticket": "44376",
    "created": "2026-08-15T04:50",
-   "last": "2026-08-15T09:22",
+   "last": "2026-08-17T03:58",
    "priority": null,
    "channel": "Email",
    "customer": "Helen Svalbe",
@@ -5134,85 +3986,42 @@ const D = {
    ],
    "action": "Replacement approved, awaiting fulfilment",
    "action_state": "pending",
-   "age_days": 0.3,
+   "age_days": 2.1,
    "idle_days": 0.1
   },
   {
-   "ticket": "44353",
-   "created": "2026-08-15T03:41",
-   "last": "2026-08-15T08:55",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44378",
+   "created": "2026-08-15T04:59",
+   "last": "2026-08-15T21:14",
    "priority": null,
    "channel": "Email",
-   "customer": "Eveyln Hayse",
-   "agent": "AI (Lovely)",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 0.3,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "44358",
-   "created": "2026-08-15T03:50",
-   "last": "2026-08-15T08:39",
-   "priority": null,
-   "channel": "Email",
-   "customer": "dawn-breeze-512",
-   "agent": "Jomalyn",
+   "customer": "Jan Pearson",
+   "agent": "UNASSIGNED",
    "issue": "Product Question",
    "labels": [
     "product-question"
    ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 0.3,
-   "idle_days": 0.1
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 2.1,
+   "idle_days": 1.4
   },
   {
-   "ticket": "44369",
-   "created": "2026-08-15T04:24",
-   "last": "2026-08-15T08:39",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44380",
+   "created": "2026-08-15T05:06",
+   "last": "2026-08-15T23:19",
    "priority": null,
    "channel": "Email",
-   "customer": "Lyndis Zirbel",
-   "agent": "Jomalyn",
-   "issue": "Billing & Payments",
-   "labels": [
-    "payment-issue"
-   ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 0.3,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "44368",
-   "created": "2026-08-15T04:23",
-   "last": "2026-08-15T08:39",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Lyndis Zirbel",
-   "agent": "Jomalyn",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 0.3,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "44338",
-   "created": "2026-08-15T02:44",
-   "last": "2026-08-15T08:38",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Stella Walters",
-   "agent": "Jomalyn",
+   "customer": "Rebecca",
+   "agent": "Raiza",
    "issue": "Replacement / Exchange",
    "labels": [
     "return-exchange",
@@ -5220,370 +4029,620 @@ const D = {
    ],
    "action": "Replacement approved, awaiting fulfilment",
    "action_state": "pending",
-   "age_days": 0.3,
-   "idle_days": 0.1
+   "age_days": 2.1,
+   "idle_days": 1.3
   },
   {
-   "ticket": "44381",
-   "created": "2026-08-15T05:07",
-   "last": "2026-08-15T08:39",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44382",
+   "created": "2026-08-15T05:12",
+   "last": "2026-08-15T21:19",
    "priority": null,
    "channel": "Email",
-   "customer": "Louisa Heycox",
-   "agent": "Jomalyn",
-   "issue": "Billing & Payments",
-   "labels": [
-    "payment-issue"
-   ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 0.2,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "44385",
-   "created": "2026-08-15T05:23",
-   "last": "2026-08-15T08:38",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Kay Baker",
-   "agent": "Jomalyn",
-   "issue": "Replacement / Exchange",
-   "labels": [
-    "pfg-ready"
-   ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 0.2,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "44384",
-   "created": "2026-08-15T05:20",
-   "last": "2026-08-15T08:38",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Trevor Davidson",
-   "agent": "Jomalyn",
+   "customer": "Liz Roberts",
+   "agent": "UNASSIGNED",
    "issue": "Order Status & Changes",
    "labels": [
     "order-status"
    ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 0.2,
-   "idle_days": 0.1
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 2.0,
+   "idle_days": 1.4
   },
   {
-   "ticket": "44392",
-   "created": "2026-08-15T05:52",
-   "last": "2026-08-15T08:38",
-   "priority": null,
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44387",
+   "created": "2026-08-15T05:29",
+   "last": "2026-08-15T21:53",
+   "priority": "high",
    "channel": "Email",
-   "customer": "Diane Ross",
-   "agent": "Jomalyn",
-   "issue": "Refund",
+   "customer": "Kathryn C",
+   "agent": "UNASSIGNED",
+   "issue": "Wrong Item",
    "labels": [
-    "refund-request"
+    "fulfilment-error"
    ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 0.2,
-   "idle_days": 0.1
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 2.0,
+   "idle_days": 1.4
   },
   {
-   "ticket": "44393",
-   "created": "2026-08-15T05:53",
-   "last": "2026-08-15T08:38",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44388",
+   "created": "2026-08-15T05:29",
+   "last": "2026-08-15T21:34",
    "priority": null,
    "channel": "Email",
-   "customer": "Liz",
-   "agent": "Jomalyn",
-   "issue": "Billing & Payments",
+   "customer": "angelo cristina",
+   "agent": "UNASSIGNED",
+   "issue": "Order Status & Changes",
    "labels": [
-    "payment-issue"
+    "order-status"
    ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 0.2,
-   "idle_days": 0.1
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 2.0,
+   "idle_days": 1.4
   },
   {
-   "ticket": "44401",
-   "created": "2026-08-15T06:09",
-   "last": "2026-08-15T08:38",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44397",
+   "created": "2026-08-15T06:01",
+   "last": "2026-08-15T22:08",
    "priority": null,
    "channel": "Email",
-   "customer": "Anna Clarke",
-   "agent": "Jomalyn",
+   "customer": "muddy-wildflower-673",
+   "agent": "UNASSIGNED",
    "issue": "Product Question",
    "labels": [
-    "product-question",
-    "pfg-ready"
+    "product-question"
    ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 0.2,
-   "idle_days": 0.1
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 2.0,
+   "idle_days": 1.3
   },
   {
-   "ticket": "44404",
-   "created": "2026-08-15T06:34",
-   "last": "2026-08-15T08:38",
-   "priority": null,
+   "order": null,
+   "says": "Surely after all the communication we've had about the sizing, surely you're not sending me 2 replacements exactly the same size (4XL). We agreed you'd replace them with 3XL.",
+   "from_text": false,
+   "why": null,
+   "ticket": "44398",
+   "created": "2026-08-15T06:02",
+   "last": "2026-08-15T22:11",
+   "priority": "high",
    "channel": "Email",
-   "customer": "Lyn denford",
-   "agent": "Jomalyn",
-   "issue": "Sizing & Fit",
+   "customer": "Lois Cooper",
+   "agent": "UNASSIGNED",
+   "issue": "Wrong Item",
    "labels": [
-    "ai-size-swap",
-    "ai-edited-order"
+    "fulfilment-error"
    ],
-   "action": "Size swapped by AI agent; Order edited by AI agent",
-   "action_state": "pending",
-   "age_days": 0.2,
-   "idle_days": 0.1
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 2.0,
+   "idle_days": 1.3
   },
   {
-   "ticket": "44407",
-   "created": "2026-08-15T06:43",
-   "last": "2026-08-15T08:38",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44421",
+   "created": "2026-08-15T07:12",
+   "last": "2026-08-15T23:15",
    "priority": null,
    "channel": "Email",
-   "customer": "Michelle Gratwick",
-   "agent": "Jomalyn",
-   "issue": "Order Status & Changes",
+   "customer": "Debra Curchin",
+   "agent": "UNASSIGNED",
+   "issue": "Product Question",
    "labels": [
-    "order-status"
+    "product-question"
    ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 0.2,
-   "idle_days": 0.1
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 2.0,
+   "idle_days": 1.3
   },
   {
-   "ticket": "44411",
-   "created": "2026-08-15T06:48",
-   "last": "2026-08-15T08:38",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44427",
+   "created": "2026-08-15T07:37",
+   "last": "2026-08-15T23:41",
    "priority": null,
    "channel": "Email",
-   "customer": "Michelle Gratwick",
-   "agent": "Jomalyn",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 0.2,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "44415",
-   "created": "2026-08-15T06:52",
-   "last": "2026-08-15T08:38",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Kym Hunter",
-   "agent": "Jomalyn",
-   "issue": "Refund",
-   "labels": [
-    "refund-request",
-    "refund-approved"
-   ],
-   "action": "Refund agreed, awaiting processing in Shopify",
-   "action_state": "pending",
-   "age_days": 0.2,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "44416",
-   "created": "2026-08-15T06:54",
-   "last": "2026-08-15T08:38",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Gail",
-   "agent": "Jomalyn",
-   "issue": "Cancellation",
-   "labels": [
-    "cancel-order"
-   ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 0.2,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "44423",
-   "created": "2026-08-15T07:16",
-   "last": "2026-08-15T08:38",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Liz Kebby",
-   "agent": "Jomalyn",
+   "customer": "Kim Trueman",
+   "agent": "UNASSIGNED",
    "issue": "Replacement / Exchange",
    "labels": [
-    "pfg-ready"
+    "return-exchange"
    ],
-   "action": "Replacement approved, awaiting fulfilment",
-   "action_state": "pending",
-   "age_days": 0.2,
-   "idle_days": 0.1
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 1.9,
+   "idle_days": 1.3
   },
   {
-   "ticket": "44396",
-   "created": "2026-08-15T05:58",
-   "last": "2026-08-15T08:38",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44428",
+   "created": "2026-08-15T07:46",
+   "last": "2026-08-15T23:50",
    "priority": null,
    "channel": "Email",
-   "customer": "lively-dew-154",
-   "agent": "Jomalyn",
+   "customer": "Joanne Waters",
+   "agent": "UNASSIGNED",
+   "issue": "Replacement / Exchange",
+   "labels": [
+    "return-exchange"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 1.9,
+   "idle_days": 1.3
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44430",
+   "created": "2026-08-15T07:52",
+   "last": "2026-08-15T23:54",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Stephanie Kougious",
+   "agent": "UNASSIGNED",
    "issue": "Order Status & Changes",
    "labels": [
     "order-status"
    ],
-   "action": "Assigned to Jomalyn",
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 1.9,
+   "idle_days": 1.3
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44443",
+   "created": "2026-08-15T08:24",
+   "last": "2026-08-16T00:28",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Julie Freeman",
+   "agent": "UNASSIGNED",
+   "issue": "Product Quality",
+   "labels": [
+    "damaged-item",
+    "pre-chargeback-risk"
+   ],
+   "action": "Flagged as chargeback risk",
+   "action_state": "pending",
+   "age_days": 1.9,
+   "idle_days": 1.2
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44444",
+   "created": "2026-08-15T08:33",
+   "last": "2026-08-16T00:35",
+   "priority": null,
+   "channel": "Email",
+   "customer": "wandering-surf-506",
+   "agent": "UNASSIGNED",
+   "issue": "Product Question",
+   "labels": [
+    "product-question"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 1.9,
+   "idle_days": 1.2
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44499",
+   "created": "2026-08-15T19:41",
+   "last": "2026-08-15T19:41",
+   "priority": null,
+   "channel": "Facebook",
+   "customer": "Vanessa Madden",
+   "agent": "UNASSIGNED",
+   "issue": "Unclassified (no label)",
+   "labels": [],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 1.4,
+   "idle_days": 1.4
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44515",
+   "created": "2026-08-15T21:58",
+   "last": "2026-08-15T21:58",
+   "priority": null,
+   "channel": "Facebook",
+   "customer": "Elaine Hargrave",
+   "agent": "UNASSIGNED",
+   "issue": "Unclassified (no label)",
+   "labels": [],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 1.3,
+   "idle_days": 1.3
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44517",
+   "created": "2026-08-15T22:08",
+   "last": "2026-08-17T04:25",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Margaret",
+   "agent": "Joyce",
+   "issue": "Product Question",
+   "labels": [
+    "product-question"
+   ],
+   "action": "Assigned to Joyce",
    "action_state": "assigned",
-   "age_days": 0.2,
+   "age_days": 1.3,
    "idle_days": 0.1
   },
   {
-   "ticket": "44409",
-   "created": "2026-08-15T06:46",
-   "last": "2026-08-15T08:38",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44520",
+   "created": "2026-08-15T22:24",
+   "last": "2026-08-15T23:07",
    "priority": null,
    "channel": "Email",
-   "customer": "Michelle Gratwick",
-   "agent": "Jomalyn",
+   "customer": "Sharon Hipwell",
+   "agent": "UNASSIGNED",
    "issue": "Shipping Delay",
    "labels": [
     "shipping-issue"
    ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 1.3,
+   "idle_days": 1.3
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44524",
+   "created": "2026-08-15T22:27",
+   "last": "2026-08-15T22:27",
+   "priority": null,
+   "channel": "Facebook",
+   "customer": "Wendy Harris",
+   "agent": "UNASSIGNED",
+   "issue": "Unclassified (no label)",
+   "labels": [],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 1.3,
+   "idle_days": 1.3
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44525",
+   "created": "2026-08-15T22:27",
+   "last": "2026-08-15T22:35",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Jenny",
+   "agent": "UNASSIGNED",
+   "issue": "Replacement / Exchange",
+   "labels": [
+    "return-exchange",
+    "pfg-ready"
+   ],
+   "action": "Replacement approved, awaiting fulfilment",
+   "action_state": "pending",
+   "age_days": 1.3,
+   "idle_days": 1.3
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44531",
+   "created": "2026-08-15T22:43",
+   "last": "2026-08-15T22:42",
+   "priority": null,
+   "channel": "Facebook",
+   "customer": "Sue Permain",
+   "agent": "UNASSIGNED",
+   "issue": "Unclassified (no label)",
+   "labels": [],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 1.3,
+   "idle_days": 1.3
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44535",
+   "created": "2026-08-15T23:04",
+   "last": "2026-08-15T23:04",
+   "priority": null,
+   "channel": "Facebook",
+   "customer": "Linda Vaccaro",
+   "agent": "UNASSIGNED",
+   "issue": "Unclassified (no label)",
+   "labels": [],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 1.3,
+   "idle_days": 1.3
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44549",
+   "created": "2026-08-16T00:10",
+   "last": "2026-08-16T00:10",
+   "priority": null,
+   "channel": "Facebook",
+   "customer": "Joyce Ebner",
+   "agent": "UNASSIGNED",
+   "issue": "Unclassified (no label)",
+   "labels": [],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 1.3,
+   "idle_days": 1.3
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44554",
+   "created": "2026-08-16T00:22",
+   "last": "2026-08-16T00:24",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Marina vergara",
+   "agent": "UNASSIGNED",
+   "issue": "Billing & Payments",
+   "labels": [
+    "payment-issue"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 1.2,
+   "idle_days": 1.2
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44724",
+   "created": "2026-08-16T11:35",
+   "last": "2026-08-17T04:22",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Shirley",
+   "agent": "UNASSIGNED",
+   "issue": "Billing & Payments",
+   "labels": [
+    "payment-issue"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 0.8,
+   "idle_days": 0.1
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44816",
+   "created": "2026-08-16T23:39",
+   "last": "2026-08-17T04:34",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Edna",
+   "agent": "UNASSIGNED",
+   "issue": "Billing & Payments",
+   "labels": [
+    "payment-issue"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 0.3,
+   "idle_days": 0.1
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44822",
+   "created": "2026-08-16T23:51",
+   "last": "2026-08-17T03:44",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Joanne Richards",
+   "agent": "UNASSIGNED",
+   "issue": "Order Status & Changes",
+   "labels": [
+    "order-status"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 0.3,
+   "idle_days": 0.1
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44868",
+   "created": "2026-08-17T01:26",
+   "last": "2026-08-17T03:56",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Jan D",
+   "agent": "UNASSIGNED",
+   "issue": "Billing & Payments",
+   "labels": [
+    "payment-issue"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
    "age_days": 0.2,
    "idle_days": 0.1
   },
   {
-   "ticket": "44458",
-   "created": "2026-08-15T09:44",
-   "last": "2026-08-15T09:44",
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44872",
+   "created": "2026-08-17T01:36",
+   "last": "2026-08-17T04:15",
    "priority": null,
-   "channel": "Facebook",
-   "customer": "Rostia Trimboli",
+   "channel": "Email",
+   "customer": "young-thunder-19",
+   "agent": "UNASSIGNED",
+   "issue": "Product Question",
+   "labels": [
+    "product-question"
+   ],
+   "action": "No action recorded",
+   "action_state": "none",
+   "age_days": 0.2,
+   "idle_days": 0.1
+  },
+  {
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44881",
+   "created": "2026-08-17T01:48",
+   "last": "2026-08-17T04:22",
+   "priority": null,
+   "channel": "Email",
+   "customer": "Garrie mccalla",
    "agent": "UNASSIGNED",
    "issue": "Unclassified (no label)",
    "labels": [],
    "action": "No action recorded",
    "action_state": "none",
-   "age_days": 0.1,
+   "age_days": 0.2,
    "idle_days": 0.1
   },
   {
-   "ticket": "44447",
-   "created": "2026-08-15T08:54",
-   "last": "2026-08-15T08:54",
-   "priority": null,
-   "channel": "Facebook",
-   "customer": "Cheryl Burnett",
-   "agent": "UNASSIGNED",
-   "issue": "Unclassified (no label)",
-   "labels": [],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 0.1,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "44431",
-   "created": "2026-08-15T07:57",
-   "last": "2026-08-15T08:38",
-   "priority": null,
+   "order": null,
+   "says": null,
+   "from_text": false,
+   "why": null,
+   "ticket": "44961",
+   "created": "2026-08-17T04:11",
+   "last": "2026-08-17T04:11",
+   "priority": "high",
    "channel": "Email",
-   "customer": "Noelene Main",
-   "agent": "Jomalyn",
-   "issue": "Product Question",
-   "labels": [
-    "product-question"
-   ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 0.1,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "44433",
-   "created": "2026-08-15T08:02",
-   "last": "2026-08-15T08:38",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Noelene Main",
-   "agent": "Jomalyn",
-   "issue": "Product Question",
-   "labels": [
-    "product-question"
-   ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 0.1,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "44438",
-   "created": "2026-08-15T08:15",
-   "last": "2026-08-15T08:38",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Rosemary Schwarz",
-   "agent": "Jomalyn",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status"
-   ],
-   "action": "Assigned to Jomalyn",
-   "action_state": "assigned",
-   "age_days": 0.1,
-   "idle_days": 0.1
-  },
-  {
-   "ticket": "44468",
-   "created": "2026-08-15T10:47",
-   "last": "2026-08-15T10:47",
-   "priority": null,
-   "channel": "Email",
-   "customer": "dawn-cloud-269",
+   "customer": "Elaine Matthews",
    "agent": "AI (Lovely)",
-   "issue": "Order Status & Changes",
+   "issue": "Wrong Item",
    "labels": [
-    "order-status"
+    "fulfilment-error"
    ],
    "action": "AI agent handling, no human action recorded",
    "action_state": "ai",
-   "age_days": 0.0,
-   "idle_days": 0.0
-  },
-  {
-   "ticket": "44462",
-   "created": "2026-08-15T10:15",
-   "last": "2026-08-15T10:30",
-   "priority": null,
-   "channel": "Email",
-   "customer": "Margee",
-   "agent": "UNASSIGNED",
-   "issue": "Order Status & Changes",
-   "labels": [
-    "order-status",
-    "refund-request"
-   ],
-   "action": "No action recorded",
-   "action_state": "none",
-   "age_days": 0.0,
-   "idle_days": 0.0
+   "age_days": 0.1,
+   "idle_days": 0.1
   }
  ],
  "unresolved_meta": {
-  "total_open": 247,
-  "captured": 147
+  "total_open": 529,
+  "captured": 70,
+  "as_of": "2026-08-17T06:20:00Z"
+ },
+ "enriched": {
+  "33880": {
+   "order": "17755",
+   "says": "Thank you for my order no: 17755 but I need to exchange the nude and white cami for the next size down to a L as the XL is too big. I have worn the black cami so will keep that. Please advise how to send back to exchange for a smaller size."
+  },
+  "35183": {
+   "order": null,
+   "says": "Regrettably, my tanks are too big for me. Can I please exchange them for XXL? Can you advise a return address?"
+  },
+  "36492": {
+   "order": null,
+   "says": "Thankyou for my order but they are very tight across my bust can I return for next size up, please"
+  },
+  "41452": {
+   "order": null,
+   "says": "I ordered a brown 3xl love love it fits perfectly! I ordered a 4xl white because I was unsure of sizing ITS TOO SMALL!!! And I ordered a black ribbed tank 3xl again too small. I'm very disappointed... there seems to be inconsistency with sizing.",
+   "issue_from_text": "Sizing & Fit",
+   "why": "auto-labelled fulfilment-error, but she is reporting size inconsistency between garments, not a picking mistake"
+  },
+  "44182": {
+   "order": null,
+   "says": "I don't find they hold me sufficiently in a shape that doesn't sag or flatten out the breast profile shape. I don't feel adequately supported or held up, and the shape is not flattering... I've taken out the cups and just wear them over my existing bra, not what I was hoping for, sadly.",
+   "issue_from_text": "Product Quality",
+   "why": "auto-labelled product-question, but she is reporting the garment does not support or shape as sold"
+  },
+  "44398": {
+   "order": null,
+   "says": "Surely after all the communication we've had about the sizing, surely you're not sending me 2 replacements exactly the same size (4XL). We agreed you'd replace them with 3XL."
+  }
  }
 };
 const SER = ['var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)','var(--s6)'];
@@ -6324,12 +5383,12 @@ function renderUnresolved(){
 
   $('#unres-title').innerHTML = `${fmt(rows.length)} shown`;
   $('#unres-scope').innerHTML = `Mary&rsquo;s Tanks has <b class="num">${fmt(D.unresolved_meta.total_open)}</b>
-    open tickets; the <b class="num">${fmt(D.unresolved_meta.captured)}</b> below are the most
-    recently active plus the entire stale tail, so nothing old is missing. A red stripe means
-    no action is recorded against the ticket; amber means an action was agreed but is still
-    waiting to be carried out. Order numbers and the free-text action notes live inside the
-    message bodies, which the Commslayer message API would not release today — see the method
-    note at the foot of the page.`;
+    open tickets, up from 247 two days ago. The <b class="num">${fmt(D.unresolved_meta.captured)}</b>
+    below are the entire stale tail plus every aged ticket found on the middle pages, so nothing
+    old is missing — the recent, still-being-worked ones are the part not listed. A red stripe
+    means no action is recorded against the ticket; amber means an action was agreed but is
+    still waiting to be carried out. Order numbers were read from the message bodies for the
+    oldest and highest-priority tickets, quoted in full below the table.`;
 
   const body = rows.map(r => {
     const sev = r.action_state === 'none' && r.age_days > 3 ? 'sev-crit'
@@ -6339,8 +5398,12 @@ function renderUnresolved(){
       {none:'No action', pending:'Action pending', assigned:'Assigned', ai:'AI only'}[r.action_state]}</span>`;
     return {sev, cells:[
       `<span class="tk">#${r.ticket}</span>`,
+      r.order ? `<span class="tk">#${esc(r.order)}</span>`
+              : '<span style="color:var(--ink-3)">—</span>',
       esc(r.customer),
-      esc(r.issue),
+      esc(r.issue) + (r.from_text
+        ? ' <span class="scoped" title="Read from the conversation, not the label">from text</span>'
+        : ''),
       r.agent === 'UNASSIGNED' ? '<span style="color:var(--crit-ink);font-weight:600">Unassigned</span>' : esc(r.agent),
       esc(r.action) + '<br>' + tag,
       r.channel,
@@ -6349,8 +5412,8 @@ function renderUnresolved(){
     ]};
   });
   $('#t-unres').innerHTML = tableHTML(
-    ['Ticket','Customer','Issue','Assigned agent','Action taken','Channel','Age','Idle'],
-    body.map(b => b.cells), [6,7], i => body[i].sev);
+    ['Ticket','Order','Customer','Issue','Assigned agent','Action taken','Channel','Age','Idle'],
+    body.map(b => b.cells), [7,8], i => body[i].sev);
 
   const counts = {
     all: all.length,
@@ -6366,6 +5429,35 @@ function renderUnresolved(){
     b.onclick = () => { unresFilter = k; renderUnresolved(); };
     $('#unres-pills').append(b);
   });
+}
+
+/* ---------------- verbatim quotes from the oldest tickets ---------------- */
+function renderQuotes(){
+  const rows = D.unresolved.filter(r => r.says)
+    .sort((a,b) => b.age_days - a.age_days);
+  const host = $('#quotes');
+  if (!rows.length){ host.innerHTML = ''; return; }
+  const wrap = el('div','quotes');
+  rows.forEach(r => {
+    const q = el('div','quote');
+    q.innerHTML = `<div class="meta">
+        <b>#${esc(r.ticket)}</b>
+        ${esc(r.customer)}<br>
+        ${r.order ? 'Order #' + esc(r.order) + '<br>' : ''}
+        <span class="num">${r.age_days.toFixed(0)} days old</span><br>
+        ${r.agent === 'UNASSIGNED'
+          ? '<span style="color:var(--crit-ink);font-weight:600">Unassigned</span>'
+          : esc(r.agent)}
+      </div>
+      <div>
+        <blockquote>${esc(r.says)}</blockquote>
+        <p class="why">${esc(r.issue)} &middot; ${esc(r.action)}${
+          r.why ? '<br><span style="color:var(--crit-ink)">Re-classified: ' + esc(r.why) + '</span>' : ''}</p>
+      </div>`;
+    wrap.append(q);
+  });
+  host.innerHTML = '';
+  host.append(wrap);
 }
 
 /* ---------------- stores ---------------- */
@@ -6631,14 +5723,15 @@ function renderMethod(){
      a refund, a replacement or a shipment, and they are reported separately as a live count
      rather than folded into a rate.`,
 
-    `<b>What is not here, and why.</b> Order numbers, agent notes and the free-text action
-     recorded on each ticket live inside message bodies. The Commslayer message endpoint
-     returned "daily message access limit reached (20,000 messages/day)" for the whole of this
-     session, so per-ticket order numbers and action text could not be read. The unresolved
-     table therefore infers action from the workflow labels the team applies — pfg-ready,
-     refund-approved, ai-size-swap and so on — which record what was agreed, not what was
-     said. Re-running this build tomorrow, when the message quota resets, would fill those two
-     columns in.`,
+    `<b>Order numbers and what customers actually wrote.</b> These live inside message bodies.
+     The Commslayer message endpoint was over its 20,000-a-day cap when this dashboard was
+     first built on 15 August; the cap has since reset, so the oldest and highest-priority open
+     tickets were read in full and their order numbers and opening words appear below the
+     unresolved table. The rest of the table still infers action from the workflow labels the
+     team applies — pfg-ready, refund-approved, ai-size-swap and so on — which record what was
+     agreed rather than what was said. Reading all ${fmt(D.unresolved_meta.total_open)} open
+     tickets would exhaust the daily message quota, so it is deliberately limited to the ones
+     that need a decision.`,
 
     `<b>What the date picker actually re-slices.</b> Tickets created, tickets closed and
      average resolution time are stored as day-by-day arrays covering
@@ -6686,7 +5779,7 @@ function renderMethod(){
 function renderAll(){
   renderSummary(); renderKPIs(); renderResolution(); renderIssues();
   renderVolume(); renderLines(); renderDelta(); renderUnresolved();
-  renderEmail(); renderStores(); renderMethod();
+  renderQuotes(); renderEmail(); renderStores(); renderMethod();
   $('#d-from').value = HIST[R.a];
   $('#d-to').value = HIST[R.b];
   const pr = prevRange();
@@ -6766,6 +5859,7 @@ document.addEventListener('click', e => {
 $('#m-period').textContent = shortDate(D.period.cur[0]) + ' – ' + shortDate(D.period.cur[1]);
 $('#m-prev').textContent = shortDate(D.period.prev[0]) + ' – ' + shortDate(D.period.prev[1]);
 $('#m-gen').textContent = D.generated;
+$('#m-live').textContent = 'live at ' + D.unresolved_meta.as_of.slice(11,16) + ' UTC';
 $('#f-gen').textContent = D.generated;
 buildPills();
 renderAll();
