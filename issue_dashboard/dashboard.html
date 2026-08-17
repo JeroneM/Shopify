@@ -1,0 +1,884 @@
+<title>Customer Issue Dashboard</title>
+<style>
+  :root {
+    color-scheme: light;
+    --plane: #f4f3ef;
+    --surface: #fcfcfb;
+    --surface-2: #f0efea;
+    --surface-3: #e9e8e1;
+    --ink: #14130f;
+    --ink-2: #52514e;
+    --ink-3: #86847d;
+    --rule: #e2e0d7;
+    --rule-strong: #c9c6ba;
+    --accent: #4a3aa7;
+    --accent-soft: #ece9fa;
+    --accent-line: #4a3aa7;
+    --accent-fill-1: rgba(74,58,167,.20);
+    --accent-fill-2: rgba(74,58,167,.02);
+    --good: #0ca30c; --warning: #fab219; --critical: #d03b3b;
+    --good-ink: #006300; --critical-ink: #a52121; --warning-ink: #8a5d00;
+    --shadow: 0 1px 2px rgba(20,19,15,.05), 0 1px 12px rgba(20,19,15,.04);
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --plane: #0d0d0c;
+      --surface: #1a1a19;
+      --surface-2: #232322;
+      --surface-3: #2b2b29;
+      --ink: #f7f6f2;
+      --ink-2: #c3c2b7;
+      --ink-3: #898781;
+      --rule: #2c2c2a;
+      --rule-strong: #3d3d3a;
+      --accent: #9085e9;
+      --accent-soft: #262340;
+      --accent-line: #9085e9;
+      --accent-fill-1: rgba(144,133,233,.26);
+      --accent-fill-2: rgba(144,133,233,.02);
+      --good-ink: #4cc44c; --critical-ink: #e07a7a; --warning-ink: #f0c04d;
+      --shadow: 0 1px 2px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --plane: #0d0d0c;
+    --surface: #1a1a19;
+    --surface-2: #232322;
+    --surface-3: #2b2b29;
+    --ink: #f7f6f2;
+    --ink-2: #c3c2b7;
+    --ink-3: #898781;
+    --rule: #2c2c2a;
+    --rule-strong: #3d3d3a;
+    --accent: #9085e9;
+    --accent-soft: #262340;
+    --accent-line: #9085e9;
+    --accent-fill-1: rgba(144,133,233,.26);
+    --accent-fill-2: rgba(144,133,233,.02);
+    --good-ink: #4cc44c; --critical-ink: #e07a7a; --warning-ink: #f0c04d;
+    --shadow: 0 1px 2px rgba(0,0,0,.4);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--plane);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 0 20px 64px; }
+  h1, h2 { margin: 0; text-wrap: balance; font-weight: 600; letter-spacing: -.01em; }
+  .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+
+  /* masthead */
+  .mast { padding: 26px 0 16px; display: flex; flex-wrap: wrap; gap: 14px 20px; align-items: flex-end; justify-content: space-between; }
+  .mast h1 { font-size: 24px; letter-spacing: -.02em; }
+  .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: .13em; color: var(--ink-3); font-weight: 600; margin-bottom: 4px; }
+  .mast > div { min-width: 0; }
+  #status-pill { min-width: 0; max-width: 100%; }
+  .status {
+    display: inline-flex; align-items: center; gap: 4px 8px; flex-wrap: wrap; max-width: 100%;
+    font-size: 12.5px; font-weight: 500; padding: 5px 11px 5px 9px; border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--good) 40%, transparent);
+    background: color-mix(in srgb, var(--good) 9%, transparent); color: var(--good-ink);
+  }
+  .status.bad { border-color: color-mix(in srgb, var(--critical) 45%, transparent);
+    background: color-mix(in srgb, var(--critical) 10%, transparent); color: var(--critical-ink); }
+  .status svg { flex: none; }
+  .status .sep { color: var(--ink-3); font-weight: 400; }
+
+  /* filters */
+  .controls {
+    position: sticky; top: 0; z-index: 40;
+    background: color-mix(in srgb, var(--plane) 93%, transparent);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+    padding: 12px 0; margin-bottom: 24px;
+  }
+  .ctl-row { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: flex-end; }
+  .ctl { display: flex; flex-direction: column; gap: 5px; }
+  .ctl > label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-3); font-weight: 600; }
+  select, input[type="date"] {
+    font: inherit; font-size: 13px; color: var(--ink);
+    background: var(--surface); border: 1px solid var(--rule-strong);
+    border-radius: 6px; padding: 6px 9px; min-height: 34px; max-width: 220px;
+  }
+  select:focus-visible, input:focus-visible, button:focus-visible, tr:focus-visible, .ib-row:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 1px;
+  }
+  .btn {
+    font: inherit; font-size: 12.5px; font-weight: 500;
+    background: var(--surface); color: var(--ink-2);
+    border: 1px solid var(--rule-strong); border-radius: 6px;
+    padding: 7px 11px; cursor: pointer; min-height: 34px;
+  }
+  .btn:hover { background: var(--surface-2); color: var(--ink); }
+  .btn.on { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+  .btn[disabled] { opacity: .4; cursor: not-allowed; }
+  .btn[disabled]:hover { background: var(--surface); color: var(--ink-2); }
+  .seg { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 6px; overflow: hidden; }
+  .seg .btn { border: 0; border-radius: 0; border-right: 1px solid var(--rule-strong); }
+  .seg .btn:last-child { border-right: 0; }
+  .effective { font-size: 12px; color: var(--ink-2); margin-top: 9px; }
+  .effective b { color: var(--ink); font-weight: 600; }
+  .effective .chip {
+    display: inline-flex; align-items: center; gap: 5px; margin-left: 8px;
+    background: var(--accent-soft); color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+    border-radius: 999px; padding: 2px 6px 2px 9px; font-size: 11.5px; font-weight: 500; cursor: pointer;
+  }
+  .effective .chip span { font-size: 13px; line-height: 1; opacity: .7; }
+  .effective .chip:hover span { opacity: 1; }
+
+  /* sections */
+  section { margin-bottom: 30px; }
+  .sec-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between;
+    margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+  .sec-head h2 { font-size: 14.5px; }
+  .sec-note { font-size: 12px; color: var(--ink-3); }
+
+  .card { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; box-shadow: var(--shadow); }
+  .pad { padding: 15px 17px; }
+
+  /* KPI */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(156px, 1fr)); gap: 10px; }
+  .kpi { background: var(--surface); border: 1px solid var(--rule); border-radius: 9px; padding: 12px 13px;
+    box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 2px; }
+  .kpi.wide { grid-column: span 2; }
+  .kpi-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .085em; color: var(--ink-3); font-weight: 600; }
+  .kpi-val { font-size: 26px; font-weight: 600; letter-spacing: -.02em; line-height: 1.14; font-variant-numeric: tabular-nums; }
+  .kpi-val.sm { font-size: 15.5px; line-height: 1.32; letter-spacing: -.005em; }
+  .kpi-sub { font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .kpi-meter { height: 3px; border-radius: 2px; background: var(--surface-3); overflow: hidden; margin-top: 6px; }
+  .kpi-meter i { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
+
+  /* tables */
+  .tbl-scroll { overflow-x: auto; max-width: 100%; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--rule); }
+  th {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: .075em;
+    color: var(--ink-3); font-weight: 600; white-space: nowrap;
+    position: sticky; top: 0; background: var(--surface); z-index: 2;
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  tbody tr.pick { cursor: pointer; }
+  tbody tr.pick:hover { background: var(--surface-2); }
+  tbody tr.sel { background: var(--accent-soft); }
+  tbody tr.sel td { border-bottom-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+  tbody tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+  td.iss { white-space: nowrap; font-weight: 500; }
+  td.tot, th.tot { font-weight: 600; background: var(--surface-2); }
+  tfoot td { font-weight: 600; border-top: 1px solid var(--rule-strong); border-bottom: 0; background: var(--surface-2); }
+  .zero { color: var(--ink-3); }
+  #issue-table th:first-child, #issue-table td:first-child { position: sticky; left: 0; background: var(--surface); }
+  #issue-table tr.sel td:first-child { background: var(--accent-soft); }
+  #issue-table thead th:first-child { z-index: 3; }
+  .heat { position: relative; }
+  .heat i { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--accent); opacity: .55; }
+
+  /* breakdown */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .ib { display: flex; flex-direction: column; gap: 2px; }
+  .ib-row {
+    display: grid; grid-template-columns: minmax(120px, 190px) 1fr 96px;
+    gap: 11px; align-items: center; padding: 5px 7px; border-radius: 6px;
+    cursor: pointer; border: 1px solid transparent; text-align: left;
+    background: none; font: inherit; color: inherit; width: 100%;
+  }
+  .ib-row:hover { background: var(--surface-2); }
+  .ib-row.sel { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+  .ib-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ib-track { background: var(--surface-3); border-radius: 3px; height: 14px; overflow: hidden; }
+  .ib-bar { height: 100%; background: var(--accent); border-radius: 0 3px 3px 0; min-width: 2px; }
+  .ib-fig { font-size: 12.5px; color: var(--ink-2); text-align: right; font-variant-numeric: tabular-nums; }
+  .ib-fig b { color: var(--ink); font-weight: 600; }
+  .detail-h { font-size: 10.5px; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-3); font-weight: 600; margin-bottom: 9px; }
+  .nr { color: var(--warning-ink); }
+
+  /* chart */
+  .chart-box { position: relative; }
+  svg { display: block; width: 100%; overflow: visible; }
+  .tip {
+    position: absolute; pointer-events: none; opacity: 0; transition: opacity .1s;
+    background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 7px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.16); padding: 8px 10px; font-size: 12px;
+    min-width: 120px; z-index: 30; color: var(--ink);
+  }
+  .tip.show { opacity: 1; }
+  .tip-h { font-weight: 600; margin-bottom: 4px; }
+  .tip-v { font-variant-numeric: tabular-nums; font-size: 15px; font-weight: 600; }
+  .tip-s { color: var(--ink-2); font-size: 11.5px; }
+  .trend-read { font-size: 13px; color: var(--ink-2); margin-top: 12px; }
+  .trend-read b { color: var(--ink); font-weight: 600; }
+  .up { color: var(--critical-ink); font-weight: 600; }
+  .down { color: var(--good-ink); font-weight: 600; }
+
+  .empty { padding: 34px 18px; text-align: center; color: var(--ink-3); font-size: 13.5px; }
+
+  footer { border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 34px; font-size: 12px; color: var(--ink-3); line-height: 1.62; }
+  footer b { color: var(--ink-2); font-weight: 600; }
+  footer ul { margin: 6px 0 0; padding-left: 16px; }
+  footer li { margin-bottom: 3px; max-width: 96ch; }
+  footer code { font-family: var(--mono); font-size: 11px; background: var(--surface-2); padding: 1px 4px; border-radius: 3px; }
+
+  @media (max-width: 900px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .kpi.wide { grid-column: span 1; }
+    .controls { position: static; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <div>
+      <div class="eyebrow">Simply Elsie &middot; Maggie&rsquo;s Tanks &middot; Mary&rsquo;s Tanks &middot; Lyn&rsquo;s Tanks</div>
+      <h1>Customer Issue Dashboard</h1>
+    </div>
+    <div id="status-pill"></div>
+  </header>
+
+  <div class="controls">
+    <div class="ctl-row">
+      <div class="ctl">
+        <label for="f-from">From</label>
+        <input type="date" id="f-from" min="2026-07-01" max="2026-08-17" value="2026-07-01">
+      </div>
+      <div class="ctl">
+        <label for="f-to">To</label>
+        <input type="date" id="f-to" min="2026-07-01" max="2026-08-17" value="2026-08-17">
+      </div>
+      <div class="ctl">
+        <label>Quick range</label>
+        <div class="seg" id="presets"></div>
+      </div>
+      <div class="ctl">
+        <label for="f-store">Store</label>
+        <select id="f-store"><option value="">All stores</option></select>
+      </div>
+      <div class="ctl">
+        <label for="f-issue">Issue</label>
+        <select id="f-issue"><option value="">All issues</option></select>
+      </div>
+      <div class="ctl">
+        <label for="f-reason">Issue reason</label>
+        <select id="f-reason"><option value="">All reasons</option></select>
+      </div>
+      <div class="ctl">
+        <label>&nbsp;</label>
+        <button class="btn" id="f-reset">Reset</button>
+      </div>
+    </div>
+    <div class="effective" id="effective"></div>
+  </div>
+
+  <section id="kpi">
+    <div class="sec-head">
+      <h2>KPI summary</h2>
+      <span class="sec-note" id="kpi-note"></span>
+    </div>
+    <div class="kpis" id="kpi-grid"></div>
+  </section>
+
+  <section id="bystore">
+    <div class="sec-head">
+      <h2>Issues by store</h2>
+      <span class="sec-note">Click an issue to see its breakdown</span>
+    </div>
+    <div class="card">
+      <div class="tbl-scroll">
+        <table id="issue-table">
+          <thead><tr id="it-head"></tr></thead>
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="breakdown">
+    <div class="sec-head">
+      <h2>Issue breakdown</h2>
+      <span class="sec-note" id="bd-note"></span>
+    </div>
+    <div class="grid-2">
+      <div class="card pad">
+        <div class="detail-h">Issue &middot; share of all issues</div>
+        <div class="ib" id="ib-issue"></div>
+      </div>
+      <div class="card pad">
+        <div class="detail-h" id="bd-title">Issue reason</div>
+        <div class="ib" id="ib-reason"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="trend">
+    <div class="sec-head">
+      <h2>Issue trend</h2>
+      <div class="ctl-row" style="gap:8px 12px">
+        <div class="seg" id="measure">
+          <button class="btn on" data-m="issues">Issues</button>
+          <button class="btn" data-m="tickets">Tickets</button>
+        </div>
+        <div class="seg" id="gran">
+          <button class="btn" data-g="day">Daily</button>
+          <button class="btn on" data-g="week">Weekly</button>
+          <button class="btn" data-g="month">Monthly</button>
+        </div>
+      </div>
+    </div>
+    <div class="card pad">
+      <div class="chart-box">
+        <svg id="trend-svg" height="250" role="img" aria-labelledby="trend-title-a11y"></svg>
+        <title id="trend-title-a11y">Customer issue volume over time</title>
+        <div class="tip" id="trend-tip"></div>
+      </div>
+      <div class="trend-read" id="trend-read"></div>
+    </div>
+  </section>
+
+  <footer>
+    <b>Source and completeness.</b> Every figure is the complete server-side count for the selected
+    period from four Commslayer accounts &mdash; Simply Elsie (7356), Maggie&rsquo;s Tanks (6576),
+    Mary&rsquo;s Tanks (6377) and Lyn&rsquo;s Tanks (6527). Nothing here is a sample or an extrapolation.
+    <ul>
+      <li><b>Why aggregates, not ticket rows.</b> The conversation list caps at 500 records per account
+        and reaches back only 30 days, so it cannot cover 1 July onward for 48,539 tickets. Counts come from
+        the reporting endpoints, which aggregate the whole population server-side.</li>
+      <li><b>Resolution.</b> Ticket volume is exact per day. Issue and reason splits are exact per week, so
+        the date filter snaps outward to whole weeks and the effective range is always shown. Nothing is
+        interpolated between weeks.</li>
+      <li><b>Tickets vs issues.</b> One ticket can carry more than one issue. A reason such as
+        <em>&ldquo;item arrived damaged and has a sizing issue&rdquo;</em> is counted as 1 ticket and 2 issues
+        (Product Quality &rarr; Damaged, Sizing). 22 of the source reasons are multi-issue, which is why
+        total issues exceeds total tickets.</li>
+      <li><b>Issue reasons.</b> Reasons are the helpdesk&rsquo;s own classification of each ticket, so they are
+        complete rather than inferred. The source does not record the direction of a fit failure, so
+        &ldquo;too small&rdquo; versus &ldquo;too big&rdquo; is not separable from it &mdash; sizing reasons name what the
+        source does state. Anything unclassified is shown as <em>Other / Needs review</em>.</li>
+      <li><b>Known variances, verified.</b> Weekly counts were reconciled against an independently fetched
+        full-period total for all four accounts: 3 of 279 reason nodes differed, by 4 tickets in 38,674
+        (0.01%), from tickets being reclassified mid-fetch. Mary&rsquo;s Tanks reports in UTC+10, so its daily
+        series covers 13,190 of its 13,253 tickets (0.5%) &mdash; the remainder falls outside the UTC day
+        buckets. Both are shown rather than smoothed.</li>
+      <li><b>Colour.</b> None of the four accounts has a colour reason in its taxonomy, so colour appears only
+        where a reason explicitly names it. That row is near-zero because the source cannot see colour, not
+        because customers do not raise it.</li>
+      <li><b>Open and resolved.</b> <code>Resolved</code> counts closures recorded inside the range, which
+        can include tickets raised before it, so a resolution rate above 100% means the backlog shrank rather
+        than that every ticket was answered. <code>Open</code> is created minus closures; where that is
+        negative the card shows 0 and reports the reduction instead. The reporting API also exposes a
+        created-cohort closure total (43,198 across the period) measured differently from the daily closure
+        series (51,165); the daily series is used throughout because it is the one that filters by date, and
+        mixing the two would break the single-dataset rule.</li>
+      <li><b>Ticket total.</b> 48,476 is the sum of the daily series across all four stores. The accounts&rsquo;
+        own period totals add to 48,539; the 63-ticket difference is Mary&rsquo;s UTC+10 boundary described above.
+        The lower, internally consistent figure is used everywhere so the KPIs, table, breakdown and chart
+        cannot disagree.</li>
+    </ul>
+  </footer>
+</div>
+
+<script>
+const DATA = {"generated":"2026-08-17","from":"2026-07-01","to":"2026-08-17","days":["2026-07-01","2026-07-02","2026-07-03","2026-07-04","2026-07-05","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-11","2026-07-12","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-18","2026-07-19","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24","2026-07-25","2026-07-26","2026-07-27","2026-07-28","2026-07-29","2026-07-30","2026-07-31","2026-08-01","2026-08-02","2026-08-03","2026-08-04","2026-08-05","2026-08-06","2026-08-07","2026-08-08","2026-08-09","2026-08-10","2026-08-11","2026-08-12","2026-08-13","2026-08-14","2026-08-15","2026-08-16","2026-08-17"],"weeks":[{"s":"2026-07-01","e":"2026-07-07","i0":0,"i1":6,"label":"1\u20137 Jul"},{"s":"2026-07-08","e":"2026-07-14","i0":7,"i1":13,"label":"8\u201314 Jul"},{"s":"2026-07-15","e":"2026-07-21","i0":14,"i1":20,"label":"15\u201321 Jul"},{"s":"2026-07-22","e":"2026-07-28","i0":21,"i1":27,"label":"22\u201328 Jul"},{"s":"2026-07-29","e":"2026-08-04","i0":28,"i1":34,"label":"29 Jul\u20134 Aug"},{"s":"2026-08-05","e":"2026-08-11","i0":35,"i1":41,"label":"5\u201311 Aug"},{"s":"2026-08-12","e":"2026-08-17","i0":42,"i1":47,"label":"12\u201317 Aug"}],"issues":["Sizing","Product Quality","Color","Shipping & Delivery","Returns & Exchanges","Refund Request","Order Issue","Product Question","Billing & Payment","Other"],"stores":[{"name":"Simply Elsie","id":7356,"tz":"UTC","created":[0,0,0,0,0,0,0,0,0,0,0,0,0,5,4,15,4,6,8,16,13,18,16,32,25,24,25,26,32,32,33,41,37,38,45,45,59,58,50,35,45,46,46,65,42,55,47,22],"closed":[0,0,0,0,0,0,0,0,0,0,0,0,0,4,4,15,8,7,8,17,14,18,10,18,16,13,14,19,25,20,15,142,34,30,36,61,51,28,57,52,51,51,53,83,28,48,36,63],"totCreated":1110,"totClosed":966,"dayDelta":0,"wk":[{},{"Shipping & Delivery":{"Other / Needs Review":1,"Tracking Issue":1},"Other":{"Other / Needs Review":1,"Solicitation / Spam":1},"Order Issue":{"Other / Needs Review":1}},{"Other":{"Solicitation / Spam":7,"Other / Needs Review":14,"Subscription":2},"Shipping & Delivery":{"Other / Needs Review":11,"Tracking Issue":1,"Lost Package":2},"Returns & Exchanges":{"Other / Needs Review":1},"Product Question":{"Other / Needs Review":4,"Availability":1,"Brand / Provenance":5,"Sizing / Spec Question":8},"Order Issue":{"Other / Needs Review":2,"Cancel Order":2,"Edit Order":2},"Billing & Payment":{"Discount Code":1,"Payment Failed":3}},{"Other":{"Other / Needs Review":21,"Solicitation / Spam":8},"Shipping & Delivery":{"Other / Needs Review":17,"Tracking Issue":6,"Wrong Address":1,"Shipping Delayed":10},"Returns & Exchanges":{"Other / Needs Review":5,"Exchange Requested":4},"Sizing":{"Size Exchange Requested":4},"Product Question":{"Availability":3,"Brand / Provenance":2,"Sizing / Spec Question":10},"Order Issue":{"Cancel Order":1,"Order Status":4,"Edit Order":2},"Billing & Payment":{"Other / Needs Review":2},"Refund Request":{"Refund Requested":2}},{"Other":{"Other / Needs Review":17,"Trust / Scam Concern":3,"Solicitation / Spam":14},"Shipping & Delivery":{"Other / Needs Review":12,"Tracking Issue":9,"Wrong Address":1,"Shipping Delayed":13,"Lost Package":5},"Returns & Exchanges":{"Other / Needs Review":12,"Exchange Requested":20,"Return Status":1},"Sizing":{"Size Exchange Requested":20},"Product Question":{"Availability":5,"Brand / Provenance":2,"Sizing / Spec Question":18},"Order Issue":{"Cancel Order":9,"Cart / Checkout Problem":1,"Order Status":24,"Edit Order":1,"Wrong Item Received":2},"Refund Request":{"Refund Requested":8}},{"Other":{"Other / Needs Review":9,"Trust / Scam Concern":7,"Solicitation / Spam":15},"Shipping & Delivery":{"Other / Needs Review":17,"Tracking Issue":28,"Wrong Address":4,"Shipping Delayed":42,"Lost Package":10},"Returns & Exchanges":{"Other / Needs Review":44,"Exchange Requested":33,"Return Requested":3},"Sizing":{"Size Exchange Requested":33},"Product Quality":{"Damaged":3},"Product Question":{"Other / Needs Review":2,"Sizing / Spec Question":27},"Order Issue":{"Cancel Order":6,"Order Status":31,"Edit Order":4},"Billing & Payment":{"Other / Needs Review":2},"Refund Request":{"Refund Requested":21}},{"Other":{"Other / Needs Review":11,"Trust / Scam Concern":4,"Solicitation / Spam":7},"Shipping & Delivery":{"Other / Needs Review":20,"Tracking Issue":12,"Wrong Address":3,"Shipping Delayed":35,"Lost Package":11},"Returns & Exchanges":{"Other / Needs Review":27,"Exchange Requested":19,"Return Requested":1,"Changed Mind":1,"Return Status":2},"Sizing":{"Size Exchange Requested":19},"Product Quality":{"Damaged":1},"Product Question":{"Sizing / Spec Question":16},"Order Issue":{"Cancel Order":4,"New Order Request":1,"Order Status":25,"Edit Order":8},"Billing & Payment":{"Other / Needs Review":1,"Payment Method":1,"Discount Code":1},"Refund Request":{"Refund Requested":26}}]},{"name":"Maggie's Tanks","id":6576,"tz":"UTC","created":[126,166,136,109,129,180,231,171,168,189,175,158,216,226,181,202,217,236,213,277,337,357,377,446,419,606,796,759,752,1009,947,877,772,1213,1164,1484,1810,1123,1173,961,1207,1442,1516,1560,1578,1384,1452,306],"closed":[153,171,136,138,122,136,347,182,120,147,135,122,154,207,165,277,223,216,212,222,321,353,335,389,330,418,417,723,674,938,952,989,747,951,965,1567,1390,1046,1082,964,1348,1287,1516,1551,1806,1629,1583,500],"totCreated":31533,"totClosed":26450,"dayDelta":0,"wk":[{"Other":{"Other / Needs Review":24,"Solicitation / Spam":11,"Complaint":35,"Auto-reply / Out of Office":4,"Trust / Scam Concern":7},"Order Issue":{"Cart / Checkout Problem":4,"Order Status":30,"Other / Needs Review":3,"Cancel Order":33,"Order Confirmation":56,"Edit Order":26,"Wrong Item Received":5},"Product Quality":{"Damaged":135},"Sizing":{"Fit Issue + Damage":131,"Size Exchange + Refund":69,"Size Exchange Requested":134},"Returns & Exchanges":{"Exchange Requested":203,"Other / Needs Review":173,"Return Requested":4,"Changed Mind":13,"Return Status":2},"Refund Request":{"Refund Requested":160},"Shipping & Delivery":{"Other / Needs Review":19,"Tracking Issue":11,"Wrong Address":18,"Shipping Delayed":19,"Lost Package":29},"Product Question":{"Other / Needs Review":2,"Availability":3,"Sizing / Spec Question":102},"Billing & Payment":{"Discount Code":3}},{"Other":{"Other / Needs Review":21,"Solicitation / Spam":17,"Complaint":54,"Feedback":1,"Auto-reply / Out of Office":2,"Unsubscribe":1,"Trust / Scam Concern":5},"Billing & Payment":{"Other / Needs Review":4,"Payment Failed":3},"Order Issue":{"Cart / Checkout Problem":1,"Unanswered / Follow-up":6,"Order Status":92,"Other / Needs Review":2,"Cancel Order":35,"Order Confirmation":50,"Edit Order":47,"Wrong Item Received":7},"Product Quality":{"Damaged":121},"Sizing":{"Fit Issue + Damage":117,"Size Exchange + Refund":83,"Size Exchange Requested":190},"Returns & Exchanges":{"Replacement Requested":9,"Exchange Requested":273,"Other / Needs Review":198,"Return Requested":4,"Changed Mind":22,"Return Status":2},"Refund Request":{"Refund Requested":186},"Product Question":{"Where To Buy":1,"Other / Needs Review":2,"Availability":4,"Sizing / Spec Question":131},"Shipping & Delivery":{"Other / Needs Review":16,"Wrong Address":22,"Shipping Delayed":9,"Lost Package":6}},{"Other":{"Other / Needs Review":32,"Solicitation / Spam":6,"Complaint":35,"Auto-reply / Out of Office":8,"Unsubscribe":1,"Trust / Scam Concern":15,"Subscription":1},"Billing & Payment":{"Other / Needs Review":4,"Payment Method":3,"Discount Request":3,"Discount Code":6},"Order Issue":{"Cart / Checkout Problem":10,"Unanswered / Follow-up":26,"Order Status":163,"Other / Needs Review":4,"Cancel Order":52,"Order Confirmation":66,"Edit Order":76,"Wrong Item Received":6},"Product Quality":{"Damaged":132},"Sizing":{"Fit Issue + Damage":128,"Size Exchange + Refund":65,"Size Exchange Requested":214},"Returns & Exchanges":{"Replacement Requested":8,"Exchange Requested":279,"Other / Needs Review":194,"Return Requested":4,"Changed Mind":14,"Return Status":4},"Refund Request":{"Refund Requested":193},"Product Question":{"Where To Buy":4,"Other / Needs Review":3,"Availability":4,"Sizing / Spec Question":186},"Shipping & Delivery":{"Other / Needs Review":24,"Tracking Issue":3,"Wrong Address":21,"Shipping Delayed":14,"Lost Package":13}},{"Other":{"Other / Needs Review":59,"Solicitation / Spam":9,"Greeting / No Request":19,"Complaint":75,"Feedback":4,"Auto-reply / Out of Office":16,"Unsubscribe":7,"Trust / Scam Concern":28,"Subscription":3},"Billing & Payment":{"Other / Needs Review":5,"Payment Method":11,"Discount Request":10,"Payment Confirmation":2,"Discount Code":12,"Payment Failed":2},"Order Issue":{"Cart / Checkout Problem":15,"Unanswered / Follow-up":55,"Website Problem":5,"Order Status":382,"Other / Needs Review":8,"Cancel Order":228,"Order Confirmation":150,"Edit Order":145,"Wrong Item Received":36},"Product Quality":{"Damaged":150},"Sizing":{"Fit Issue + Damage":145,"Size Exchange + Refund":92,"Size Exchange Requested":327},"Returns & Exchanges":{"Replacement Requested":11,"Exchange Requested":419,"Other / Needs Review":189,"Return Requested":5,"Changed Mind":13,"Return Status":2},"Refund Request":{"Refund Requested":230},"Product Question":{"Where To Buy":8,"Brand / Provenance":2,"Other / Needs Review":10,"Availability":13,"Sizing / Spec Question":404},"Shipping & Delivery":{"Other / Needs Review":84,"Tracking Issue":13,"Wrong Address":63,"Shipping Delayed":61,"Lost Package":18}},{"Billing & Payment":{"Store Credit":9,"Other / Needs Review":7,"Payment Method":14,"Discount Request":20,"Payment Confirmation":3,"Discount Code":14,"Payment Failed":2},"Other":{"Other / Needs Review":67,"Greeting / No Request":19,"Unclear Message":3,"Solicitation / Spam":6,"Complaint":78,"Feedback":4,"Auto-reply / Out of Office":17,"Unsubscribe":2,"Trust / Scam Concern":81},"Order Issue":{"Cart / Checkout Problem":17,"Unanswered / Follow-up":89,"Order Status":734,"Other / Needs Review":12,"Cancel Order":328,"Order Confirmation":224,"Edit Order":174,"Wrong Item Received":45},"Product Quality":{"Damaged":165},"Sizing":{"Fit Issue + Damage":154,"Size Exchange + Refund":78,"Size Exchange Requested":553},"Returns & Exchanges":{"Replacement Requested":23,"Exchange Requested":631,"Other / Needs Review":241,"Return Requested":11,"Changed Mind":11,"Return Status":6},"Refund Request":{"Refund Requested":335},"Product Question":{"Where To Buy":11,"Brand / Provenance":45,"Other / Needs Review":56,"Availability":14,"General Product Question":98,"Sizing / Spec Question":416},"Shipping & Delivery":{"Other / Needs Review":139,"Tracking Issue":143,"Wrong Address":95,"Shipping Delayed":359,"Lost Package":47}},{"Billing & Payment":{"Store Credit":6,"Other / Needs Review":14,"Payment Method":18,"Discount Request":23,"Payment Confirmation":10,"Invoice":27,"Discount Code":9,"Payment Failed":2},"Other":{"Other / Needs Review":72,"Solicitation / Spam":19,"Greeting / No Request":17,"Unclear Message":3,"Complaint":96,"Feedback":66,"Auto-reply / Out of Office":17,"Unsubscribe":4,"Trust / Scam Concern":113},"Order Issue":{"Cart / Checkout Problem":17,"Unanswered / Follow-up":153,"Order Status":1353,"Website Problem":2,"Other / Needs Review":20,"Cancel Order":329,"Order Confirmation":263,"Edit Order":177,"Wrong Item Received":41},"Product Quality":{"Damaged":324},"Sizing":{"Fit Issue + Damage":318,"Size Exchange + Refund":117,"Size Exchange Requested":1039},"Product Question":{"Other / Needs Review":57,"Where To Buy":10,"Brand / Provenance":42,"Availability":42,"General Product Question":195,"Sizing / Spec Question":303},"Returns & Exchanges":{"Replacement Requested":38,"Exchange Requested":1156,"Other / Needs Review":230,"Return Requested":157,"Changed Mind":11,"Return Status":6},"Refund Request":{"Refund Requested":465},"Shipping & Delivery":{"Other / Needs Review":177,"Tracking Issue":287,"Wrong Address":64,"Shipping Delayed":698,"Lost Package":66}},{"Billing & Payment":{"Unauthorized Charge":25,"Store Credit":1,"Other / Needs Review":3,"Payment Method":12,"Invoice":20,"Discount Request":12,"Payment Confirmation":25,"Discount Code":17,"Payment Failed":1},"Other":{"Other / Needs Review":63,"Solicitation / Spam":18,"Trust / Scam Concern":73,"Greeting / No Request":3,"Unclear Message":3,"Complaint":89,"Feedback":63,"Auto-reply / Out of Office":15,"Unsubscribe":7,"Subscription":2},"Order Issue":{"Order Status":833,"Cart / Checkout Problem":19,"Unanswered / Follow-up":131,"Website Problem":7,"Other / Needs Review":8,"Cancel Order":255,"Order Confirmation":199,"Edit Order":167,"Wrong Item Received":45},"Product Quality":{"Damaged":326},"Sizing":{"Fit Issue + Damage":317,"Size Exchange + Refund":76,"Size Exchange Requested":1182},"Returns & Exchanges":{"Replacement Requested":45,"Exchange Requested":1258,"Other / Needs Review":33,"Return Requested":348,"Changed Mind":4,"Return Status":13},"Refund Request":{"Refund Requested":410},"Product Question":{"Where To Buy":9,"Brand / Provenance":46,"Other / Needs Review":38,"Availability":43,"General Product Question":191,"Sizing / Spec Question":309},"Shipping & Delivery":{"Other / Needs Review":148,"Tracking Issue":112,"Wrong Address":66,"Shipping Delayed":507,"Lost Package":80}}]},{"name":"Mary's Tanks","id":6377,"tz":"UTC+10","created":[260,197,190,158,152,182,198,173,205,203,156,201,216,228,229,263,195,146,138,231,277,312,324,237,219,276,374,336,376,392,339,288,306,368,374,356,360,360,282,260,387,482,446,346,318,271,283,320],"closed":[345,257,267,224,181,294,589,231,261,283,200,238,278,306,286,376,311,223,187,309,376,390,436,332,292,339,461,397,325,365,374,356,297,333,376,315,339,363,292,242,440,515,516,387,561,628,336,308],"totCreated":13253,"totClosed":12912,"dayDelta":63,"wk":[{"Other":{"Solicitation / Spam":59,"Other / Needs Review":3,"Auto-reply / Out of Office":31,"Unsubscribe":3,"Complaint":5,"Greeting / No Request":9,"Unclear Message":1,"Feedback":95,"Trust / Scam Concern":15},"Product Question":{"Other / Needs Review":8,"Availability":8,"Sizing / Spec Question":149,"Where To Buy":11,"General Product Question":22},"Shipping & Delivery":{"Other / Needs Review":57,"Tracking Issue":14,"Wrong Address":17,"Shipping Delayed":56,"Lost Package":8},"Returns & Exchanges":{"Other / Needs Review":31,"Return Requested":118,"Exchange Requested":210,"Return Status":1},"Sizing":{"Fit Issue \u2192 Return":116,"Size Exchange Requested":210,"Size Change Requested":12,"Fit Issue + Billing Error":3},"Refund Request":{"Refund Requested":193,"Refund Confirmation":11},"Product Quality":{"Damaged":2,"Other / Needs Review":87},"Order Issue":{"Other / Needs Review":7,"Cancel Order":19,"Unanswered / Follow-up":55,"Missing Item":8,"Order Status":53,"Website Problem":11,"Edit Order":37,"Wrong Item Received":7},"Billing & Payment":{"Other / Needs Review":3,"Invoice":3,"Payment Method":28,"Payment Confirmation":5,"Unauthorized Charge":3,"Discount Code":4,"Payment Failed":1}},{"Other":{"Solicitation / Spam":53,"Other / Needs Review":7,"Auto-reply / Out of Office":31,"Unsubscribe":4,"Complaint":3,"Greeting / No Request":13,"Feedback":46,"Trust / Scam Concern":11},"Product Question":{"Other / Needs Review":10,"Availability":8,"Sizing / Spec Question":249,"Where To Buy":6,"General Product Question":22},"Shipping & Delivery":{"Other / Needs Review":52,"Tracking Issue":12,"Wrong Address":24,"Shipping Delayed":64,"Lost Package":9},"Returns & Exchanges":{"Other / Needs Review":18,"Return Requested":93,"Replacement Requested":92,"Exchange Requested":148,"Return Status":3},"Product Quality":{"Damaged":97,"Other / Needs Review":50},"Sizing":{"Wrong Size Received":3,"Fit Issue \u2192 Return":88,"Fit Issue \u2192 Replacement":92,"Size Exchange Requested":148,"Size Change Requested":16,"Fit Issue + Billing Error":1},"Color":{"Wrong Color":3},"Refund Request":{"Refund Requested":152,"Refund Confirmation":10},"Order Issue":{"Other / Needs Review":20,"Cancel Order":17,"Unanswered / Follow-up":61,"Missing Item":5,"Order Status":76,"Website Problem":10,"Edit Order":49,"Wrong Item Received":5},"Billing & Payment":{"Other / Needs Review":1,"Invoice":10,"Payment Method":25,"Payment Confirmation":2,"Unauthorized Charge":1,"Discount Code":5,"Payment Failed":2}},{"Other":{"Solicitation / Spam":39,"Other / Needs Review":5,"Auto-reply / Out of Office":14,"Unsubscribe":6,"Complaint":2,"Greeting / No Request":14,"Unclear Message":1,"Feedback":55,"Trust / Scam Concern":12},"Product Question":{"Other / Needs Review":10,"Availability":10,"Sizing / Spec Question":249,"Where To Buy":4,"General Product Question":16},"Shipping & Delivery":{"Other / Needs Review":71,"Tracking Issue":21,"Wrong Address":24,"Shipping Delayed":35,"Lost Package":9},"Returns & Exchanges":{"Other / Needs Review":12,"Return Requested":65,"Replacement Requested":187,"Exchange Requested":120},"Product Quality":{"Damaged":188,"Other / Needs Review":46},"Sizing":{"Wrong Size Received":1,"Fit Issue \u2192 Return":64,"Fit Issue \u2192 Replacement":187,"Size Exchange Requested":120,"Size Change Requested":21,"Fit Issue + Billing Error":2},"Color":{"Wrong Color":1},"Refund Request":{"Refund Requested":136,"Refund Confirmation":6},"Order Issue":{"Other / Needs Review":14,"Cancel Order":24,"Unanswered / Follow-up":50,"Missing Item":6,"Order Status":85,"Website Problem":11,"Edit Order":42,"Wrong Item Received":4},"Billing & Payment":{"Other / Needs Review":1,"Invoice":4,"Payment Method":22,"Payment Confirmation":9,"Unauthorized Charge":2,"Discount Code":1,"Payment Failed":2}},{"Other":{"Solicitation / Spam":41,"Other / Needs Review":10,"Trust / Scam Concern":34,"Auto-reply / Out of Office":12,"Unsubscribe":9,"Complaint":1,"Greeting / No Request":18,"Unclear Message":3,"Feedback":48},"Product Question":{"Other / Needs Review":12,"Availability":9,"Sizing / Spec Question":234,"Where To Buy":2,"General Product Question":25},"Shipping & Delivery":{"Other / Needs Review":73,"Tracking Issue":44,"Wrong Address":24,"Shipping Delayed":69,"Lost Package":8},"Returns & Exchanges":{"Other / Needs Review":22,"Return Requested":55,"Replacement Requested":234,"Exchange Requested":191,"Return Status":3},"Sizing":{"Fit Issue \u2192 Return":55,"Fit Issue \u2192 Replacement":234,"Size Exchange Requested":191,"Size Change Requested":12,"Fit Issue + Billing Error":2},"Refund Request":{"Refund Requested":109,"Refund Confirmation":4},"Product Quality":{"Damaged":234,"Other / Needs Review":44},"Order Issue":{"Other / Needs Review":19,"Cancel Order":14,"Cart / Checkout Problem":7,"Unanswered / Follow-up":45,"Missing Item":2,"Order Confirmation":41,"Order Status":111,"Website Problem":11,"Edit Order":52,"Wrong Item Received":6},"Billing & Payment":{"Other / Needs Review":4,"Store Credit":2,"Currency":2,"Invoice":3,"Payment Method":26,"Payment Confirmation":13,"Unauthorized Charge":2,"Discount Code":1,"Payment Failed":2}},{"Other":{"Solicitation / Spam":7,"Other / Needs Review":13,"Trust / Scam Concern":42,"Auto-reply / Out of Office":17,"Unsubscribe":7,"Complaint":4,"Greeting / No Request":21,"Unclear Message":1,"Feedback":62},"Product Question":{"Other / Needs Review":13,"Availability":13,"Sizing / Spec Question":273,"Where To Buy":8,"General Product Question":17},"Shipping & Delivery":{"Other / Needs Review":100,"Tracking Issue":53,"Wrong Address":44,"Shipping Delayed":98,"Lost Package":21},"Returns & Exchanges":{"Other / Needs Review":10,"Return Requested":19,"Replacement Requested":277,"Exchange Requested":222,"Return Status":1},"Product Quality":{"Damaged":282,"Other / Needs Review":41},"Sizing":{"Wrong Size Received":5,"Fit Issue \u2192 Return":14,"Fit Issue \u2192 Replacement":277,"Size Exchange Requested":222,"Size Change Requested":29,"Fit Issue + Billing Error":10},"Color":{"Wrong Color":5},"Refund Request":{"Refund Requested":65,"Refund Confirmation":8},"Order Issue":{"Other / Needs Review":20,"Cancel Order":25,"Cart / Checkout Problem":7,"Unanswered / Follow-up":61,"Missing Item":8,"Order Confirmation":61,"Order Status":147,"Website Problem":9,"Edit Order":78,"Wrong Item Received":6},"Billing & Payment":{"Other / Needs Review":2,"Store Credit":1,"Currency":3,"Invoice":12,"Payment Confirmation":18,"Payment Method":42,"Unauthorized Charge":10,"Discount Code":4}},{"Other":{"Solicitation / Spam":18,"Other / Needs Review":6,"Trust / Scam Concern":58,"Auto-reply / Out of Office":18,"Complaint":9,"Greeting / No Request":20,"Unclear Message":1,"Feedback":126,"Subscription":1},"Product Question":{"Other / Needs Review":16,"Availability":21,"Sizing / Spec Question":263,"Where To Buy":13,"General Product Question":19},"Shipping & Delivery":{"Other / Needs Review":84,"Tracking Issue":56,"Wrong Address":26,"Shipping Delayed":78,"Lost Package":11},"Returns & Exchanges":{"Other / Needs Review":4,"Return Requested":19,"Replacement Requested":332,"Exchange Requested":309,"Return Status":2},"Product Quality":{"Damaged":337,"Other / Needs Review":48},"Sizing":{"Wrong Size Received":2,"Fit Issue \u2192 Return":14,"Fit Issue \u2192 Replacement":332,"Size Exchange Requested":309,"Size Change Requested":20,"Fit Issue + Billing Error":5},"Color":{"Wrong Color":2},"Refund Request":{"Refund Requested":54,"Refund Confirmation":11},"Order Issue":{"Other / Needs Review":25,"Cancel Order":19,"Cart / Checkout Problem":2,"Unanswered / Follow-up":81,"Missing Item":4,"Order Confirmation":56,"Order Status":181,"Website Problem":6,"Edit Order":49,"Wrong Item Received":7},"Billing & Payment":{"Chargeback":1,"Other / Needs Review":1,"Currency":8,"Invoice":11,"Payment Confirmation":16,"Payment Method":27,"Unauthorized Charge":5,"Discount Code":6,"Payment Failed":2}},{"Other":{"Solicitation / Spam":32,"Other / Needs Review":4,"Trust / Scam Concern":42,"Auto-reply / Out of Office":19,"Unsubscribe":2,"Complaint":5,"Greeting / No Request":16,"Unclear Message":3,"Feedback":92},"Product Question":{"Other / Needs Review":18,"Suitability":16,"Availability":13,"Sizing / Spec Question":219,"Where To Buy":9,"Brand / Provenance":1,"General Product Question":14},"Shipping & Delivery":{"Other / Needs Review":42,"Wrong Address":38,"Tracking Issue":16,"Shipping Delayed":33,"Lost Package":5},"Returns & Exchanges":{"Other / Needs Review":5,"Return Requested":22,"Replacement Requested":233,"Exchange Requested":250,"Return Status":2},"Product Quality":{"Damaged":236,"Other / Needs Review":22},"Sizing":{"Wrong Size Received":3,"Fit Issue \u2192 Return":19,"Fit Issue \u2192 Replacement":233,"Size Exchange Requested":250,"Size Change Requested":18,"Fit Issue + Billing Error":15},"Color":{"Wrong Color":3},"Refund Request":{"Refund Requested":76,"Refund Confirmation":13},"Order Issue":{"Cancel Order":18,"Unanswered / Follow-up":34,"Missing Item":7,"Order Confirmation":49,"Other / Needs Review":17,"Order Status":244,"Website Problem":10,"Edit Order":59,"Wrong Item Received":4},"Billing & Payment":{"Chargeback":1,"Store Credit":3,"Currency":2,"Invoice":13,"Payment Method":26,"Payment Confirmation":20,"Unauthorized Charge":15,"Discount Code":7,"Payment Failed":3}}]},{"name":"Lyn's Tanks","id":6527,"tz":"UTC","created":[105,122,129,116,100,138,115,108,104,76,72,48,7,0,35,56,42,25,38,47,38,45,49,55,41,38,44,46,71,55,116,27,41,40,44,42,38,32,28,26,41,37,35,31,29,18,32,21],"closed":[164,156,168,224,116,181,466,111,93,123,60,63,11,2,16,42,42,25,20,32,32,49,47,59,40,24,45,62,52,50,151,33,64,31,48,30,46,27,17,25,56,22,46,58,11,33,23,27],"totCreated":2643,"totClosed":2870,"dayDelta":0,"wk":[{"Other":{"Complaint":1,"Auto-reply / Out of Office":2,"Feedback":44,"Trust / Scam Concern":2,"Other / Needs Review":5,"Solicitation / Spam":4},"Shipping & Delivery":{"Other / Needs Review":15,"Tracking Issue":12,"Wrong Address":1,"Shipping Delayed":13,"Lost Package":6},"Product Question":{"Other / Needs Review":11,"Availability":6,"Sizing / Spec Question":65,"Brand / Provenance":10},"Order Issue":{"Website Problem":11,"Other / Needs Review":7,"Cancel Order":10,"New Order Request":1,"Order Confirmation":54,"Order Status":9,"Unanswered / Follow-up":8,"Edit Order":48,"Wrong Item Received":4},"Returns & Exchanges":{"Other / Needs Review":27,"Exchange Requested":154,"Return Requested":1,"Changed Mind":2,"Return Status":5,"Replacement Requested":4,"Replacement Declined":1},"Sizing":{"Size Exchange Requested":93,"Fit Issue + Quality":171,"Fit Issue + Refund":61},"Product Quality":{"Damaged":1,"Poor Stitching":171,"Fabric Quality":10,"Product Not as Described":4},"Refund Request":{"Refund Requested":103},"Billing & Payment":{"Payment Confirmation":11,"Invoice":3,"Payment Method":2,"Unauthorized Charge":1,"Discount Code":1}},{"Other":{"Auto-reply / Out of Office":3,"Feedback":27,"Other / Needs Review":2,"Solicitation / Spam":3,"Greeting / No Request":1,"Trust / Scam Concern":3},"Shipping & Delivery":{"Other / Needs Review":5,"Tracking Issue":3,"Wrong Address":2,"Shipping Delayed":11,"Lost Package":3},"Product Question":{"Other / Needs Review":10,"Availability":1,"Sizing / Spec Question":48,"Brand / Provenance":5},"Order Issue":{"Website Problem":4,"Other / Needs Review":1,"Cancel Order":8,"New Order Request":1,"Order Confirmation":34,"Order Status":8,"Edit Order":22,"Wrong Item Received":6},"Returns & Exchanges":{"Other / Needs Review":8,"Exchange Requested":64,"Return Requested":2,"Return Status":2,"Replacement Requested":1},"Sizing":{"Size Exchange Requested":41,"Fit Issue + Quality":84,"Fit Issue + Refund":23},"Product Quality":{"Damaged":2,"Poor Stitching":84,"Fabric Quality":5,"Product Not as Described":3},"Refund Request":{"Refund Requested":42},"Billing & Payment":{"Payment Confirmation":6,"Invoice":1,"Payment Method":2,"Unauthorized Charge":3,"Payment Failed":3}},{"Other":{"Complaint":2,"Other / Needs Review":10,"Unsubscribe":1},"Shipping & Delivery":{"Other / Needs Review":8,"Tracking Issue":11,"Shipping Delayed":4,"Lost Package":1},"Product Question":{"Other / Needs Review":12,"Availability":1,"Sizing / Spec Question":18,"Brand / Provenance":1},"Order Issue":{"Website Problem":5,"Order Confirmation":7,"Other / Needs Review":2,"Cancel Order":6,"Order Status":12,"Unanswered / Follow-up":11,"Edit Order":6,"Wrong Item Received":2},"Billing & Payment":{"Unauthorized Charge":2,"Payment Confirmation":1,"Invoice":1,"Payment Failed":2},"Returns & Exchanges":{"Other / Needs Review":11,"Exchange Requested":74},"Sizing":{"Size Exchange Requested":49,"Fit Issue + Quality":33,"Fit Issue + Refund":25},"Product Quality":{"Poor Stitching":33,"Fabric Quality":1,"Product Not as Described":1},"Refund Request":{"Refund Requested":48}},{"Other":{"Complaint":3,"Other / Needs Review":12,"Solicitation / Spam":1,"Unsubscribe":1},"Shipping & Delivery":{"Other / Needs Review":10,"Tracking Issue":3,"Shipping Delayed":8,"Lost Package":3},"Product Question":{"Other / Needs Review":8,"Sizing / Spec Question":21,"Brand / Provenance":1},"Order Issue":{"Website Problem":2,"Other / Needs Review":2,"Cancel Order":4,"Missing Item":1,"New Order Request":3,"Order Confirmation":10,"Order Status":12,"Unanswered / Follow-up":10,"Edit Order":10,"Wrong Item Received":1},"Returns & Exchanges":{"Other / Needs Review":4,"Exchange Requested":50,"Return Status":1},"Sizing":{"Size Exchange Requested":41,"Fit Issue + Quality":27,"Fit Issue + Refund":9},"Product Quality":{"Poor Stitching":27,"Fabric Quality":1},"Refund Request":{"Refund Requested":34},"Billing & Payment":{"Payment Confirmation":2,"Payment Method":1,"Discount Code":2,"Payment Failed":4}},{"Other":{"Complaint":3,"Other / Needs Review":8,"Auto-reply / Out of Office":1,"Feedback":4,"Solicitation / Spam":1,"Trust / Scam Concern":1},"Shipping & Delivery":{"Other / Needs Review":6,"Tracking Issue":7,"Wrong Address":2,"Shipping Delayed":9,"Lost Package":1},"Product Question":{"Other / Needs Review":5,"Availability":1,"Sizing / Spec Question":32,"Care / Maintenance":1},"Order Issue":{"Website Problem":5,"Other / Needs Review":2,"Missing Item":3,"New Order Request":2,"Order Confirmation":10,"Order Status":6,"Unanswered / Follow-up":12,"Edit Order":11},"Returns & Exchanges":{"Other / Needs Review":7,"Exchange Requested":43,"Return Status":1},"Sizing":{"Size Exchange Requested":35,"Fit Issue + Quality":33,"Fit Issue + Refund":8},"Product Quality":{"Poor Stitching":33},"Refund Request":{"Refund Requested":19},"Billing & Payment":{"Payment Confirmation":5,"Other / Needs Review":1,"Invoice":1,"Payment Method":6,"Payment Failed":1}},{"Other":{"Solicitation / Spam":2,"Other / Needs Review":7,"Greeting / No Request":2,"Feedback":1,"Trust / Scam Concern":2},"Shipping & Delivery":{"Other / Needs Review":6,"Tracking Issue":12,"Shipping Delayed":18,"Lost Package":2},"Product Question":{"Other / Needs Review":5,"Availability":1,"Sizing / Spec Question":17,"Care / Maintenance":1,"Brand / Provenance":1},"Order Issue":{"Website Problem":1,"Other / Needs Review":4,"Cancel Order":3,"New Order Request":1,"Order Confirmation":11,"Order Status":5,"Unanswered / Follow-up":9,"Edit Order":6},"Returns & Exchanges":{"Other / Needs Review":1,"Exchange Requested":54,"Changed Mind":1,"Return Status":2},"Sizing":{"Size Exchange Requested":41,"Fit Issue + Quality":36,"Fit Issue + Refund":13},"Product Quality":{"Poor Stitching":36,"Fabric Quality":1},"Billing & Payment":{"Chargeback":2,"Payment Confirmation":1,"Invoice":1,"Payment Failed":3},"Refund Request":{"Refund Requested":19}},{"Other":{"Solicitation / Spam":4,"Complaint":2,"Auto-reply / Out of Office":1,"Feedback":2,"Other / Needs Review":1,"Unsubscribe":1},"Shipping & Delivery":{"Other / Needs Review":3,"Tracking Issue":2,"Shipping Delayed":9,"Lost Package":4},"Order Issue":{"Website Problem":1,"Other / Needs Review":2,"Cancel Order":5,"New Order Request":1,"Order Confirmation":4,"Order Status":3,"Unanswered / Follow-up":7,"Edit Order":7,"Wrong Item Received":2},"Sizing":{"Size Exchange Requested":36,"Fit Issue + Quality":13,"Fit Issue + Refund":10},"Returns & Exchanges":{"Exchange Requested":46,"Changed Mind":1},"Product Quality":{"Poor Stitching":13,"Product Not as Described":2},"Product Question":{"Sizing / Spec Question":10},"Billing & Payment":{"Chargeback":11,"Payment Confirmation":1,"Invoice":1,"Unauthorized Charge":1,"Payment Failed":2},"Refund Request":{"Refund Requested":18}}]}],"reasons":{"Sizing":["Size Exchange Requested","Fit Issue \u2192 Replacement","Fit Issue + Damage","Size Exchange + Refund","Fit Issue + Quality","Fit Issue \u2192 Return","Fit Issue + Refund","Size Change Requested","Fit Issue + Billing Error","Wrong Size Received"],"Product Quality":["Damaged","Poor Stitching","Other / Needs Review","Fabric Quality","Product Not as Described"],"Color":["Wrong Color"],"Shipping & Delivery":["Shipping Delayed","Other / Needs Review","Tracking Issue","Wrong Address","Lost Package"],"Returns & Exchanges":["Exchange Requested","Other / Needs Review","Replacement Requested","Return Requested","Changed Mind","Return Status","Replacement Declined"],"Refund Request":["Refund Requested","Refund Confirmation"],"Order Issue":["Order Status","Cancel Order","Order Confirmation","Edit Order","Unanswered / Follow-up","Wrong Item Received","Other / Needs Review","Website Problem","Cart / Checkout Problem","Missing Item","New Order Request"],"Product Question":["Sizing / Spec Question","General Product Question","Other / Needs Review","Availability","Brand / Provenance","Where To Buy","Suitability","Care / Maintenance"],"Billing & Payment":["Payment Method","Payment Confirmation","Invoice","Discount Code","Unauthorized Charge","Discount Request","Other / Needs Review","Payment Failed","Store Credit","Currency","Chargeback"],"Other":["Feedback","Trust / Scam Concern","Other / Needs Review","Complaint","Solicitation / Spam","Auto-reply / Out of Office","Greeting / No Request","Unsubscribe","Unclear Message","Subscription"]}};
+
+/* ---------- state ---------- */
+const S = { w0: 0, w1: DATA.weeks.length - 1, store: '', issue: '', reason: '', gran: 'week', measure: 'issues' };
+const NR = 'Other / Needs Review';
+const fmt = n => n.toLocaleString('en-US');
+const pct = (a, b) => b ? (a / b * 100) : 0;
+const d1 = n => (Math.round(n * 10) / 10).toFixed(1);
+
+function dayLabel(iso) {
+  const d = new Date(iso + 'T00:00:00Z');
+  return d.getUTCDate() + ' ' + d.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
+}
+
+/* ---------- integrity ---------- */
+function integrity() {
+  const nw = DATA.weeks.length;
+  const missing = DATA.stores.filter(s => !s.wk || s.wk.length !== nw || s.created.length !== DATA.days.length);
+  return { ok: missing.length === 0 && DATA.stores.length === 4, stores: DATA.stores.length, missing };
+}
+
+/* ---------- selectors ---------- */
+const activeStores = () => S.store ? DATA.stores.filter(s => s.name === S.store) : DATA.stores;
+
+/** Ticket counts are exact per day. */
+function ticketTotals() {
+  const i0 = DATA.weeks[S.w0].i0, i1 = DATA.weeks[S.w1].i1;
+  let created = 0, closed = 0;
+  for (const st of activeStores())
+    for (let i = i0; i <= i1; i++) { created += st.created[i]; closed += st.closed[i]; }
+  return { created, closed };
+}
+
+/** Issue matrix for the current range: {store: {issue: {reason: n}}} */
+function matrix() {
+  const out = {};
+  for (const st of activeStores()) {
+    const acc = {};
+    for (let w = S.w0; w <= S.w1; w++) {
+      const wk = st.wk[w] || {};
+      for (const iss in wk) {
+        if (S.issue && iss !== S.issue) continue;
+        acc[iss] = acc[iss] || {};
+        for (const r in wk[iss]) {
+          if (S.reason && r !== S.reason) continue;
+          acc[iss][r] = (acc[iss][r] || 0) + wk[iss][r];
+        }
+      }
+    }
+    out[st.name] = acc;
+  }
+  return out;
+}
+const sumReasons = o => { let t = 0; for (const k in o) t += o[k]; return t; };
+
+/** Issue totals across stores in range, honouring the issue/reason filter. */
+function issueTotals(m) {
+  const t = {};
+  for (const sn in m) for (const iss in m[sn]) t[iss] = (t[iss] || 0) + sumReasons(m[sn][iss]);
+  return t;
+}
+/** Reason totals for one issue across stores in range. */
+function reasonTotals(m, issue) {
+  const t = {};
+  for (const sn in m) {
+    const rs = m[sn][issue]; if (!rs) continue;
+    for (const r in rs) t[r] = (t[r] || 0) + rs[r];
+  }
+  return t;
+}
+
+/* ---------- date snapping ---------- */
+function snap() {
+  const from = document.getElementById('f-from').value || DATA.from;
+  const to = document.getElementById('f-to').value || DATA.to;
+  let a = from, b = to;
+  if (a > b) { const t = a; a = b; b = t; }
+  let w0 = 0, w1 = DATA.weeks.length - 1;
+  for (let i = DATA.weeks.length - 1; i >= 0; i--) if (DATA.weeks[i].s <= a) { w0 = i; break; }
+  for (let i = 0; i < DATA.weeks.length; i++) if (DATA.weeks[i].e >= b) { w1 = i; break; }
+  if (w1 < w0) w1 = w0;
+  S.w0 = w0; S.w1 = w1;
+}
+
+/* ---------- render: filters ---------- */
+const PRESETS = [
+  ['Everything', '2026-07-01', '2026-08-17'],
+  ['1–28 Jul', '2026-07-01', '2026-07-28'],
+  ['29 Jul–17 Aug', '2026-07-29', '2026-08-17'],
+  ['Last 2 weeks', '2026-08-05', '2026-08-17'],
+  ['Last week', '2026-08-12', '2026-08-17'],
+];
+
+function buildFilters() {
+  const seg = document.getElementById('presets');
+  seg.innerHTML = PRESETS.map((p, i) => `<button class="btn" data-i="${i}">${p[0]}</button>`).join('');
+  seg.onclick = e => {
+    const b = e.target.closest('button[data-i]'); if (!b) return;
+    const p = PRESETS[+b.dataset.i];
+    document.getElementById('f-from').value = p[1];
+    document.getElementById('f-to').value = p[2];
+    apply();
+  };
+  const st = document.getElementById('f-store');
+  DATA.stores.forEach(s => st.add(new Option(s.name, s.name)));
+  const iss = document.getElementById('f-issue');
+  DATA.issues.forEach(i => iss.add(new Option(i, i)));
+
+  ['f-from', 'f-to', 'f-store', 'f-issue', 'f-reason'].forEach(id =>
+    document.getElementById(id).addEventListener('change', e => {
+      if (id === 'f-store') S.store = e.target.value;
+      if (id === 'f-issue') { S.issue = e.target.value; S.reason = ''; }
+      if (id === 'f-reason') S.reason = e.target.value;
+      apply();
+    }));
+  document.getElementById('f-reset').onclick = () => {
+    document.getElementById('f-from').value = DATA.from;
+    document.getElementById('f-to').value = DATA.to;
+    S.store = S.issue = S.reason = '';
+    document.getElementById('f-store').value = '';
+    document.getElementById('f-issue').value = '';
+    apply();
+  };
+  document.getElementById('measure').onclick = e => {
+    const b = e.target.closest('button[data-m]'); if (!b) return;
+    S.measure = b.dataset.m;
+    if (S.measure === 'issues' && S.gran === 'day') S.gran = 'week';
+    apply();
+  };
+  document.getElementById('gran').onclick = e => {
+    const b = e.target.closest('button[data-g]'); if (!b || b.disabled) return;
+    S.gran = b.dataset.g; apply();
+  };
+}
+
+function renderReasonOptions(m) {
+  const sel = document.getElementById('f-reason');
+  const cur = S.reason;
+  sel.innerHTML = '<option value="">All reasons</option>';
+  if (!S.issue) { sel.disabled = true; sel.value = ''; return; }
+  sel.disabled = false;
+  const order = DATA.reasons[S.issue] || [];
+  const present = reasonTotals(matrixAll(), S.issue);
+  order.filter(r => present[r]).forEach(r => sel.add(new Option(`${r} (${fmt(present[r])})`, r)));
+  sel.value = order.includes(cur) ? cur : '';
+  if (sel.value !== cur) S.reason = sel.value;
+}
+/** matrix ignoring the reason filter — used to populate the reason dropdown. */
+function matrixAll() {
+  const keep = S.reason; S.reason = '';
+  const m = matrix(); S.reason = keep; return m;
+}
+/** matrix honouring only date + store — the issue picker and table skeleton use this,
+    so choosing one issue never collapses the comparison view. */
+function matrixScope() {
+  const ki = S.issue, kr = S.reason; S.issue = ''; S.reason = '';
+  const m = matrix(); S.issue = ki; S.reason = kr; return m;
+}
+
+function renderEffective() {
+  const a = DATA.weeks[S.w0], b = DATA.weeks[S.w1];
+  const nw = S.w1 - S.w0 + 1;
+  const el = document.getElementById('effective');
+  const chips = [];
+  if (S.store) chips.push(`<button class="chip" data-clr="store">${S.store}<span>×</span></button>`);
+  if (S.issue) chips.push(`<button class="chip" data-clr="issue">${S.issue}<span>×</span></button>`);
+  if (S.reason) chips.push(`<button class="chip" data-clr="reason">${S.reason}<span>×</span></button>`);
+  el.innerHTML = `Showing <b>${dayLabel(a.s)} – ${dayLabel(b.e)}</b> `
+    + `<span style="color:var(--ink-3)">· ${nw} complete ${nw === 1 ? 'week' : 'weeks'}`
+    + `${(a.s !== (document.getElementById('f-from').value || DATA.from) || b.e !== (document.getElementById('f-to').value || DATA.to)) ? ' · snapped to whole weeks' : ''}</span>`
+    + chips.join('');
+  el.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    const k = c.dataset.clr;
+    if (k === 'store') { S.store = ''; document.getElementById('f-store').value = ''; }
+    if (k === 'issue') { S.issue = ''; S.reason = ''; document.getElementById('f-issue').value = ''; }
+    if (k === 'reason') S.reason = '';
+    apply();
+  });
+}
+
+/* ---------- render: status ---------- */
+function renderStatus() {
+  const g = integrity();
+  const el = document.getElementById('status-pill');
+  const tick = '<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const warn = '<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l6.4 11.4H1.6z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M8 6.2v3.1M8 11.3v.1" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+  const total = DATA.stores.reduce((a, s) => a + s.created.reduce((x, y) => x + y, 0), 0);
+  el.innerHTML = g.ok
+    ? `<div class="status">${tick}Complete data<span class="sep">·</span>${g.stores}/4 stores<span class="sep">·</span><span class="num">${fmt(total)}</span> tickets</div>`
+    : `<div class="status bad">${warn}Incomplete Data<span class="sep">·</span>${g.stores - g.missing.length}/4 stores retrieved</div>`;
+}
+
+/* ---------- render: KPIs ---------- */
+function renderKPIs(m, it) {
+  const { created, closed } = ticketTotals();
+  const totalIssues = Object.values(it).reduce((a, b) => a + b, 0);
+  const net = created - closed;
+  const rate = pct(closed, created);
+
+  const iss = k => it[k] || 0;
+  const RET = m && 'Returns & Exchanges';
+  let replacement = 0;
+  for (const sn in m) {
+    const rs = m[sn]['Returns & Exchanges']; if (!rs) continue;
+    replacement += (rs['Replacement Requested'] || 0) + (rs['Exchange Requested'] || 0);
+  }
+
+  const entries = Object.entries(it).sort((a, b) => b[1] - a[1]);
+  const topIssue = entries[0];
+  const pair = {};
+  for (const sn in m) for (const i in m[sn]) for (const r in m[sn][i]) {
+    const k = i + '\u0000' + r;
+    pair[k] = (pair[k] || 0) + m[sn][i][r];
+  }
+  let topReason = null;
+  for (const k in pair) if (!topReason || pair[k] > topReason[2]) topReason = [...k.split('\u0000'), pair[k]];
+
+  const scoped = S.issue || S.reason;
+  const allIssues = scoped
+    ? Object.values(issueTotals(matrixScope())).reduce((a, b) => a + b, 0)
+    : totalIssues;
+  const days = DATA.weeks[S.w1].i1 - DATA.weeks[S.w0].i0 + 1;
+  const cards = [
+    { l: 'Total Tickets', v: fmt(created),
+      s: scoped ? 'in range · not issue-filtered' : `${d1(created / days)} per day` },
+    { l: 'Total Issues', v: fmt(totalIssues),
+      s: scoped ? `of ${fmt(allIssues)} issues in range` : (created ? `${d1(totalIssues / created)} issues per ticket` : '—') },
+    net >= 0
+      ? { l: 'Open Tickets', v: fmt(net), s: 'created − resolved' }
+      : { l: 'Open Tickets', v: '0', s: `backlog reduced by ${fmt(-net)}` },
+    { l: 'Resolved Tickets', v: fmt(closed), s: 'closures in range' },
+    { l: 'Resolution Rate', v: d1(rate) + '%', s: rate > 100 ? 'backlog clearing' : `${fmt(closed)} of ${fmt(created)}`, meter: Math.min(rate, 100) },
+    { l: 'Sizing Issues', v: fmt(iss('Sizing')), s: `${d1(pct(iss('Sizing'), totalIssues))}% of issues` },
+    { l: 'Quality Issues', v: fmt(iss('Product Quality')), s: `${d1(pct(iss('Product Quality'), totalIssues))}% of issues` },
+    { l: 'Shipping Issues', v: fmt(iss('Shipping & Delivery')), s: `${d1(pct(iss('Shipping & Delivery'), totalIssues))}% of issues` },
+    { l: 'Refund Requests', v: fmt(iss('Refund Request')),
+      s: scoped ? `${d1(pct(iss('Refund Request'), allIssues))}% of issues` : `${d1(pct(iss('Refund Request'), created))}% of tickets` },
+    { l: 'Replacement Requests', v: fmt(replacement), s: 'replacement + exchange' },
+    { l: 'Most Common Issue', v: topIssue ? topIssue[0] : '—', sm: 1, s: topIssue ? `${fmt(topIssue[1])} · ${d1(pct(topIssue[1], totalIssues))}% of issues` : '', wide: 1 },
+    { l: 'Most Common Issue Reason', v: topReason ? topReason[1] : '—', sm: 1, s: topReason ? `${topReason[0]} · ${fmt(topReason[2])}` : '', wide: 1 },
+  ];
+
+  document.getElementById('kpi-grid').innerHTML = cards.map(c => `
+    <div class="kpi${c.wide ? ' wide' : ''}">
+      <div class="kpi-label">${c.l}</div>
+      <div class="kpi-val${c.sm ? ' sm' : ''}${c.v === NR ? ' nr' : ''}">${c.v}</div>
+      <div class="kpi-sub">${c.s || '&nbsp;'}</div>
+      ${c.meter != null ? `<div class="kpi-meter"><i style="width:${c.meter}%"></i></div>` : ''}
+    </div>`).join('');
+
+  document.getElementById('kpi-note').textContent =
+    `Complete counts for ${dayLabel(DATA.weeks[S.w0].s)} – ${dayLabel(DATA.weeks[S.w1].e)}`;
+}
+
+/* ---------- render: issue × store table ---------- */
+function renderTable(m, it) {
+  const head = document.getElementById('it-head');
+  const names = DATA.stores.map(s => s.name);
+  const cols = S.store ? [S.store] : names;
+  head.innerHTML = `<th>Issue</th>` + cols.map(c => `<th class="n">${c}</th>`).join('') + `<th class="n tot">Total</th>`;
+
+  const tb = document.querySelector('#issue-table tbody');
+  const rowIssues = S.issue ? [S.issue] : DATA.issues;
+  const max = Math.max(1, ...rowIssues.map(i => it[i] || 0));
+  tb.innerHTML = rowIssues.map(i => {
+    const tot = it[i] || 0;
+    const cells = cols.map(c => {
+      const v = m[c] && m[c][i] ? sumReasons(m[c][i]) : 0;
+      return `<td class="n${v ? '' : ' zero'}">${fmt(v)}</td>`;
+    }).join('');
+    return `<tr class="pick${S.issue === i ? ' sel' : ''}" data-i="${i}" tabindex="0" role="button" aria-pressed="${S.issue === i}">
+      <td class="iss">${i}</td>${cells}
+      <td class="n tot heat">${fmt(tot)}${tot ? `<i style="width:${pct(tot, max)}%"></i>` : ''}</td></tr>`;
+  }).join('');
+
+  const tf = document.querySelector('#issue-table tfoot');
+  const colTot = cols.map(c => {
+    let t = 0; if (m[c]) for (const i in m[c]) t += sumReasons(m[c][i]);
+    return `<td class="n">${fmt(t)}</td>`;
+  }).join('');
+  const grand = Object.values(it).reduce((a, b) => a + b, 0);
+  tf.innerHTML = `<tr><td>${S.issue ? (S.reason || S.issue) : 'All issues'}</td>${colTot}<td class="n tot">${fmt(grand)}</td></tr>`;
+
+  tb.querySelectorAll('tr[data-i]').forEach(tr => {
+    const go = () => { S.issue = S.issue === tr.dataset.i ? '' : tr.dataset.i; S.reason = ''; document.getElementById('f-issue').value = S.issue; apply(); };
+    tr.onclick = go;
+    tr.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
+  });
+}
+
+/* ---------- render: breakdown ---------- */
+function renderBreakdown(m, it) {
+  const pick = issueTotals(matrixScope());
+  const grand = Object.values(pick).reduce((a, b) => a + b, 0);
+  const rows = DATA.issues.map(i => [i, pick[i] || 0]).filter(r => r[1] > 0).sort((a, b) => b[1] - a[1]);
+  const max = Math.max(1, ...rows.map(r => r[1]));
+  const box = document.getElementById('ib-issue');
+  box.innerHTML = rows.length ? rows.map(([i, v]) => `
+    <button class="ib-row${S.issue === i ? ' sel' : ''}" data-i="${i}" aria-pressed="${S.issue === i}">
+      <span class="ib-name">${i}</span>
+      <span class="ib-track"><span class="ib-bar" style="width:${pct(v, max)}%"></span></span>
+      <span class="ib-fig"><b>${fmt(v)}</b> · ${d1(pct(v, grand))}%</span>
+    </button>`).join('') : `<div class="empty">No issues in this range.</div>`;
+  box.querySelectorAll('.ib-row').forEach(b => b.onclick = () => {
+    S.issue = S.issue === b.dataset.i ? '' : b.dataset.i; S.reason = '';
+    document.getElementById('f-issue').value = S.issue; apply();
+  });
+
+  const focus = S.issue || (rows[0] && rows[0][0]);
+  document.getElementById('bd-title').textContent = focus ? `${focus} · by reason` : 'Issue reason';
+  document.getElementById('bd-note').textContent = S.issue
+    ? 'Click a reason to filter the whole dashboard'
+    : 'Showing the largest issue — click any issue to change it';
+
+  const rb = document.getElementById('ib-reason');
+  if (!focus) { rb.innerHTML = `<div class="empty">Select an issue.</div>`; return; }
+  const rt = reasonTotals(matrixScope(), focus);
+  const order = (DATA.reasons[focus] || Object.keys(rt));
+  const list = order.filter(r => rt[r]).map(r => [r, rt[r]]);
+  const rmax = Math.max(1, ...list.map(r => r[1]));
+  const rsum = list.reduce((a, r) => a + r[1], 0);
+  rb.innerHTML = list.length ? list.map(([r, v]) => `
+    <button class="ib-row${S.reason === r ? ' sel' : ''}" data-r="${r}" aria-pressed="${S.reason === r}">
+      <span class="ib-name${r === NR ? ' nr' : ''}">${r === NR ? 'Other / Needs review' : r}</span>
+      <span class="ib-track"><span class="ib-bar" style="width:${pct(v, rmax)}%"></span></span>
+      <span class="ib-fig"><b>${fmt(v)}</b> · ${d1(pct(v, rsum))}%</span>
+    </button>`).join('') : `<div class="empty">No reasons recorded.</div>`;
+  rb.querySelectorAll('.ib-row').forEach(b => b.onclick = () => {
+    if (!S.issue) { S.issue = focus; document.getElementById('f-issue').value = focus; }
+    S.reason = S.reason === b.dataset.r ? '' : b.dataset.r;
+    apply();
+  });
+}
+
+/* ---------- render: trend ---------- */
+function trendSeries() {
+  const stores = activeStores();
+  if (S.measure === 'tickets') {
+    if (S.gran === 'day') {
+      const pts = [];
+      for (let i = DATA.weeks[S.w0].i0; i <= DATA.weeks[S.w1].i1; i++) {
+        let v = 0; for (const st of stores) v += st.created[i];
+        pts.push({ k: dayLabel(DATA.days[i]), v, d: 1, full: DATA.days[i] });
+      }
+      return pts;
+    }
+    const buckets = S.gran === 'week'
+      ? Array.from({ length: S.w1 - S.w0 + 1 }, (_, k) => [S.w0 + k, S.w0 + k])
+      : monthBuckets();
+    return buckets.map(([a, b]) => {
+      let v = 0;
+      for (const st of stores) for (let i = DATA.weeks[a].i0; i <= DATA.weeks[b].i1; i++) v += st.created[i];
+      return { k: bucketLabel(a, b), v, d: DATA.weeks[b].i1 - DATA.weeks[a].i0 + 1, full: `${DATA.weeks[a].s} → ${DATA.weeks[b].e}` };
+    });
+  }
+  const buckets = S.gran === 'month'
+    ? monthBuckets()
+    : Array.from({ length: S.w1 - S.w0 + 1 }, (_, k) => [S.w0 + k, S.w0 + k]);
+  return buckets.map(([a, b]) => {
+    let v = 0;
+    for (const st of stores) for (let w = a; w <= b; w++) {
+      const wk = st.wk[w] || {};
+      for (const i in wk) {
+        if (S.issue && i !== S.issue) continue;
+        for (const r in wk[i]) { if (S.reason && r !== S.reason) continue; v += wk[i][r]; }
+      }
+    }
+    return { k: bucketLabel(a, b), v, d: DATA.weeks[b].i1 - DATA.weeks[a].i0 + 1, full: `${DATA.weeks[a].s} → ${DATA.weeks[b].e}` };
+  });
+}
+function monthBuckets() {
+  const out = []; let a = S.w0;
+  for (let w = S.w0; w <= S.w1; w++) {
+    const m = DATA.weeks[w].e.slice(0, 7);
+    const next = w < S.w1 ? DATA.weeks[w + 1].e.slice(0, 7) : null;
+    if (next !== m) { out.push([a, w]); a = w + 1; }
+  }
+  return out;
+}
+function bucketLabel(a, b) {
+  if (a === b) return DATA.weeks[a].label;
+  const x = DATA.weeks[a], y = DATA.weeks[b];
+  return `${dayLabel(x.s)} – ${dayLabel(y.e)}`;
+}
+
+function renderTrend() {
+  document.querySelectorAll('#measure .btn').forEach(b => b.classList.toggle('on', b.dataset.m === S.measure));
+  const dayBtn = document.querySelector('#gran .btn[data-g="day"]');
+  dayBtn.disabled = S.measure === 'issues';
+  dayBtn.title = S.measure === 'issues' ? 'Issue splits are exact per week, not per day' : '';
+  document.querySelectorAll('#gran .btn').forEach(b => b.classList.toggle('on', b.dataset.g === S.gran));
+
+  const pts = trendSeries();
+  const svg = document.getElementById('trend-svg');
+  const tip = document.getElementById('trend-tip');
+  const W = svg.clientWidth || 900, H = 250;
+  const P = { t: 14, r: 16, b: 30, l: 48 };
+  const iw = Math.max(10, W - P.l - P.r), ih = H - P.t - P.b;
+  const maxV = Math.max(1, ...pts.map(p => p.v));
+  const top = niceMax(maxV);
+  const X = i => pts.length === 1 ? P.l + iw / 2 : P.l + (i / (pts.length - 1)) * iw;
+  const Y = v => P.t + ih - (v / top) * ih;
+
+  const ticks = [0, .25, .5, .75, 1].map(f => Math.round(top * f));
+  let g = '';
+  ticks.forEach(t => {
+    g += `<line x1="${P.l}" y1="${Y(t)}" x2="${P.l + iw}" y2="${Y(t)}" stroke="var(--rule)" stroke-width="1"/>`;
+    g += `<text x="${P.l - 9}" y="${Y(t) + 3.5}" text-anchor="end" font-size="10.5" fill="var(--ink-3)" font-family="var(--mono)">${fmt(t)}</text>`;
+  });
+
+  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(p.v).toFixed(1)}`).join(' ');
+  const area = `${line} L${X(pts.length - 1).toFixed(1)},${Y(0)} L${X(0).toFixed(1)},${Y(0)} Z`;
+
+  const everyN = Math.ceil(pts.length / Math.max(2, Math.floor(iw / 74)));
+  let xl = '';
+  pts.forEach((p, i) => {
+    if (i % everyN && i !== pts.length - 1) return;
+    xl += `<text x="${X(i)}" y="${H - 9}" text-anchor="middle" font-size="10.5" fill="var(--ink-3)">${p.k}</text>`;
+  });
+
+  const last = pts.length - 1;
+  svg.innerHTML = `
+    <defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="var(--accent-fill-1)"/><stop offset="100%" stop-color="var(--accent-fill-2)"/>
+    </linearGradient></defs>
+    ${g}
+    <path d="${area}" fill="url(#tg)"/>
+    <path d="${line}" fill="none" stroke="var(--accent-line)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${pts.length <= 14 ? pts.map((p, i) => `<circle cx="${X(i)}" cy="${Y(p.v)}" r="3" fill="var(--surface)" stroke="var(--accent-line)" stroke-width="2"/>`).join('') : ''}
+    <circle cx="${X(last)}" cy="${Y(pts[last].v)}" r="4.5" fill="var(--accent-line)" stroke="var(--surface)" stroke-width="2"/>
+    <line id="ch" x1="0" y1="${P.t}" x2="0" y2="${P.t + ih}" stroke="var(--rule-strong)" stroke-width="1" opacity="0"/>
+    ${xl}
+    <rect x="${P.l}" y="${P.t}" width="${iw}" height="${ih}" fill="transparent" id="hit"/>`;
+
+  const hit = svg.querySelector('#hit'), ch = svg.querySelector('#ch');
+  const label = S.measure === 'issues' ? 'issues' : 'tickets';
+  hit.addEventListener('pointermove', e => {
+    const r = svg.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    let i = pts.length === 1 ? 0 : Math.round(((x - P.l) / iw) * (pts.length - 1));
+    i = Math.max(0, Math.min(pts.length - 1, i));
+    const p = pts[i];
+    ch.setAttribute('x1', X(i)); ch.setAttribute('x2', X(i)); ch.setAttribute('opacity', '1');
+    tip.innerHTML = `<div class="tip-h">${p.k}</div><div class="tip-v">${fmt(p.v)}</div>`
+      + `<div class="tip-s">${label}${p.d > 1 ? ` · ${fmt(Math.round(p.v / p.d))}/day` : ''}`
+      + `${S.issue ? ' · ' + S.issue : ''}${S.reason ? ' · ' + S.reason : ''}</div>`;
+    tip.classList.add('show');
+    const tw = tip.offsetWidth;
+    tip.style.left = Math.max(0, Math.min(W - tw, X(i) - tw / 2)) + 'px';
+    tip.style.top = Math.max(0, Y(p.v) - tip.offsetHeight - 12) + 'px';
+  });
+  hit.addEventListener('pointerleave', () => { tip.classList.remove('show'); ch.setAttribute('opacity', '0'); });
+
+  // Reading compares per-day rates, so a short final bucket cannot distort the change.
+  const A = pts[0], B = pts[last];
+  const ra = A.v / A.d, rb = B.v / B.d;
+  const delta = ra ? (rb - ra) / ra * 100 : 0;
+  const dir = Math.abs(delta) < 2 ? 'flat' : (delta > 0 ? 'up' : 'down');
+  const uneven = A.d !== B.d;
+  document.getElementById('trend-read').innerHTML = pts.length < 2
+    ? `<b>${fmt(B.v)}</b> ${label} in this bucket — widen the range to see a trend.`
+    : `${label[0].toUpperCase() + label.slice(1)} ran at <b>${fmt(Math.round(ra))}/day</b> in ${A.k} and `
+      + `<b>${fmt(Math.round(rb))}/day</b> in ${B.k} — `
+      + (dir === 'flat' ? `<b>broadly flat</b>` : `<span class="${dir === 'up' ? 'up' : 'down'}">${dir === 'up' ? '▲' : '▼'} ${d1(Math.abs(delta))}%</span>`)
+      + `.${uneven ? ` Compared per day because ${B.k} covers ${B.d} days, not ${A.d}.` : ''}`
+      + (S.measure === 'issues' ? ` Issue splits are exact per week; switch to Tickets for daily detail.` : '');
+}
+function niceMax(v) {
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const m of [1, 1.25, 1.5, 2, 2.5, 3, 4, 5, 7.5, 10]) if (v <= m * p) return m * p;
+  return 10 * p;
+}
+
+/* ---------- apply ---------- */
+function apply() {
+  snap();
+  const m = matrix();
+  renderReasonOptions(m);
+  const m2 = matrix();               // re-read after a stale reason was cleared
+  const it = issueTotals(m2);
+  renderEffective();
+  renderKPIs(m2, it);
+  renderTable(m2, it);
+  renderBreakdown(m2, it);
+  renderTrend();
+}
+
+renderStatus();
+buildFilters();
+apply();
+let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(renderTrend, 120); });
+</script>
