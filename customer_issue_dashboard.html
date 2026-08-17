@@ -632,7 +632,7 @@ function periodSlice(brandName, from, to) {
   const out = { created: 0, g: {}, s: {}, used: [], clipped: [], partial: false, derived: false };
   periods.forEach(p => {
     if (p.from >= from && p.to <= to) {
-      out.created += p.created;
+      if (p.created != null) out.created += p.created;
       for (const k in p.g) out.g[k] = (out.g[k] || 0) + p.g[k];
       for (const k in p.s) out.s[k] = (out.s[k] || 0) + p.s[k];
       out.used.push(p);
@@ -789,6 +789,9 @@ function renderBrands() {
   const days = dayCount(efFrom, efTo);
   const clipped = B.filter(b => b._slice.clipped.length);
   const short = B.filter(b => b._slice.coveredDays < days);
+  const spans = [...new Set(B.filter(b => !b._slice.unavailable)
+    .map(b => b._slice.used[0].from + "\u2192" + b._slice.used[b._slice.used.length - 1].to))];
+  const mixedWindows = spans.length > 1;
   const widenNote = widened
     ? `You picked ${fmtD(Date.parse(S.bfrom + "T00:00:00Z"))}&ndash;${fmtD(Date.parse(S.bto + "T00:00:00Z"))}. ` +
       `Commslayer only stores issue counts per fetched period, and the finest period covering those dates runs ` +
@@ -967,7 +970,7 @@ function renderBrands() {
         const strength = (v2 == null || raw) ? 0 : Math.min(1, pct(v2, b.created) / 25);
         return `<td class="num" style="background:color-mix(in srgb, ${BRAND_COLOR[b.name]} ${Math.round(strength * 26)}%, transparent)">${one(v2, b)}</td>`;
       }).join("") +
-      `<td class="num">${sum == null ? NAV
+      `<td class="num">${sum == null || (mixedWindows && !raw) ? NAV
         : raw ? `<b>${sum.toLocaleString()}</b>`
         : fmtCell(sum,
             B.filter((b, i) => vals[i] != null).reduce((s, b) => s + b.created, 0),
@@ -977,7 +980,7 @@ function renderBrands() {
 
   sectionRow("Top-level issue groups");
   GROUPS.forEach(c => dataRow(c, b => b._slice.unavailable ? null : (b.top[c] || 0)));
-  dataRow("Total tickets received", b => b._slice.unavailable ? null : b.created);
+  dataRow("Total tickets received", b => (b._slice.unavailable || b._slice.noTotal) ? null : b.created);
   sectionRow("Detailed reasons (subsets of the groups above)");
   DETAIL.forEach(([k, label]) => dataRow(label, b => b._slice.unavailable ? null : (b.sub[k] || 0)));
   sectionRow("Commslayer labels — whole week 11–17 Aug, not sliced by the dates above");
@@ -1011,6 +1014,7 @@ function renderBrands() {
   const totKnown = withTotal.reduce((s, b) => s + b.created, 0);
   document.getElementById("mix-range-note").innerHTML =
     (widened ? `<b>Widened to match stored periods.</b> ` : "") +
+    (mixedWindows ? `<b>Brands resolve to different windows here (${esc(spans.join("; "))}), so the columns are not like-for-like and the All brands column is withheld.</b> ` : "") +
     `Counting <b>${esc(fmtD(Date.parse(efFrom + "T00:00:00Z")))} &ndash; ${esc(fmtD(Date.parse(efTo + "T00:00:00Z")))}</b>` +
     ` &middot; issue counts for <b>${avail.length}</b> of ${B.length} brand${B.length === 1 ? "" : "s"}` +
     (B.length - avail.length ? ` (${B.filter(b => b._slice.unavailable).map(b => esc(b.name)).join(", ")} unavailable at this range)` : "") +
