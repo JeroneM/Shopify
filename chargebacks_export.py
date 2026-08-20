@@ -2,9 +2,12 @@
 
     python chargebacks_export.py                # -> chargebacks.json + chargebacks.csv
 
-One row per Shopify dispute. The dispute ID is the unique key, so an order with
-several transactions is never counted more than once - only cases Shopify itself
-records as separate disputes become separate rows.
+One row per chargeback case. Shopify opens a separate dispute record for each
+captured transaction, so a single chargeback on an order with several
+transactions arrives as several disputes - the merchant sees one chargeback on
+one order, and that is what a row here counts. Disputes are grouped by order,
+their amounts summed, and every dispute ID is kept on the row so the case can be
+traced back. A dispute with no order is a case on its own.
 """
 
 import csv
@@ -40,10 +43,68 @@ STATUS_MAP = {
 }
 
 FIELDS = [
-    "dispute_id", "store", "created_at", "created_date", "order_number", "order_id",
-    "customer", "amount", "currency", "reason", "status", "status_raw", "case_type",
-    "outcome_date", "evidence_due_by",
+    "case_id", "store", "created_at", "created_date", "order_number", "order_id",
+    "customer", "amount", "currency", "reason", "status", "sub_status",
+    "dispute_count", "dispute_ids", "status_raw", "outcome_date", "evidence_due_by",
 ]
+
+# One order can carry several Shopify disputes - one per captured transaction - which
+# the merchant sees as a single chargeback on a single order. Disputes are grouped by
+# order and the case takes the status of the dispute that still needs the most action.
+NEEDS_RESPONSE = {"needs_response", "warning_needs_response"}
+UNDER_REVIEW = {"under_review", "warning_under_review", "response_disabled"}
+LOST_STATUSES = {"lost", "accepted", "charge_refunded"}
+
+
+def case_status(disputes: list[dict]) -> tuple[str, str, dict]:
+    """(status, sub_status, the dispute that decided it) for one order's disputes."""
+    newest = lambda group: sorted(group, key=lambda d: str(d.get("created_at") or ""))[-1]
+    for statuses, status, sub in (
+        (NEEDS_RESPONSE, "Open", "Needs response"),
+        (UNDER_REVIEW, "Open", "Under review"),
+        (LOST_STATUSES, "Lost", "Lost"),
+    ):
+        hits = [d for d in disputes if d.get("status") in statuses]
+        if hits:
+            return status, sub, newest(hits)
+    sub = "Prevented" if all(d.get("status") == "prevented" for d in disputes) else "Defended"
+    return "Won", sub, newest(disputes)
+
+
+def group_into_cases(disputes: list[dict], display_name: str, tz: ZoneInfo, warnings: list[str]) -> list[dict]:
+    grouped: dict[str, list[dict]] = {}
+    for dispute in disputes:
+        key = str(dispute.get("order_id") or ("dispute-" + str(dispute.get("id"))))
+        grouped.setdefault(key, []).append(dispute)
+
+    cases = []
+    for key, group in grouped.items():
+        status, sub_status, primary = case_status(group)
+        unknown = [d for d in group if d.get("status") not in STATUS_MAP]
+        for d in unknown:
+            warnings.append(f"{display_name}: unrecognized status '{d.get('status')}' on dispute {d.get('id')}")
+        dates = sorted(to_local_date(d.get("initiated_at") or d.get("created_at"), tz) for d in group)
+        finalized = sorted(filter(None, (to_local_date(d.get("finalized_on"), tz) for d in group)))
+        due = sorted(filter(None, (to_local_date(d.get("evidence_due_by"), tz) for d in group)))
+        cases.append({
+            "_group": group,
+            "case_id": f"{display_name}:{key}",
+            "store": display_name,
+            "created_at": min(str(d.get("initiated_at") or d.get("created_at") or "") for d in group),
+            "created_date": dates[0],
+            "order_id": group[0].get("order_id") or "",
+            "amount": round(sum(float(d.get("amount") or 0) for d in group), 2),
+            "currency": primary.get("currency") or "",
+            "reason": primary.get("reason") or "",
+            "status": status,
+            "sub_status": sub_status,
+            "status_raw": primary.get("status") or "",
+            "dispute_count": len(group),
+            "dispute_ids": ";".join(str(d.get("id")) for d in sorted(group, key=lambda d: str(d.get("id")))),
+            "outcome_date": finalized[-1] if finalized and status != "Open" else "",
+            "evidence_due_by": due[0] if due and status == "Open" else "",
+        })
+    return cases
 
 
 def to_local_date(iso: str | None, tz: ZoneInfo) -> str:
@@ -81,10 +142,11 @@ def collect_store(display_name: str, env_key: str, warnings: list[str]) -> list[
     if duplicates:
         warnings.append(f"{display_name}: dropped {duplicates} repeated dispute ID(s) returned by the API")
 
+    cases = group_into_cases(list(seen.values()), display_name, tz, warnings)
+
     order_cache: dict[int, dict] = {}
-    rows = []
-    for dispute_id, dispute in seen.items():
-        order_id = dispute.get("order_id")
+    for case in cases:
+        order_id = case["order_id"]
         order = {}
         if order_id:
             if order_id not in order_cache:
@@ -94,34 +156,29 @@ def collect_store(display_name: str, env_key: str, warnings: list[str]) -> list[
                     order_cache[order_id] = {}
                     warnings.append(f"{display_name}: could not read order {order_id} ({exc})")
             order = order_cache[order_id]
+        case["order_number"] = order.get("name") or (f"#{order['order_number']}" if order.get("order_number") else "")
+        case["customer"] = customer_name(order)
+        case["disputes"] = [
+            {
+                "dispute_id": str(d.get("id")),
+                "created_date": to_local_date(d.get("initiated_at") or d.get("created_at"), tz),
+                "amount": d.get("amount") or "",
+                "currency": d.get("currency") or "",
+                "reason": d.get("reason") or "",
+                "status_raw": d.get("status") or "",
+                "outcome_date": to_local_date(d.get("finalized_on"), tz),
+            }
+            for d in sorted(case.pop("_group"), key=lambda d: str(d.get("initiated_at") or ""))
+        ]
 
-        status_raw = dispute.get("status") or ""
-        status = STATUS_MAP.get(status_raw)
-        if status is None:
-            status = "Open"
-            warnings.append(f"{display_name}: unrecognized status '{status_raw}' mapped to Open")
-        created_at = dispute.get("initiated_at") or dispute.get("created_at") or ""
-
-        rows.append({
-            "dispute_id": dispute_id,
-            "store": display_name,
-            "created_at": created_at,
-            "created_date": to_local_date(created_at, tz),
-            "order_number": order.get("name") or (f"#{order['order_number']}" if order.get("order_number") else ""),
-            "order_id": order_id or "",
-            "customer": customer_name(order),
-            "amount": dispute.get("amount") or "",
-            "currency": dispute.get("currency") or "",
-            "reason": dispute.get("reason") or "",
-            "status": status,
-            "status_raw": status_raw,
-            "case_type": dispute.get("type") or "",
-            "outcome_date": to_local_date(dispute.get("finalized_on"), tz),
-            "evidence_due_by": to_local_date(dispute.get("evidence_due_by"), tz),
-        })
-
-    print(f"[{display_name}] {len(rows)} dispute(s)")
-    return rows
+    split = sum(1 for c in cases if c["dispute_count"] > 1)
+    if split:
+        warnings.append(
+            f"{display_name}: {split} order(s) carry more than one Shopify dispute "
+            f"(one per transaction) and count as one chargeback each"
+        )
+    print(f"[{display_name}] {len(disputes)} dispute(s) -> {len(cases)} chargeback case(s)")
+    return cases
 
 
 def main() -> None:
@@ -151,11 +208,13 @@ def main() -> None:
     with open("chargebacks.json", "w") as handle:
         json.dump(payload, handle, indent=2)
     with open("chargebacks.csv", "w", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=FIELDS)
+        writer = csv.DictWriter(handle, fieldnames=FIELDS, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
 
-    print(f"\n{len(rows)} chargeback(s) written to chargebacks.json and chargebacks.csv")
+    disputes = sum(r["dispute_count"] for r in rows)
+    print(f"\n{len(rows)} chargeback case(s) from {disputes} Shopify dispute(s)"
+          f" written to chargebacks.json and chargebacks.csv")
     for warning in warnings:
         print(f"  warning: {warning}")
     if not rows:

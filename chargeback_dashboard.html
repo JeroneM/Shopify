@@ -178,6 +178,18 @@ th.sortable:hover { color: var(--accent); }
 th .caret { color: var(--accent); }
 .empty { padding: 26px 16px; text-align: center; color: var(--muted); font-size: var(--step-0); background: var(--surface); }
 
+.linkish { background: none; border: 0; padding: 0; color: var(--accent); font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums; font-size: var(--step-0); }
+.linkish:hover { text-decoration: underline; }
+tr.expandable { cursor: pointer; }
+tr.detail > td { background: var(--surface-2); padding: 0; }
+tr.detail:hover > td { background: var(--surface-2); }
+.detail-box { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 8px; border-left: 3px solid var(--accent); }
+table.inner { background: transparent; }
+table.inner th { background: transparent; border-bottom: 1px solid var(--line); position: static; }
+table.inner td { border-bottom: 0; padding: 5px 12px 5px 0; }
+table.inner th { padding: 4px 12px 4px 0; }
+table.inner tr:hover td { background: transparent; }
+
 /* pills */
 .pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px 2px 7px; border-radius: 999px; font-size: 0.75rem; font-weight: 500; border: 1px solid transparent; }
 .pill .sw { width: 8px; height: 8px; border-radius: 50%; }
@@ -289,7 +301,7 @@ textarea { width: 100%; min-height: 120px; font-family: "IBM Plex Mono", ui-mono
       <div class="kpi open">
         <p class="eyebrow swatch-label"><i class="sw open"></i>Open</p>
         <p class="v" id="k-open">0</p>
-        <p class="foot">still open or under review</p>
+        <p class="foot" id="k-open-foot">still open or under review</p>
       </div>
       <div class="kpi won">
         <p class="eyebrow swatch-label"><i class="sw won"></i>Won</p>
@@ -368,7 +380,9 @@ textarea { width: 100%; min-height: 120px; font-family: "IBM Plex Mono", ui-mono
       <label class="field"><span>Store</span><select id="f-store"></select></label>
       <label class="field"><span>Status</span><select id="f-status">
         <option value="">All</option>
-        <option value="Open">Open</option>
+        <option value="Open">Open (all)</option>
+        <option value="Open:needs">Open &mdash; needs response</option>
+        <option value="Open:review">Open &mdash; submitted, under review</option>
         <option value="Won">Won (all)</option>
         <option value="Won:defended">Won &mdash; defended</option>
         <option value="Won:prevented">Won &mdash; prevented by Shopify</option>
@@ -391,6 +405,7 @@ textarea { width: 100%; min-height: 120px; font-family: "IBM Plex Mono", ui-mono
           <th class="sortable" data-sort="reason">Reason</th>
           <th class="sortable" data-sort="status">Status</th>
           <th class="sortable" data-sort="outcome">Outcome date</th>
+          <th class="sortable n" data-sort="disputes">Disputes</th>
         </tr></thead>
         <tbody></tbody>
       </table>
@@ -404,13 +419,16 @@ textarea { width: 100%; min-height: 120px; font-family: "IBM Plex Mono", ui-mono
         <div class="scroll"><table>
           <thead><tr><th>Reported here</th><th>Shopify status</th></tr></thead>
           <tbody>
-            <tr><td><span class="pill open"><i class="sw open"></i>Open</span></td><td class="mono">needs_response, under_review, warning_needs_response, warning_under_review, response_disabled</td></tr>
+            <tr><td><span class="pill open"><i class="sw open"></i>Open</span> <span class="sub">needs response</span></td><td class="mono">needs_response, warning_needs_response</td></tr>
+            <tr><td><span class="pill open"><i class="sw open"></i>Open</span> <span class="sub">under review</span></td><td class="mono">under_review, warning_under_review, response_disabled</td></tr>
             <tr><td><span class="pill won"><i class="sw won"></i>Won</span></td><td class="mono">won, warning_closed, prevented</td></tr>
             <tr><td><span class="pill lost"><i class="sw lost"></i>Lost</span></td><td class="mono">lost, accepted, charge_refunded</td></tr>
           </tbody>
         </table></div>
         <p><b>Prevented cases count as won.</b> Shopify blocks some disputes before any money moves and marks them <code>prevented</code> &mdash; no loss, but no defence was mounted either. They are folded into Won so that Total = Open + Won + Lost holds, labelled <span class="sub">prevented</span> in the table below, counted separately under the Won figure, and selectable on their own in the Status filter. Filter to <b>Won &mdash; defended</b> to see the win rate on cases actually fought.</p>
-        <p><b>One case, one row.</b> Rows are keyed on the Shopify dispute ID, so an order with several transactions still counts once. A repeated dispute ID is dropped and reported in the data notes above. Only cases Shopify records as separate disputes appear as separate rows.</p>
+        <p><b>One order, one chargeback.</b> Shopify opens a separate dispute record for every captured transaction, so a single chargeback on an order paid in several transactions arrives as several disputes with different IDs. Counting those as separate chargebacks would inflate every figure here, so disputes are grouped by order: one row per order, amounts summed, and each dispute kept underneath it. Where a row shows more than one dispute, click the count in the last column to see the individual dispute IDs, amounts and Shopify statuses behind it.</p>
+        <p><b>The status of a grouped case</b> is the one that still needs the most attention: any dispute awaiting our response makes the case <i>needs response</i>; failing that, any dispute under review makes it <i>under review</i>; failing that, any lost dispute makes the case Lost. This is why an order can read Open here while the Shopify orders list badges it something else &mdash; that badge follows the most recent dispute on the order, not the one that still needs work.</p>
+        <p><b>Reading against the Shopify orders list.</b> Filter Status to <b>Open &mdash; needs response</b> to get the set of orders Shopify badges &ldquo;Chargeback open&rdquo;. The counts can still differ by a case or two: an order carrying both an open and a submitted dispute badges &ldquo;Chargeback submitted&rdquo;, and one covered by Shopify Protect badges &ldquo;Chargeback protected&rdquo;, though both still need a response.</p>
         <p><b>Dates.</b> Filtering uses the date the dispute was created (Shopify's <code>initiated_at</code>), in the store's own timezone. Outcome date is the date the case was finalised.</p>
         <p><b>Win rate.</b> Won &divide; (Won + Lost) &times; 100. Open cases are excluded from the divisor. With no closed cases in range, the rate reads &ldquo;&mdash;&rdquo;.</p>
       </div>
@@ -458,11 +476,22 @@ outcome_date, evidence_due_by</pre>
     won: "Won", warning_closed: "Won", prevented: "Won", closed_won: "Won",
     lost: "Lost", accepted: "Lost", charge_refunded: "Lost", refunded: "Lost", closed_lost: "Lost"
   };
+  const RAW_SUB = {
+    needs_response: "Needs response", warning_needs_response: "Needs response",
+    under_review: "Under review", warning_under_review: "Under review", response_disabled: "Under review",
+    prevented: "Prevented", won: "Defended", warning_closed: "Defended",
+    lost: "Lost", accepted: "Lost", charge_refunded: "Lost"
+  };
+  const SUB_SLUG = { "Needs response": "needs", "Under review": "review", Defended: "defended", Prevented: "prevented", Lost: "lost" };
   const DEFAULT_STORES = ["Maggie's Tanks", "Mary's Tanks", "Lyn's Tanks", "Simply Elsie"];
 
   const normKey = (s) => String(s).trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
   const ALIASES = {
-    dispute_id: ["dispute_id", "disputeid", "id", "chargeback_id", "case_id"],
+    dispute_id: ["case_id", "dispute_id", "disputeid", "id", "chargeback_id"],
+    sub_status: ["sub_status", "substatus", "detail_status"],
+    dispute_count: ["dispute_count", "disputes_count", "transactions"],
+    dispute_ids: ["dispute_ids", "disputeids"],
+    disputes: ["disputes"],
     store: ["store", "store_name", "shop", "shop_name"],
     created: ["created_date", "chargeback_date", "created_at", "initiated_at", "date", "dispute_date", "opened"],
     order_number: ["order_number", "order", "order_name", "order_no", "order_num"],
@@ -561,7 +590,11 @@ outcome_date, evidence_due_by</pre>
         reason: String(r.reason || "").trim(),
         status: status,
         statusRaw: String(r.status_raw || r.status || "").trim(),
-        prevented: normKey(r.status_raw || r.status || "") === "prevented",
+        sub: String(r.sub_status || "").trim() || RAW_SUB[normKey(r.status_raw || r.status || "")] || "",
+        prevented: String(r.sub_status || "").trim() === "Prevented" || normKey(r.status_raw || r.status || "") === "prevented",
+        disputeCount: Math.max(1, parseInt(r.dispute_count, 10) || 1),
+        disputeIds: String(r.dispute_ids || "").split(";").filter(Boolean),
+        disputes: Array.isArray(r.disputes) ? r.disputes : [],
         outcome: parseDate(r.outcome_date)
       });
     });
@@ -581,7 +614,7 @@ outcome_date, evidence_due_by</pre>
   /* ---------- state ---------- */
   const state = {
     data: null, isSample: false, from: "", to: "", preset: "all", trend: "daily",
-    sort: { key: "date", dir: -1 },
+    sort: { key: "date", dir: -1 }, expanded: new Set(),
     filters: { store: "", status: "", reason: "", order: "" }
   };
   let lastPeriods = [];
@@ -630,11 +663,14 @@ outcome_date, evidence_due_by</pre>
   }
 
   /* ---------- aggregation ---------- */
-  const blank = () => ({ total: 0, Open: 0, Won: 0, Lost: 0, prevented: 0, amounts: {} });
+  const blank = () => ({ total: 0, Open: 0, Won: 0, Lost: 0, prevented: 0, needs: 0, review: 0, disputes: 0, amounts: {} });
   function tally(bucket, row) {
     bucket.total++;
     bucket[row.status]++;
     if (row.prevented) bucket.prevented++;
+    if (row.sub === "Needs response") bucket.needs++;
+    if (row.sub === "Under review") bucket.review++;
+    bucket.disputes += row.disputeCount;
     if (row.amount != null) {
       const cur = row.currency || "—";
       bucket.amounts[cur] = (bucket.amounts[cur] || 0) + row.amount;
@@ -678,8 +714,10 @@ outcome_date, evidence_due_by</pre>
     $("#from").value = state.from;
     $("#to").value = state.to;
     const b = bounds();
+    const rolled = ranged.reduce((a, r) => a + r.disputeCount, 0);
     $("#range-note").innerHTML = ranged.length
-      ? esc(prettyDate(state.from)) + " to " + esc(prettyDate(state.to)) + " &middot; <span class=\"num\">" + int(ranged.length) + "</span> of <span class=\"num\">" + int(rows.length) + "</span> cases<br>data covers " + esc(prettyDate(b.min)) + " &ndash; " + esc(prettyDate(b.max))
+      ? esc(prettyDate(state.from)) + " to " + esc(prettyDate(state.to)) + " &middot; <span class=\"num\">" + int(ranged.length) + "</span> of <span class=\"num\">" + int(rows.length) + "</span> cases" +
+        (rolled > ranged.length ? " <span class=\"num\">(" + int(rolled) + " Shopify disputes)</span>" : "") + "<br>data covers " + esc(prettyDate(b.min)) + " &ndash; " + esc(prettyDate(b.max))
       : "No cases in this range &middot; data covers " + esc(prettyDate(b.min)) + " &ndash; " + esc(prettyDate(b.max));
 
     $("#k-total").textContent = int(overall.total);
@@ -688,6 +726,9 @@ outcome_date, evidence_due_by</pre>
     $("#k-lost").textContent = int(overall.Lost);
     $("#k-rate").textContent = rateText(overall);
     $("#k-total-foot").textContent = amountText(overall.amounts) === "—" ? "created in range" : amountText(overall.amounts) + " disputed";
+    $("#k-open-foot").textContent = (overall.needs + overall.review === overall.Open && overall.Open)
+      ? int(overall.needs) + " need a response · " + int(overall.review) + " submitted, awaiting decision"
+      : "still open or under review";
     $("#k-won-foot").textContent = overall.prevented
       ? int(overall.Won - overall.prevented) + " defended · " + int(overall.prevented) + " prevented by Shopify"
       : "resolved in our favour";
@@ -720,6 +761,7 @@ outcome_date, evidence_due_by</pre>
     const totals = blank();
     list.forEach((b) => {
       totals.total += b.total; totals.Open += b.Open; totals.Won += b.Won; totals.Lost += b.Lost;
+      totals.prevented += b.prevented; totals.needs += b.needs; totals.review += b.review; totals.disputes += b.disputes;
       Object.keys(b.amounts).forEach((c) => { totals.amounts[c] = (totals.amounts[c] || 0) + b.amounts[c]; });
     });
 
@@ -845,7 +887,7 @@ outcome_date, evidence_due_by</pre>
   function auditRows(ranged) {
     const f = state.filters;
     const q = f.order.trim().toLowerCase().replace(/^#/, "");
-    const statusOf = (r) => (f.status.indexOf(":") === -1 ? r.status : r.status + ":" + (r.prevented ? "prevented" : "defended"));
+    const statusOf = (r) => (f.status.indexOf(":") === -1 ? r.status : r.status + ":" + (SUB_SLUG[r.sub] || ""));
     let list = ranged.filter((r) =>
       (!f.store || r.store === f.store) &&
       (!f.status || statusOf(r) === f.status) &&
@@ -853,10 +895,10 @@ outcome_date, evidence_due_by</pre>
       (!q || r.order.toLowerCase().replace(/^#/, "").indexOf(q) !== -1)
     );
     const k = state.sort.key, dir = state.sort.dir;
-    const get = { date: "date", store: "store", order: "order", customer: "customer", amount: "amount", reason: "reason", status: "status", outcome: "outcome" }[k];
+    const get = { date: "date", store: "store", order: "order", customer: "customer", amount: "amount", reason: "reason", status: "status", outcome: "outcome", disputes: "disputeCount" }[k];
     list = list.slice().sort((a, x) => {
       let va = a[get], vx = x[get];
-      if (get === "amount") { va = va == null ? -Infinity : va; vx = vx == null ? -Infinity : vx; return (va - vx) * dir; }
+      if (get === "amount" || get === "disputeCount") { va = va == null ? -Infinity : va; vx = vx == null ? -Infinity : vx; return (va - vx) * dir; }
       va = String(va || ""); vx = String(vx || "");
       return va === vx ? 0 : (va < vx ? -1 : 1) * dir;
     });
@@ -883,21 +925,41 @@ outcome_date, evidence_due_by</pre>
       ? int(list.length) + " cases in range"
       : int(list.length) + " of " + int(ranged.length) + " cases in range";
     $("#audit-table").tBodies[0].innerHTML = list.length
-      ? list.map((r) =>
-        "<tr>" +
-        '<td class="num">' + esc(prettyDate(r.date)) + "</td>" +
-        "<td>" + esc(r.store) + "</td>" +
-        '<td class="mono">' + esc(r.order || "—") + "</td>" +
-        "<td>" + esc(r.customer || "—") + "</td>" +
-        '<td class="n">' + (r.amount == null ? "—" : esc(money(r.amount))) + "</td>" +
-        '<td class="mono">' + esc(r.currency || "—") + "</td>" +
-        "<td>" + esc(prettyReason(r.reason)) + "</td>" +
-        '<td><span class="pill ' + r.status.toLowerCase() + '" title="Shopify status: ' + esc(r.statusRaw || "n/a") + '"><i class="sw ' + r.status.toLowerCase() + '"></i>' + r.status + "</span>" +
-        (r.prevented ? ' <span class="sub">prevented</span>' : "") + "</td>" +
-        '<td class="num">' + esc(r.outcome ? prettyDate(r.outcome) : "—") + "</td>" +
-        "</tr>"
-      ).join("")
-      : '<tr><td colspan="9" class="empty">No cases match these filters.</td></tr>';
+      ? list.map((r) => {
+        const open = state.expanded.has(r.id);
+        const label = r.sub && r.sub !== r.status ? r.sub.toLowerCase() : "";
+        let html = '<tr class="case' + (r.disputeCount > 1 ? " expandable" : "") + '" data-case="' + esc(r.id) + '">' +
+          '<td class="num">' + esc(prettyDate(r.date)) + "</td>" +
+          "<td>" + esc(r.store) + "</td>" +
+          '<td class="mono">' + esc(r.order || "—") + "</td>" +
+          "<td>" + esc(r.customer || "—") + "</td>" +
+          '<td class="n">' + (r.amount == null ? "—" : esc(money(r.amount))) + "</td>" +
+          '<td class="mono">' + esc(r.currency || "—") + "</td>" +
+          "<td>" + esc(prettyReason(r.reason)) + "</td>" +
+          '<td><span class="pill ' + r.status.toLowerCase() + '" title="Shopify status: ' + esc(r.statusRaw || "n/a") + '"><i class="sw ' + r.status.toLowerCase() + '"></i>' + r.status + "</span>" +
+          (label ? ' <span class="sub">' + esc(label) + "</span>" : "") + "</td>" +
+          '<td class="num">' + esc(r.outcome ? prettyDate(r.outcome) : "—") + "</td>" +
+          '<td class="n">' + (r.disputeCount > 1
+            ? '<button class="linkish" aria-expanded="' + open + '">' + r.disputeCount + (open ? " ▲" : " ▼") + "</button>"
+            : "1") + "</td>" +
+          "</tr>";
+        if (open && r.disputes.length) {
+          html += '<tr class="detail"><td colspan="10"><div class="detail-box"><p class="eyebrow">' +
+            r.disputes.length + " Shopify disputes on order " + esc(r.order || "—") + " — one per captured transaction, counted here as one chargeback</p>" +
+            '<table class="inner"><thead><tr><th>Dispute ID</th><th>Raised</th><th class="n">Amount</th><th>Reason</th><th>Shopify status</th><th>Finalised</th></tr></thead><tbody>' +
+            r.disputes.map((d) => "<tr>" +
+              '<td class="mono">' + esc(d.dispute_id) + "</td>" +
+              '<td class="num">' + esc(prettyDate(String(d.created_date || ""))) + "</td>" +
+              '<td class="n">' + esc(d.amount ? money(parseFloat(d.amount)) + " " + (d.currency || "") : "—") + "</td>" +
+              "<td>" + esc(prettyReason(d.reason)) + "</td>" +
+              '<td class="mono">' + esc(d.status_raw || "—") + "</td>" +
+              '<td class="num">' + esc(d.outcome_date ? prettyDate(d.outcome_date) : "—") + "</td>" +
+              "</tr>").join("") +
+            "</tbody></table></div></td></tr>";
+        }
+        return html;
+      }).join("")
+      : '<tr><td colspan="10" class="empty">No cases match these filters.</td></tr>';
     return list;
   }
 
@@ -1090,6 +1152,13 @@ outcome_date, evidence_due_by</pre>
     state.trend = btn.dataset.mode;
     render();
   });
+  $("#audit-table").addEventListener("click", (e) => {
+    const row = e.target.closest("tr.expandable");
+    if (!row) return;
+    const id = row.dataset.case;
+    if (state.expanded.has(id)) state.expanded.delete(id); else state.expanded.add(id);
+    render();
+  });
   $("#f-store").addEventListener("change", (e) => { state.filters.store = e.target.value; render(); });
   $("#f-status").addEventListener("change", (e) => { state.filters.status = e.target.value; render(); });
   $("#f-reason").addEventListener("change", (e) => { state.filters.reason = e.target.value; render(); });
@@ -1104,11 +1173,13 @@ outcome_date, evidence_due_by</pre>
     });
   });
   $("#btn-csv").addEventListener("click", () => {
-    const cols = ["Chargeback date", "Store", "Order number", "Customer", "Amount", "Currency", "Reason", "Status", "Outcome date"];
+    const cols = ["Chargeback date", "Store", "Order number", "Customer", "Amount", "Currency", "Reason", "Status", "Shopify status", "Outcome date", "Disputes", "Dispute IDs"];
     const cell = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
     const list = auditRows(state.data.rows.filter(inRange));
     const csv = [cols.join(",")].concat(list.map((r) =>
-      [r.date, r.store, r.order, r.customer, r.amount == null ? "" : r.amount, r.currency, r.reason, r.status, r.outcome].map(cell).join(",")
+      [r.date, r.store, r.order, r.customer, r.amount == null ? "" : r.amount, r.currency, r.reason,
+       r.sub && r.sub !== r.status ? r.status + " — " + r.sub.toLowerCase() : r.status,
+       r.statusRaw, r.outcome, r.disputeCount, r.disputeIds.join(";")].map(cell).join(",")
     )).join("\n");
     const out = $("#csv-out");
     const fallback = () => { out.classList.remove("hidden"); out.value = csv; out.select(); $("#btn-csv").textContent = "Select all and copy"; };
