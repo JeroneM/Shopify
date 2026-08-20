@@ -1,0 +1,563 @@
+<title>Tank Inventory Control</title>
+<style>
+:root{
+  color-scheme: light;
+  --ground:#F1F4F5; --surface:#FFFFFF; --surface-2:#F7F9FA; --surface-3:#ECF0F2;
+  --ink:#131719; --ink-2:#55636A; --ink-3:#7D8A91;
+  --rule:#DCE3E6; --rule-2:#EDF1F2;
+  --accent:#14595F; --accent-soft:#E2EFF0; --accent-ink:#0E4449;
+  --pos:#2a78d6; --neg:#e34948;
+  --warn:#8A5B00; --warn-bg:#FBF0DA;
+  --crit:#9C2B2B; --crit-bg:#FBE4E4;
+  --ok:#0B6B4F; --ok-bg:#DFF1EA;
+  --shadow:0 1px 2px rgba(19,23,25,.05), 0 8px 24px -16px rgba(19,23,25,.25);
+  --serif: ui-serif, "Iowan Old Style", "Source Serif 4", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  color-scheme: dark;
+  --ground:#0E1214; --surface:#181D20; --surface-2:#1E2427; --surface-3:#232A2E;
+  --ink:#E9EEF0; --ink-2:#9DAAB1; --ink-3:#77858C;
+  --rule:#2A3337; --rule-2:#222A2D;
+  --accent:#5FBCC1; --accent-soft:#15302F; --accent-ink:#8FD6D9;
+  --pos:#3987e5; --neg:#e66767;
+  --warn:#E4B155; --warn-bg:#2E2415;
+  --crit:#EE8A8A; --crit-bg:#331A1A;
+  --ok:#5FC3A2; --ok-bg:#122A22;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --ground:#0E1214; --surface:#181D20; --surface-2:#1E2427; --surface-3:#232A2E;
+  --ink:#E9EEF0; --ink-2:#9DAAB1; --ink-3:#77858C;
+  --rule:#2A3337; --rule-2:#222A2D;
+  --accent:#5FBCC1; --accent-soft:#15302F; --accent-ink:#8FD6D9;
+  --pos:#3987e5; --neg:#e66767;
+  --warn:#E4B155; --warn-bg:#2E2415;
+  --crit:#EE8A8A; --crit-bg:#331A1A;
+  --ok:#5FC3A2; --ok-bg:#122A22;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1320px;margin:0 auto;padding:clamp(20px,3vw,36px) clamp(12px,3vw,32px) 90px;display:flex;flex-direction:column;gap:30px}
+h1,h2,h3{font-family:var(--serif);font-weight:600;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:clamp(1.6rem,3.2vw,2.3rem);line-height:1.1}
+h2{font-size:1.3rem} h3{font-size:1rem}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.sub{color:var(--ink-2);font-size:.92rem;max-width:78ch}
+section{display:flex;flex-direction:column;gap:14px}
+.shead{display:flex;flex-direction:column;gap:5px}
+
+/* controls */
+.controls{position:sticky;top:0;z-index:20;background:var(--surface);border:1px solid var(--rule);
+  border-radius:5px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:16px 22px;align-items:flex-end;box-shadow:var(--shadow)}
+.ctl{display:flex;flex-direction:column;gap:5px;min-width:0}
+.ctl > label{font-family:var(--mono);font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.seg{display:flex;background:var(--surface-3);border-radius:4px;padding:2px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--ink-2);font-family:var(--sans);font-size:.82rem;
+  padding:5px 11px;border-radius:3px;cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input[type=date],select{font-family:var(--sans);font-size:.82rem;padding:6px 8px;border:1px solid var(--rule);
+  border-radius:4px;background:var(--surface);color:var(--ink)}
+input[type=date]:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.dates{display:flex;gap:6px;align-items:center}
+.dates span{color:var(--ink-3);font-size:.8rem}
+.btn{font-family:var(--sans);font-size:.85rem;font-weight:600;padding:9px 16px;border-radius:4px;
+  border:1px solid var(--accent);background:var(--accent);color:var(--surface);cursor:pointer}
+:root[data-theme="dark"] .btn,:root:not([data-theme="light"]) .btn{color:#0E1214}
+@media(prefers-color-scheme: light){:root:not([data-theme="dark"]) .btn{color:#fff}}
+.btn:hover{filter:brightness(1.08)} .btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.btn.ghost{background:transparent;color:var(--accent);border-color:var(--rule)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+/* banners */
+.bar{display:flex;gap:12px;align-items:flex-start;border-radius:4px;padding:13px 16px;font-size:.88rem}
+.bar.warn{background:var(--warn-bg);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);color:var(--ink-2)}
+.bar.crit{background:var(--crit-bg);border:1px solid color-mix(in srgb,var(--crit) 32%,transparent);color:var(--ink-2)}
+.bar.ok{background:var(--ok-bg);border:1px solid color-mix(in srgb,var(--ok) 28%,transparent);color:var(--ink-2)}
+.bar b{color:var(--ink)}
+.bar .m{font-family:var(--mono);font-weight:700;flex:none}
+.bar.warn .m{color:var(--warn)} .bar.crit .m{color:var(--crit)} .bar.ok .m{color:var(--ok)}
+
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--rule);
+  border:1px solid var(--rule);border-radius:5px;overflow:hidden}
+.tile{background:var(--surface);padding:15px 17px;display:flex;flex-direction:column;gap:4px}
+.tile .k{font-family:var(--mono);font-size:.62rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.tile .v{font-family:var(--serif);font-size:1.65rem;line-height:1.05;font-variant-numeric:tabular-nums}
+.tile .n{font-size:.75rem;color:var(--ink-2)}
+.tile.hi{background:var(--accent-soft)} .tile.hi .v{color:var(--accent-ink)}
+.tile.bad .v{color:var(--crit)}
+
+/* chart */
+.chart{background:var(--surface);border:1px solid var(--rule);border-radius:5px;padding:18px}
+.bars{display:flex;align-items:flex-end;gap:3px;height:190px;overflow-x:auto;padding-bottom:2px}
+.bc{flex:1 0 16px;min-width:16px;display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:5px}
+.bstack{display:flex;flex-direction:column-reverse;gap:1px;border-radius:3px 3px 0 0;overflow:hidden;min-height:2px}
+.bseg{min-height:1px}
+.blab{font-family:var(--mono);font-size:.58rem;color:var(--ink-3);text-align:center;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;font-size:.78rem;color:var(--ink-2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+/* tables */
+.scroll{overflow-x:auto;border:1px solid var(--rule);border-radius:5px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.8rem}
+th,td{padding:7px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--rule-2)}
+thead th{position:sticky;top:0;background:var(--surface-2);font-family:var(--mono);font-size:.61rem;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);font-weight:600;border-bottom:1px solid var(--rule);z-index:1}
+tbody tr:hover{background:var(--surface-2)}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+td.sku{font-family:var(--mono);font-size:.75rem;font-weight:600}
+td.strong{font-weight:700}
+tfoot td{font-weight:700;background:var(--surface-2);border-top:2px solid var(--rule)}
+.chip{display:inline-block;padding:2px 7px;border-radius:2px;font-family:var(--mono);font-size:.63rem;letter-spacing:.03em;white-space:nowrap}
+.chip.crit{background:var(--crit-bg);color:var(--crit)}
+.chip.high{background:var(--warn-bg);color:var(--warn)}
+.chip.med{background:var(--surface-3);color:var(--ink-2)}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.chip.est{background:color-mix(in srgb,var(--pos) 14%,transparent);color:var(--pos)}
+.muted{color:var(--ink-3)}
+.note{font-size:.79rem;color:var(--ink-3);max-width:78ch}
+details{background:var(--surface);border:1px solid var(--rule);border-radius:5px;padding:14px 17px}
+summary{cursor:pointer;font-weight:600;font-size:.92rem}
+details ul{margin:10px 0 0;padding-left:20px;font-size:.85rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+footer{border-top:1px solid var(--rule);padding-top:18px;font-size:.79rem;color:var(--ink-3)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="wrap">
+<header>
+  <p class="eyebrow">Maggie&rsquo;s &middot; Lyn&rsquo;s &middot; Mary&rsquo;s &middot; Simply Elsie</p>
+  <h1>Tank Inventory Control</h1>
+  <p class="sub">Sales performance and reorder priorities across the four stores. Every figure is
+  computed from the source exports &mdash; where data is missing it is flagged, never filled in.</p>
+</header>
+
+<div id="freshness"></div>
+
+<div class="controls" role="group" aria-label="Dashboard filters">
+  <div class="ctl"><label for="gran">Period</label>
+    <div class="seg" id="gran" role="group">
+      <button data-g="daily" aria-pressed="true">Daily</button>
+      <button data-g="weekly" aria-pressed="false">Weekly</button>
+      <button data-g="monthly" aria-pressed="false">Monthly</button>
+    </div>
+  </div>
+  <div class="ctl"><label for="from">Date range</label>
+    <div class="dates"><input type="date" id="from"><span>to</span><input type="date" id="to"></div>
+  </div>
+  <div class="ctl"><label for="store">Store</label>
+    <select id="store">
+      <option value="all">All stores</option>
+      <option value="Maggie">Maggie&rsquo;s Tanks</option>
+      <option value="Lyn">Lyn&rsquo;s Tanks</option>
+      <option value="Mary">Mary&rsquo;s Tanks</option>
+      <option value="Elsie">Simply Elsie</option>
+    </select>
+  </div>
+  <div class="ctl"><label for="surge">Sales surge</label>
+    <div class="seg" id="surge" role="group">
+      <button data-s="1" aria-pressed="true">1.0&times;</button>
+      <button data-s="1.25" aria-pressed="false">1.25&times;</button>
+      <button data-s="1.5" aria-pressed="false">1.5&times;</button>
+      <button data-s="2" aria-pressed="false">2.0&times;</button>
+    </div>
+  </div>
+  <div class="ctl"><label for="incoming">Count in-production stock</label>
+    <div class="seg" id="incoming" role="group">
+      <button data-i="0" aria-pressed="true">No &mdash; unconfirmed</button>
+      <button data-i="1" aria-pressed="false">Yes</button>
+    </div>
+  </div>
+</div>
+
+<section id="sec-sales">
+  <div class="shead"><h2>Sales overview</h2><p class="sub" id="sales-sub"></p></div>
+  <div class="tiles" id="store-tiles"></div>
+  <div class="chart"><div class="bars" id="chart"></div><div class="legend" id="legend"></div></div>
+  <div id="sales-note"></div>
+  <div id="sku-sales-wrap"></div>
+</section>
+
+<section id="sec-health">
+  <div class="shead"><h2>Inventory health</h2>
+    <p class="sub">Free-to-sell stock measured against current sales velocity at the selected surge
+    multiplier. In-production units are shown separately because none of them carry an arrival date.</p></div>
+  <div class="tiles" id="health-tiles"></div>
+  <div class="scroll"><table id="health-table"></table></div>
+</section>
+
+<section id="sec-top20">
+  <div class="shead"><h2>Top 20 SKUs to order immediately</h2>
+    <p class="sub">Ranked by days of free-to-sell stock remaining at the selected surge rate &mdash;
+    inventory measured against its own sales velocity, not by which number is smallest. SKUs selling
+    under 2 units a day are excluded so the list stays actionable.</p></div>
+  <div class="scroll"><table id="top20"></table></div>
+  <p class="note" id="top20-note"></p>
+</section>
+
+<section id="sec-po">
+  <div class="shead"><h2>Recommended purchase order</h2>
+    <p class="sub" id="po-sub"></p></div>
+  <div class="tiles" id="po-tiles"></div>
+  <div class="scroll"><table id="po-table"></table></div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+    <button class="btn" id="export">Export order CSV</button>
+    <span class="note" id="export-msg"></span>
+  </div>
+</section>
+
+<section>
+  <details>
+    <summary>Method, assumptions and known data gaps</summary>
+    <ul id="assumptions"></ul>
+  </details>
+</section>
+
+<footer><p id="foot"></p></footer>
+</div>
+<script type="application/json" id="payload">{"generated":"2026-08-13T16:45:00Z","salesAsOf":"2026-08-13","salesPartial":true,"invAsOf":"2026-08-13","leadTimeDays":7,"reviewDays":7,"leadTimeSdDays":2,"daily":[{"d":"2026-07-14","Maggie":1636,"Mary":1031,"Lyn":null,"Elsie":null},{"d":"2026-07-15","Maggie":1629,"Mary":1010,"Lyn":null,"Elsie":null},{"d":"2026-07-16","Maggie":1592,"Mary":1004,"Lyn":null,"Elsie":null},{"d":"2026-07-17","Maggie":1943,"Mary":855,"Lyn":null,"Elsie":null},{"d":"2026-07-18","Maggie":2196,"Mary":977,"Lyn":null,"Elsie":null},{"d":"2026-07-19","Maggie":2454,"Mary":749,"Lyn":null,"Elsie":null},{"d":"2026-07-20","Maggie":2646,"Mary":639,"Lyn":null,"Elsie":null},{"d":"2026-07-21","Maggie":2693,"Mary":579,"Lyn":null,"Elsie":null},{"d":"2026-07-22","Maggie":3122,"Mary":726,"Lyn":null,"Elsie":null},{"d":"2026-07-23","Maggie":3211,"Mary":774,"Lyn":null,"Elsie":null},{"d":"2026-07-24","Maggie":3499,"Mary":824,"Lyn":null,"Elsie":null},{"d":"2026-07-25","Maggie":3521,"Mary":1000,"Lyn":null,"Elsie":null},{"d":"2026-07-26","Maggie":4439,"Mary":1095,"Lyn":null,"Elsie":null},{"d":"2026-07-27","Maggie":4492,"Mary":965,"Lyn":null,"Elsie":null},{"d":"2026-07-28","Maggie":4324,"Mary":894,"Lyn":null,"Elsie":null},{"d":"2026-07-29","Maggie":4444,"Mary":1116,"Lyn":null,"Elsie":null},{"d":"2026-07-30","Maggie":3936,"Mary":1111,"Lyn":null,"Elsie":null},{"d":"2026-07-31","Maggie":3863,"Mary":1070,"Lyn":null,"Elsie":null},{"d":"2026-08-01","Maggie":4678,"Mary":1241,"Lyn":null,"Elsie":null},{"d":"2026-08-02","Maggie":4910,"Mary":1092,"Lyn":153,"Elsie":295},{"d":"2026-08-03","Maggie":5326,"Mary":1185,"Lyn":133,"Elsie":258},{"d":"2026-08-04","Maggie":3748,"Mary":955,"Lyn":81,"Elsie":148},{"d":"2026-08-05","Maggie":3733,"Mary":872,"Lyn":152,"Elsie":84},{"d":"2026-08-06","Maggie":3328,"Mary":839,"Lyn":119,"Elsie":174},{"d":"2026-08-07","Maggie":3156,"Mary":873,"Lyn":122,"Elsie":117},{"d":"2026-08-08","Maggie":3335,"Mary":851,"Lyn":95,"Elsie":221},{"d":"2026-08-09","Maggie":3575,"Mary":853,"Lyn":84,"Elsie":185},{"d":"2026-08-10","Maggie":3230,"Mary":802,"Lyn":91,"Elsie":113},{"d":"2026-08-11","Maggie":3268,"Mary":828,"Lyn":73,"Elsie":174},{"d":"2026-08-12","Maggie":3729,"Mary":1058,"Lyn":94,"Elsie":171},{"d":"2026-08-13","Maggie":78,"Mary":494,"Lyn":64,"Elsie":43}],"monthly":[["BLUE L","Mary",0,0,0,0,1,0],["QA1114-black-2xl","Lyn",0,0,0,7,11,4],["QA1114-black-2xl","Maggie",0,0,0,15,93,52],["QA1114-black-2xl","Mary",0,0,0,6,18,5],["QA1114-black-3xl","Elsie",0,0,0,0,1,3],["QA1114-black-3xl","Lyn",0,0,0,9,11,0],["QA1114-black-3xl","Maggie",0,0,0,11,58,29],["QA1114-black-3xl","Mary",0,0,0,4,26,4],["QA1114-black-l","Elsie",0,0,0,0,1,0],["QA1114-black-l","Lyn",0,0,0,5,24,3],["QA1114-black-l","Maggie",0,0,0,13,90,43],["QA1114-black-l","Mary",0,0,0,4,17,4],["QA1114-black-m","Lyn",0,0,0,4,12,3],["QA1114-black-m","Maggie",0,0,0,1,52,18],["QA1114-black-m","Mary",0,0,0,1,12,3],["QA1114-black-s","Elsie",0,0,0,0,1,0],["QA1114-black-s","Lyn",0,0,0,3,8,2],["QA1114-black-s","Maggie",0,0,0,0,13,14],["QA1114-black-s","Mary",0,0,0,0,6,1],["QA1114-black-xl","Elsie",0,0,0,0,1,5],["QA1114-black-xl","Lyn",0,0,0,10,12,4],["QA1114-black-xl","Maggie",0,0,0,19,106,87],["QA1114-black-xl","Mary",0,0,0,7,21,8],["QA1114-brown-2xl","Lyn",0,0,0,1,2,0],["QA1114-brown-2xl","Maggie",0,0,0,1,11,4],["QA1114-brown-2xl","Mary",0,0,0,1,3,1],["QA1114-brown-3xl","Lyn",0,0,0,0,2,0],["QA1114-brown-3xl","Maggie",0,0,0,1,3,3],["QA1114-brown-3xl","Mary",0,0,0,0,10,0],["QA1114-brown-l","Lyn",0,0,0,2,1,0],["QA1114-brown-l","Maggie",0,0,0,1,14,2],["QA1114-brown-l","Mary",0,0,0,2,5,2],["QA1114-brown-m","Lyn",0,0,0,1,4,0],["QA1114-brown-m","Maggie",0,0,0,1,8,5],["QA1114-brown-m","Mary",0,0,0,0,2,1],["QA1114-brown-s","Lyn",0,0,0,0,1,0],["QA1114-brown-s","Maggie",0,0,0,0,2,1],["QA1114-brown-s","Mary",0,0,0,1,3,1],["QA1114-brown-xl","Lyn",0,0,0,1,1,0],["QA1114-brown-xl","Maggie",0,0,0,3,21,5],["QA1114-brown-xl","Mary",0,0,0,1,3,1],["QA1114-gray-2xl","Lyn",0,0,0,2,1,0],["QA1114-gray-2xl","Maggie",0,0,0,7,13,8],["QA1114-gray-2xl","Mary",0,0,0,2,7,6],["QA1114-gray-3xl","Lyn",0,0,0,0,1,1],["QA1114-gray-3xl","Maggie",0,0,0,1,9,3],["QA1114-gray-3xl","Mary",0,0,0,2,2,8],["QA1114-gray-l","Lyn",0,0,0,1,2,0],["QA1114-gray-l","Maggie",0,0,0,3,15,7],["QA1114-gray-l","Mary",0,0,0,0,6,0],["QA1114-gray-m","Lyn",0,0,0,4,4,0],["QA1114-gray-m","Maggie",0,0,0,3,22,8],["QA1114-gray-m","Mary",0,0,0,0,2,3],["QA1114-gray-s","Lyn",0,0,0,0,1,0],["QA1114-gray-s","Maggie",0,0,0,0,6,3],["QA1114-gray-s","Mary",0,0,0,0,2,0],["QA1114-gray-xl","Lyn",0,0,0,1,0,0],["QA1114-gray-xl","Maggie",0,0,0,1,20,8],["QA1114-gray-xl","Mary",0,0,0,2,5,1],["QA1114-green-2xl","Lyn",0,0,0,2,3,1],["QA1114-green-2xl","Maggie",0,0,0,1,18,9],["QA1114-green-2xl","Mary",0,0,0,2,2,2],["QA1114-green-3xl","Elsie",0,0,0,0,0,1],["QA1114-green-3xl","Lyn",0,0,0,0,3,1],["QA1114-green-3xl","Maggie",0,0,0,3,10,4],["QA1114-green-3xl","Mary",0,0,0,0,5,2],["QA1114-green-l","Lyn",0,0,0,1,2,0],["QA1114-green-l","Maggie",0,0,0,7,17,4],["QA1114-green-l","Mary",0,0,0,2,3,3],["QA1114-green-m","Lyn",0,0,0,1,5,0],["QA1114-green-m","Maggie",0,0,0,2,7,3],["QA1114-green-m","Mary",0,0,0,0,1,0],["QA1114-green-s","Lyn",0,0,0,0,1,0],["QA1114-green-s","Maggie",0,0,0,0,1,0],["QA1114-green-s","Mary",0,0,0,1,4,1],["QA1114-green-xl","Lyn",0,0,0,2,4,1],["QA1114-green-xl","Maggie",0,0,0,5,19,10],["QA1114-green-xl","Mary",0,0,0,0,5,0],["QA1114-khaki-2xl","Lyn",0,0,0,2,0,1],["QA1114-khaki-2xl","Maggie",0,0,0,2,41,17],["QA1114-khaki-2xl","Mary",0,0,0,3,5,1],["QA1114-khaki-3xl","Lyn",0,0,0,2,1,0],["QA1114-khaki-3xl","Maggie",0,0,0,8,27,13],["QA1114-khaki-3xl","Mary",0,0,0,0,5,2],["QA1114-khaki-l","Elsie",0,0,0,0,0,1],["QA1114-khaki-l","Lyn",0,0,0,1,2,0],["QA1114-khaki-l","Maggie",0,0,0,7,44,12],["QA1114-khaki-l","Mary",0,0,0,3,4,0],["QA1114-khaki-m","Lyn",0,0,0,2,0,0],["QA1114-khaki-m","Maggie",0,0,0,4,23,9],["QA1114-khaki-m","Mary",0,0,0,0,2,1],["QA1114-khaki-s","Maggie",0,0,0,0,3,3],["QA1114-khaki-s","Mary",0,0,0,0,3,0],["QA1114-khaki-xl","Lyn",0,0,0,2,2,0],["QA1114-khaki-xl","Maggie",0,0,0,9,53,26],["QA1114-khaki-xl","Mary",0,0,0,1,3,0],["QA1114-lightgreen-2xl","Maggie",0,0,0,3,1,1],["QA1114-lightgreen-2xl","Mary",0,0,0,4,3,0],["QA1114-lightgreen-3xl","Lyn",0,0,0,0,0,1],["QA1114-lightgreen-3xl","Maggie",0,0,0,0,8,1],["QA1114-lightgreen-3xl","Mary",0,0,0,1,7,1],["QA1114-lightgreen-l","Lyn",0,0,0,0,4,0],["QA1114-lightgreen-l","Maggie",0,0,0,0,4,1],["QA1114-lightgreen-l","Mary",0,0,0,0,7,0],["QA1114-lightgreen-m","Maggie",0,0,0,0,3,2],["QA1114-lightgreen-m","Mary",0,0,0,0,2,0],["QA1114-lightgreen-s","Maggie",0,0,0,0,1,0],["QA1114-lightgreen-s","Mary",0,0,0,0,1,0],["QA1114-lightgreen-xl","Maggie",0,0,0,0,7,0],["QA1114-lightgreen-xl","Mary",0,0,0,2,6,1],["QA1114-pink-2xl","Lyn",0,0,0,2,3,1],["QA1114-pink-2xl","Maggie",0,0,0,11,39,19],["QA1114-pink-2xl","Mary",0,0,0,4,5,4],["QA1114-pink-3xl","Lyn",0,0,0,1,2,1],["QA1114-pink-3xl","Maggie",0,0,0,5,28,11],["QA1114-pink-3xl","Mary",0,0,0,4,12,0],["QA1114-pink-l","Lyn",0,0,0,2,3,1],["QA1114-pink-l","Maggie",0,0,0,5,34,10],["QA1114-pink-l","Mary",0,0,0,0,14,7],["QA1114-pink-m","Lyn",0,0,0,1,3,1],["QA1114-pink-m","Maggie",0,0,0,1,22,9],["QA1114-pink-m","Mary",0,0,0,0,6,4],["QA1114-pink-s","Lyn",0,0,0,1,0,1],["QA1114-pink-s","Maggie",0,0,0,1,4,3],["QA1114-pink-s","Mary",0,0,0,0,4,3],["QA1114-pink-xl","Lyn",0,0,0,3,3,0],["QA1114-pink-xl","Maggie",0,0,0,8,31,20],["QA1114-pink-xl","Mary",0,0,0,2,16,4],["QA1114-red-2xl","Lyn",0,0,0,2,2,0],["QA1114-red-2xl","Maggie",0,0,0,2,19,9],["QA1114-red-2xl","Mary",0,0,0,4,4,1],["QA1114-red-3xl","Lyn",0,0,0,1,1,0],["QA1114-red-3xl","Maggie",0,0,0,3,17,7],["QA1114-red-3xl","Mary",0,0,0,0,6,3],["QA1114-red-l","Lyn",0,0,0,1,2,1],["QA1114-red-l","Maggie",0,0,0,2,18,8],["QA1114-red-l","Mary",0,0,0,1,5,1],["QA1114-red-m","Lyn",0,0,0,0,1,1],["QA1114-red-m","Maggie",0,0,0,1,13,5],["QA1114-red-s","Lyn",0,0,0,0,2,0],["QA1114-red-s","Maggie",0,0,0,1,6,3],["QA1114-red-s","Mary",0,0,0,1,2,0],["QA1114-red-xl","Lyn",0,0,0,2,1,0],["QA1114-red-xl","Maggie",0,0,0,3,23,14],["QA1114-red-xl","Mary",0,0,0,0,6,0],["QA1114-white-2xl","Elsie",0,0,0,0,0,1],["QA1114-white-2xl","Lyn",0,0,0,5,4,1],["QA1114-white-2xl","Maggie",0,0,0,17,77,31],["QA1114-white-2xl","Mary",0,0,0,5,14,11],["QA1114-white-3xl","Lyn",0,0,0,0,4,4],["QA1114-white-3xl","Maggie",0,0,0,13,59,17],["QA1114-white-3xl","Mary",0,0,0,3,18,3],["QA1114-white-l","Elsie",0,0,0,0,1,1],["QA1114-white-l","Lyn",0,0,0,2,6,1],["QA1114-white-l","Maggie",0,0,0,9,77,29],["QA1114-white-l","Mary",0,0,0,2,20,10],["QA1114-white-m","Lyn",0,0,0,2,6,3],["QA1114-white-m","Maggie",0,0,0,3,49,17],["QA1114-white-m","Mary",0,0,0,0,8,4],["QA1114-white-s","Lyn",0,0,0,0,3,0],["QA1114-white-s","Maggie",0,0,0,0,14,8],["QA1114-white-s","Mary",0,0,0,0,4,1],["QA1114-white-xl","Lyn",0,0,0,6,7,2],["QA1114-white-xl","Maggie",0,0,0,13,94,44],["QA1114-white-xl","Mary",0,0,0,8,18,6],["QA1114-yellow-2xl","Lyn",0,0,0,2,3,1],["QA1114-yellow-2xl","Maggie",0,0,0,3,27,23],["QA1114-yellow-2xl","Mary",0,0,0,0,5,1],["QA1114-yellow-3xl","Elsie",0,0,0,0,0,3],["QA1114-yellow-3xl","Lyn",0,0,0,1,2,0],["QA1114-yellow-3xl","Maggie",0,0,0,3,16,19],["QA1114-yellow-3xl","Mary",0,0,0,0,3,1],["QA1114-yellow-l","Elsie",0,0,0,0,0,1],["QA1114-yellow-l","Lyn",0,0,0,2,1,1],["QA1114-yellow-l","Maggie",0,0,0,4,29,13],["QA1114-yellow-l","Mary",0,0,0,1,4,3],["QA1114-yellow-m","Elsie",0,0,0,0,1,0],["QA1114-yellow-m","Lyn",0,0,0,1,3,0],["QA1114-yellow-m","Maggie",0,0,0,3,15,12],["QA1114-yellow-m","Mary",0,0,0,0,5,2],["QA1114-yellow-s","Lyn",0,0,0,0,2,1],["QA1114-yellow-s","Maggie",0,0,0,4,47,41],["QA1114-yellow-s","Mary",0,0,0,0,5,0],["QA1114-yellow-xl","Elsie",0,0,0,0,0,1],["QA1114-yellow-xl","Lyn",0,0,0,2,5,0],["QA1114-yellow-xl","Maggie",0,0,0,5,28,22],["QA1114-yellow-xl","Mary",0,0,0,3,6,1],["QL1057-MGT","Maggie",0,0,0,0,11,3],["QL1058-beanpaste-2XL","Elsie",0,0,0,0,3,5],["QL1058-beanpaste-2XL","Lyn",0,0,0,0,12,5],["QL1058-beanpaste-2XL","Maggie",0,0,0,0,259,221],["QL1058-beanpaste-2XL","Mary",0,0,0,0,58,53],["QL1058-beanpaste-3XL","Elsie",0,0,0,0,10,7],["QL1058-beanpaste-3XL","Lyn",0,0,0,0,9,5],["QL1058-beanpaste-3XL","Maggie",0,0,0,0,133,157],["QL1058-beanpaste-3XL","Mary",0,0,0,0,38,38],["QL1058-beanpaste-L","Elsie",0,0,0,0,20,10],["QL1058-beanpaste-L","Lyn",0,0,0,0,9,5],["QL1058-beanpaste-L","Maggie",0,0,0,0,300,159],["QL1058-beanpaste-L","Mary",0,0,0,0,98,56],["QL1058-beanpaste-M","Elsie",0,0,0,0,8,12],["QL1058-beanpaste-M","Lyn",0,0,0,0,12,6],["QL1058-beanpaste-M","Maggie",0,0,0,0,232,126],["QL1058-beanpaste-M","Mary",0,0,0,0,89,62],["QL1058-beanpaste-S","Elsie",0,0,0,0,3,2],["QL1058-beanpaste-S","Lyn",0,0,0,0,8,2],["QL1058-beanpaste-S","Maggie",0,0,0,0,87,43],["QL1058-beanpaste-S","Mary",0,0,0,0,45,27],["QL1058-beanpaste-XL","Elsie",0,0,0,0,16,12],["QL1058-beanpaste-XL","Lyn",0,0,0,0,13,8],["QL1058-beanpaste-XL","Maggie",0,0,0,0,401,379],["QL1058-beanpaste-XL","Mary",0,0,0,0,115,70],["QL1058-black-2XL","Elsie",0,0,0,0,98,71],["QL1058-black-2XL","Lyn",0,0,0,0,123,60],["QL1058-black-2XL","Maggie",0,0,0,0,2020,1915],["QL1058-black-2XL","Mary",0,1,1,0,602,419],["QL1058-black-3XL","Elsie",0,0,0,0,67,74],["QL1058-black-3XL","Lyn",0,0,0,0,91,34],["QL1058-black-3XL","Maggie",0,0,0,0,1183,1417],["QL1058-black-3XL","Mary",0,0,0,0,398,352],["QL1058-black-L","Elsie",0,0,0,0,99,70],["QL1058-black-L","Lyn",0,0,0,0,181,69],["QL1058-black-L","Maggie",0,0,0,0,2620,1527],["QL1058-black-L","Mary",0,0,0,0,882,491],["QL1058-black-M","Elsie",0,0,0,0,93,64],["QL1058-black-M","Lyn",0,0,0,0,174,77],["QL1058-black-M","Maggie",0,0,0,0,1899,948],["QL1058-black-M","Mary",0,0,0,0,959,511],["QL1058-black-S","Elsie",0,0,0,0,27,19],["QL1058-black-S","Lyn",0,0,0,0,88,20],["QL1058-black-S","Maggie",0,0,0,0,671,291],["QL1058-black-S","Mary",0,0,0,0,442,204],["QL1058-black-XL","Elsie",0,0,0,0,141,112],["QL1058-black-XL","Lyn",0,0,0,0,173,82],["QL1058-black-XL","Maggie",0,0,0,0,3252,3349],["QL1058-black-XL","Mary",0,1,0,0,926,652],["QL1058-coffee-2XL","Elsie",0,0,0,0,25,17],["QL1058-coffee-2XL","Lyn",0,0,0,0,21,16],["QL1058-coffee-2XL","Maggie",0,0,0,0,652,599],["QL1058-coffee-2XL","Mary",0,1,1,0,193,134],["QL1058-coffee-3XL","Elsie",0,0,0,0,25,15],["QL1058-coffee-3XL","Lyn",0,0,0,0,16,12],["QL1058-coffee-3XL","Maggie",0,0,0,0,285,385],["QL1058-coffee-3XL","Mary",0,0,0,0,96,98],["QL1058-coffee-L","Elsie",0,0,0,0,30,28],["QL1058-coffee-L","Lyn",0,0,0,0,50,27],["QL1058-coffee-L","Maggie",0,0,0,0,814,474],["QL1058-coffee-L","Mary",0,0,0,0,275,173],["QL1058-coffee-M","Elsie",0,0,0,0,28,22],["QL1058-coffee-M","Lyn",0,0,0,0,52,20],["QL1058-coffee-M","Maggie",0,0,0,0,602,313],["QL1058-coffee-M","Mary",0,0,0,0,335,174],["QL1058-coffee-S","Elsie",0,0,0,0,6,4],["QL1058-coffee-S","Lyn",0,0,0,0,34,6],["QL1058-coffee-S","Maggie",0,0,0,0,205,102],["QL1058-coffee-S","Mary",0,0,0,0,158,69],["QL1058-coffee-XL","Elsie",0,0,0,0,42,29],["QL1058-coffee-XL","Lyn",0,0,0,0,47,19],["QL1058-coffee-XL","Maggie",0,0,0,0,991,1091],["QL1058-coffee-XL","Mary",0,1,0,0,304,205],["QL1058-green-2XL","Elsie",0,0,0,0,19,12],["QL1058-green-2XL","Lyn",0,0,0,0,27,18],["QL1058-green-2XL","Maggie",0,0,0,0,437,403],["QL1058-green-2XL","Mary",0,1,0,0,160,89],["QL1058-green-3XL","Elsie",0,0,0,0,21,15],["QL1058-green-3XL","Lyn",0,0,0,0,27,7],["QL1058-green-3XL","Maggie",0,0,0,0,251,273],["QL1058-green-3XL","Mary",0,0,0,0,79,68],["QL1058-green-L","Elsie",0,0,0,0,37,27],["QL1058-green-L","Lyn",0,0,0,0,41,20],["QL1058-green-L","Maggie",0,0,0,0,585,375],["QL1058-green-L","Mary",0,0,0,0,216,127],["QL1058-green-M","Elsie",0,0,0,0,25,26],["QL1058-green-M","Lyn",0,0,0,0,44,19],["QL1058-green-M","Maggie",0,0,0,0,437,209],["QL1058-green-M","Mary",0,0,0,0,260,128],["QL1058-green-S","Elsie",0,0,0,0,7,9],["QL1058-green-S","Lyn",0,0,0,0,26,6],["QL1058-green-S","Maggie",0,0,0,0,152,76],["QL1058-green-S","Mary",0,0,0,0,104,52],["QL1058-green-XL","Elsie",0,0,0,0,49,40],["QL1058-green-XL","Lyn",0,0,0,0,35,22],["QL1058-green-XL","Maggie",0,0,0,0,700,722],["QL1058-green-XL","Mary",0,1,0,0,244,159],["QL1058-grey-2XL","Elsie",0,0,0,0,23,14],["QL1058-grey-2XL","Lyn",0,0,0,0,20,9],["QL1058-grey-2XL","Maggie",0,0,0,0,628,529],["QL1058-grey-2XL","Mary",0,0,0,0,100,66],["QL1058-grey-3XL","Elsie",0,0,0,0,10,12],["QL1058-grey-3XL","Lyn",0,0,0,0,11,8],["QL1058-grey-3XL","Maggie",0,0,0,0,404,430],["QL1058-grey-3XL","Mary",0,0,0,0,71,57],["QL1058-grey-L","Elsie",0,0,0,0,26,23],["QL1058-grey-L","Lyn",0,0,0,0,25,12],["QL1058-grey-L","Maggie",0,0,0,0,761,458],["QL1058-grey-L","Mary",0,0,0,0,126,77],["QL1058-grey-M","Elsie",0,0,0,0,23,21],["QL1058-grey-M","Lyn",0,0,0,0,27,18],["QL1058-grey-M","Maggie",0,0,0,0,554,281],["QL1058-grey-M","Mary",0,0,0,0,145,68],["QL1058-grey-S","Elsie",0,0,0,0,8,4],["QL1058-grey-S","Lyn",0,0,0,0,12,4],["QL1058-grey-S","Maggie",0,0,0,0,209,95],["QL1058-grey-S","Mary",0,0,0,0,70,30],["QL1058-grey-XL","Elsie",0,0,0,0,33,32],["QL1058-grey-XL","Lyn",0,0,0,0,23,12],["QL1058-grey-XL","Maggie",0,0,0,0,1005,1016],["QL1058-grey-XL","Mary",0,0,0,0,139,83],["QL1058-nude-2XL","Elsie",0,0,0,0,196,149],["QL1058-nude-2XL","Lyn",0,0,0,0,151,70],["QL1058-nude-2XL","Maggie",0,0,0,0,3655,3103],["QL1058-nude-2XL","Mary",0,0,1,0,917,645],["QL1058-nude-3XL","Elsie",0,0,0,0,147,105],["QL1058-nude-3XL","Lyn",0,0,0,0,85,44],["QL1058-nude-3XL","Maggie",0,0,0,0,2445,2697],["QL1058-nude-3XL","Mary",0,0,0,0,642,563],["QL1058-nude-L","Elsie",0,0,0,0,212,168],["QL1058-nude-L","Lyn",0,0,0,0,241,94],["QL1058-nude-L","Maggie",0,0,0,0,4596,2440],["QL1058-nude-L","Mary",0,0,0,3,1370,781],["QL1058-nude-M","Elsie",0,0,0,0,205,122],["QL1058-nude-M","Lyn",0,0,0,0,225,93],["QL1058-nude-M","Maggie",0,0,0,0,3399,1470],["QL1058-nude-M","Mary",0,0,0,0,1424,888],["QL1058-nude-S","Elsie",0,0,0,0,62,36],["QL1058-nude-S","Lyn",0,0,0,0,94,17],["QL1058-nude-S","Maggie",0,0,0,0,1108,484],["QL1058-nude-S","Mary",0,0,0,0,618,275],["QL1058-nude-XL","Elsie",0,0,0,0,283,253],["QL1058-nude-XL","Lyn",0,0,0,0,267,111],["QL1058-nude-XL","Maggie",0,0,0,0,6283,5810],["QL1058-nude-XL","Mary",0,0,1,0,1315,1053],["QL1058-red-2XL","Elsie",0,0,0,0,21,19],["QL1058-red-2XL","Lyn",0,0,0,0,26,18],["QL1058-red-2XL","Maggie",0,0,0,0,505,425],["QL1058-red-2XL","Mary",0,0,0,0,155,105],["QL1058-red-3XL","Elsie",0,0,0,0,24,23],["QL1058-red-3XL","Lyn",0,0,0,0,17,8],["QL1058-red-3XL","Maggie",0,0,0,0,313,363],["QL1058-red-3XL","Mary",0,0,0,0,108,99],["QL1058-red-L","Elsie",0,0,0,0,28,24],["QL1058-red-L","Lyn",0,0,0,0,37,13],["QL1058-red-L","Maggie",0,0,0,0,647,371],["QL1058-red-L","Mary",0,0,0,0,231,110],["QL1058-red-M","Elsie",0,0,0,0,24,25],["QL1058-red-M","Lyn",0,0,0,0,39,21],["QL1058-red-M","Maggie",0,0,0,0,454,223],["QL1058-red-M","Mary",0,0,0,0,221,104],["QL1058-red-S","Elsie",0,0,0,0,7,6],["QL1058-red-S","Lyn",0,0,0,0,23,5],["QL1058-red-S","Maggie",0,0,0,0,159,71],["QL1058-red-S","Mary",0,0,0,0,94,46],["QL1058-red-XL","Elsie",0,0,0,0,42,45],["QL1058-red-XL","Lyn",0,0,0,0,48,18],["QL1058-red-XL","Maggie",0,0,0,0,765,827],["QL1058-red-XL","Mary",0,0,0,0,227,156],["QL1058-white-2XL","Elsie",0,0,0,0,105,65],["QL1058-white-2XL","Lyn",0,0,0,0,53,33],["QL1058-white-2XL","Maggie",0,0,0,0,1733,1554],["QL1058-white-2XL","Mary",0,0,0,0,336,267],["QL1058-white-3XL","Elsie",0,0,0,0,78,63],["QL1058-white-3XL","Lyn",0,0,0,0,38,20],["QL1058-white-3XL","Maggie",0,0,0,0,1101,1158],["QL1058-white-3XL","Mary",0,0,0,0,181,193],["QL1058-white-L","Elsie",0,0,0,0,109,77],["QL1058-white-L","Lyn",0,0,0,0,101,48],["QL1058-white-L","Maggie",0,0,0,0,2470,1416],["QL1058-white-L","Mary",0,0,0,0,585,355],["QL1058-white-M","Elsie",0,0,0,0,123,71],["QL1058-white-M","Lyn",0,0,0,0,119,53],["QL1058-white-M","Maggie",0,0,0,0,1993,946],["QL1058-white-M","Mary",0,0,0,0,687,410],["QL1058-white-S","Elsie",0,0,0,0,39,27],["QL1058-white-S","Lyn",0,0,0,0,57,17],["QL1058-white-S","Maggie",0,0,0,0,714,332],["QL1058-white-S","Mary",0,0,0,0,326,181],["QL1058-white-XL","Elsie",0,0,0,0,149,123],["QL1058-white-XL","Lyn",0,0,0,0,99,42],["QL1058-white-XL","Maggie",0,0,0,0,3111,3078],["QL1058-white-XL","Mary",0,0,0,0,583,491],["QP1012-black-2XL","Mary",0,0,7,0,0,0],["QP1012-black-L","Mary",0,0,2,0,0,0],["QP1012-black-M","Mary",0,0,5,0,0,0],["QP1012-black-S","Mary",0,0,2,0,0,0],["QP1012-black-XL","Mary",0,0,6,0,0,0],["QP1012-brown-2XL","Mary",0,0,1,0,0,0],["QP1012-brown-L","Mary",0,0,1,2,0,0],["QP1012-brown-M","Mary",0,0,0,1,0,0],["QP1012-brown-S","Mary",0,0,1,0,0,0],["QP1012-brown-XL","Mary",0,0,2,0,0,0],["QP1012-burgundy-2XL","Mary",0,0,1,1,0,0],["QP1012-burgundy-L","Mary",0,0,1,0,0,0],["QP1012-burgundy-XL","Mary",0,0,2,1,0,0],["QP1012-green-2XL","Mary",0,0,5,0,0,0],["QP1012-green-L","Mary",0,0,3,0,0,0],["QP1012-green-XL","Mary",0,0,2,0,0,0],["QP1012-khaki-2XL","Mary",0,0,0,1,0,0],["QP1012-khaki-M","Mary",0,0,1,0,0,0],["QP1012-pink-2XL","Mary",0,0,3,2,0,0],["QP1012-pink-L","Mary",0,0,0,1,0,0],["QP1012-pink-XL","Mary",0,0,1,1,0,0],["QP1012-white-2XL","Mary",0,0,13,2,0,0],["QP1012-white-L","Mary",0,0,6,0,0,0],["QP1012-white-M","Mary",0,0,4,1,0,0],["QP1012-white-S","Mary",0,0,2,0,0,0],["QP1012-white-XL","Mary",0,0,7,1,0,0],["QP1012-yellow-L","Mary",0,0,2,0,0,0],["SCULPT-Beige-L","Maggie",0,0,0,0,4,0],["SCULPT-Black-L","Maggie",0,0,0,0,1,0],["SCULPT-Black-M","Maggie",0,0,0,0,1,0],["SCULPT-Black-XL","Maggie",0,0,0,0,1,0],["SCULPT-Black-XS","Maggie",0,0,0,0,5,11],["SCULPT-ChocolateBrown-L","Maggie",0,0,0,0,1,0],["SCULPT-ChocolateBrown-XL","Maggie",0,0,0,0,1,0],["SCULPT-White-L","Maggie",0,0,0,0,3,1],["SCULPT-White-XL","Maggie",0,0,0,0,1,0],["SCULPT-White-XXL","Maggie",0,0,0,0,1,0]],"months":["march","april","may","june","july","august"],"weekly":{"QL1058-nude-XL":[2144,3048,3907,4007,4314],"QL1058-nude-L":[1570,2459,3085,1978,1341],"QL1058-nude-2XL":[1266,1829,2402,2196,2214],"QL1058-black-XL":[1144,1669,2185,2331,2523],"QL1058-nude-M":[1267,2044,2586,1402,803],"QL1058-white-XL":[997,1464,1931,2082,2286],"QL1058-nude-3XL":[908,1248,1461,1967,2227],"QL1058-black-L":[942,1392,1863,1224,814],"QL1058-white-L":[745,1205,1738,1035,707],"QL1058-black-2XL":[727,1041,1393,1376,1417],"QL1058-black-M":[717,1214,1585,887,445],"QL1058-white-M":[675,1103,1515,815,432],"QL1058-white-2XL":[528,855,1112,1086,1062],"QL1058-black-3XL":[507,641,751,1092,1205],"QL1058-nude-S":[541,700,828,452,219],"QL1058-white-3XL":[390,512,623,828,922],"QL1058-coffee-XL":[358,517,689,771,746],"QL1058-grey-XL":[295,436,605,645,682],"QL1058-red-XL":[297,414,497,604,599],"QL1058-coffee-L":[274,421,608,409,257],"QL1058-green-XL":[284,382,488,519,555],"QL1058-black-S":[359,413,574,295,136],"QL1058-white-S":[295,410,583,308,116],"QL1058-coffee-M":[243,362,521,305,162],"QL1058-coffee-2XL":[215,334,436,431,443],"QL1058-grey-L":[223,364,474,304,235],"QL1058-red-L":[228,336,474,271,228],"QL1058-green-L":[204,309,473,308,219],"QL1058-grey-2XL":[185,303,373,338,355],"QL1058-red-2XL":[172,265,346,309,340],"QL1058-grey-M":[174,268,390,241,79],"QL1058-green-M":[200,272,372,215,99],"QL1058-red-M":[189,275,360,214,110],"QL1058-green-2XL":[183,244,274,300,290],"QL1058-beanpaste-XL":[129,205,265,253,294],"QL1058-grey-3XL":[148,196,198,299,307],"QL1058-red-3XL":[124,189,183,290,331],"QL1058-coffee-3XL":[108,175,171,312,325],"QL1058-green-3XL":[97,151,162,211,237],"QL1058-beanpaste-L":[97,159,216,123,110],"QL1058-coffee-S":[111,136,190,109,42],"QL1058-beanpaste-2XL":[87,118,169,152,162],"QL1058-beanpaste-M":[70,124,203,112,59],"QL1058-grey-S":[98,101,137,73,24],"QL1058-green-S":[70,105,144,81,35],"QL1058-red-S":[83,94,131,74,24],"QL1058-beanpaste-3XL":[52,75,85,117,134],"QL1058-beanpaste-S":[36,48,67,48,22],"QA1114-black-xl":[19,34,55,60,44],"QA1114-black-l":[15,42,41,25,22],"QA1114-black-2xl":[16,29,35,32,35],"QA1114-white-xl":[24,25,27,24,44],"QA1114-white-l":[22,23,30,22,13],"QA1114-white-2xl":[12,25,25,22,31],"QA1114-yellow-s":[1,34,25,24,20],"QA1114-black-m":[10,26,34,12,7],"QL1046-6pcs":[5,15,21,37,15],"QA1114-black-3xl":[15,15,22,21,22],"QA1114-white-m":[13,11,25,16,0],"QL1047-BLK-2XL":[0,15,21,26,20],"QA1114-white-3xl":[16,17,9,16,15],"QA1114-khaki-xl":[8,17,14,16,4],"QL1047-BLK-M":[0,8,19,25,11],"QA1114-pink-l":[6,12,20,10,4],"QL1047-BLK-XL":[0,12,13,22,42],"QL1047-BLK-L":[0,8,30,9,15],"QA1114-yellow-xl":[8,10,18,10,13],"QA1114-pink-xl":[9,11,13,13,15],"QA1114-yellow-2xl":[7,11,11,14,11],"QA1114-yellow-l":[4,11,19,8,4],"QA1114-pink-2xl":[8,10,13,11,20],"QA1114-khaki-l":[10,10,10,10,4],"QA1114-khaki-2xl":[7,11,7,13,11],"QA1114-pink-m":[8,9,8,11,4],"QA1114-black-s":[6,8,13,8,2],"QA1114-pink-3xl":[6,9,7,10,4],"QA1114-yellow-m":[4,6,12,7,4],"QL1047-black-x":[23,6,0,0,0],"QL1047-GRY-M":[0,5,17,6,4],"QA1114-gray-m":[4,6,13,5,2],"QL1047-BLK-S":[0,4,15,8,11]},"weekStarts":["2026-07-13","2026-07-20","2026-07-27","2026-08-03","2026-08-10"],"skus":[{"sku":"QL1058-beanpaste-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"beanpaste","sz":"4XL","av":0,"ip":233,"d7":69.7,"d28":null,"cv":0.3551,"est":true,"mix":{},"pre":true},{"sku":"QL1058-beanpaste-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"beanpaste","sz":"3XL","av":225,"ip":365,"d7":88.0,"d28":372,"cv":0.3551,"est":false,"mix":{"Maggie":0.73,"Mary":0.191,"Elsie":0.043,"Lyn":0.035}},{"sku":"QL1058-beanpaste-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"beanpaste","sz":"2XL","av":388,"ip":50,"d7":154.0,"d28":565,"cv":0.25,"est":false,"mix":{"Maggie":0.779,"Mary":0.18,"Lyn":0.028,"Elsie":0.013}},{"sku":"QL1058-beanpaste-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"beanpaste","sz":"XL","av":144,"ip":1444,"d7":279.0,"d28":930,"cv":0.2817,"est":false,"mix":{"Maggie":0.769,"Mary":0.182,"Elsie":0.028,"Lyn":0.021}},{"sku":"QL1058-beanpaste-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"beanpaste","sz":"L","av":593,"ip":0,"d7":87.0,"d28":590,"cv":0.3396,"est":false,"mix":{"Maggie":0.699,"Mary":0.234,"Elsie":0.046,"Lyn":0.021}},{"sku":"QL1058-beanpaste-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"beanpaste","sz":"M","av":405,"ip":0,"d7":64.0,"d28":499,"cv":0.5016,"est":false,"mix":{"Maggie":0.654,"Mary":0.276,"Elsie":0.037,"Lyn":0.033}},{"sku":"QL1058-beanpaste-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"beanpaste","sz":"S","av":133,"ip":113,"d7":17.0,"d28":190,"cv":0.3767,"est":false,"mix":{"Maggie":0.599,"Mary":0.332,"Lyn":0.046,"Elsie":0.023}},{"sku":"QL1058-grey-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"grey","sz":"4XL","av":0,"ip":554,"d7":173.3,"d28":null,"cv":0.3551,"est":true,"mix":{},"pre":true},{"sku":"QL1058-grey-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"grey","sz":"3XL","av":389,"ip":1066,"d7":219.0,"d28":922,"cv":0.3048,"est":false,"mix":{"Maggie":0.832,"Mary":0.128,"Elsie":0.022,"Lyn":0.019}},{"sku":"QL1058-grey-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"grey","sz":"2XL","av":600,"ip":1029,"d7":340.0,"d28":1295,"cv":0.241,"est":false,"mix":{"Maggie":0.833,"Mary":0.12,"Elsie":0.027,"Lyn":0.021}},{"sku":"QL1058-grey-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"grey","sz":"XL","av":736,"ip":2225,"d7":651.0,"d28":2148,"cv":0.3056,"est":false,"mix":{"Maggie":0.863,"Mary":0.095,"Elsie":0.028,"Lyn":0.015}},{"sku":"QL1058-grey-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"grey","sz":"L","av":933,"ip":200,"d7":202.0,"d28":1357,"cv":0.3223,"est":false,"mix":{"Maggie":0.808,"Mary":0.135,"Elsie":0.032,"Lyn":0.025}},{"sku":"QL1058-grey-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"grey","sz":"M","av":1307,"ip":67,"d7":95.0,"d28":1009,"cv":0.5001,"est":false,"mix":{"Maggie":0.734,"Mary":0.187,"Lyn":0.04,"Elsie":0.039}},{"sku":"QL1058-grey-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"grey","sz":"S","av":695,"ip":70,"d7":28.0,"d28":353,"cv":0.4824,"est":false,"mix":{"Maggie":0.704,"Mary":0.231,"Lyn":0.037,"Elsie":0.028}},{"sku":"QL1058-white-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"white","sz":"4XL","av":0,"ip":1693,"d7":514.5,"d28":null,"cv":0.3551,"est":true,"mix":{},"pre":true},{"sku":"QL1058-white-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"white","sz":"3XL","av":1059,"ip":3006,"d7":656.0,"d28":2636,"cv":0.3353,"est":false,"mix":{"Maggie":0.798,"Mary":0.132,"Elsie":0.05,"Lyn":0.02}},{"sku":"QL1058-white-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"white","sz":"2XL","av":1503,"ip":2908,"d7":1005.0,"d28":3852,"cv":0.2649,"est":false,"mix":{"Maggie":0.793,"Mary":0.145,"Elsie":0.041,"Lyn":0.021}},{"sku":"QL1058-white-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"white","sz":"XL","av":984,"ip":8634,"d7":2138.0,"d28":7133,"cv":0.2965,"est":false,"mix":{"Maggie":0.806,"Mary":0.14,"Elsie":0.035,"Lyn":0.018}},{"sku":"QL1058-white-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"white","sz":"L","av":1920,"ip":2338,"d7":660.0,"d28":4686,"cv":0.3857,"est":false,"mix":{"Maggie":0.753,"Mary":0.182,"Elsie":0.036,"Lyn":0.029}},{"sku":"QL1058-white-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"white","sz":"M","av":3089,"ip":1626,"d7":409.0,"d28":3967,"cv":0.4594,"est":false,"mix":{"Maggie":0.668,"Mary":0.249,"Elsie":0.044,"Lyn":0.039}},{"sku":"QL1058-white-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"white","sz":"S","av":1617,"ip":790,"d7":115.0,"d28":1467,"cv":0.4998,"est":false,"mix":{"Maggie":0.618,"Mary":0.299,"Lyn":0.044,"Elsie":0.039}},{"sku":"QL1058-red-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"red","sz":"4XL","av":0,"ip":607,"d7":176.9,"d28":null,"cv":0.3551,"est":true,"mix":{},"pre":true},{"sku":"QL1058-red-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"red","sz":"3XL","av":82,"ip":1293,"d7":227.0,"d28":881,"cv":0.3792,"est":false,"mix":{"Maggie":0.708,"Mary":0.217,"Elsie":0.049,"Lyn":0.026}},{"sku":"QL1058-red-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"red","sz":"2XL","av":21,"ip":1203,"d7":311.0,"d28":1174,"cv":0.2498,"est":false,"mix":{"Maggie":0.73,"Mary":0.204,"Lyn":0.035,"Elsie":0.031}},{"sku":"QL1058-red-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"red","sz":"XL","av":36,"ip":3253,"d7":587.0,"d28":1952,"cv":0.2697,"est":false,"mix":{"Maggie":0.748,"Mary":0.18,"Elsie":0.041,"Lyn":0.031}},{"sku":"QL1058-red-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"red","sz":"L","av":494,"ip":476,"d7":198.0,"d28":1283,"cv":0.3353,"est":false,"mix":{"Maggie":0.697,"Mary":0.233,"Elsie":0.036,"Lyn":0.034}},{"sku":"QL1058-red-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"red","sz":"M","av":715,"ip":478,"d7":103.0,"d28":986,"cv":0.4089,"est":false,"mix":{"Maggie":0.609,"Mary":0.293,"Lyn":0.054,"Elsie":0.044}},{"sku":"QL1058-red-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"red","sz":"S","av":657,"ip":86,"d7":25.0,"d28":340,"cv":0.4758,"est":false,"mix":{"Maggie":0.56,"Mary":0.341,"Lyn":0.068,"Elsie":0.032}},{"sku":"QL1058-green-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"green","sz":"4XL","av":0,"ip":408,"d7":125.9,"d28":null,"cv":0.3551,"est":true,"mix":{},"pre":true},{"sku":"QL1058-green-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"green","sz":"3XL","av":140,"ip":1124,"d7":158.0,"d28":699,"cv":0.318,"est":false,"mix":{"Maggie":0.707,"Mary":0.198,"Elsie":0.049,"Lyn":0.046}},{"sku":"QL1058-green-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"green","sz":"2XL","av":144,"ip":1073,"d7":288.0,"d28":1027,"cv":0.1823,"est":false,"mix":{"Maggie":0.721,"Mary":0.214,"Lyn":0.039,"Elsie":0.027}},{"sku":"QL1058-green-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"green","sz":"XL","av":176,"ip":2206,"d7":527.0,"d28":1788,"cv":0.2492,"est":false,"mix":{"Maggie":0.721,"Mary":0.204,"Elsie":0.045,"Lyn":0.029}},{"sku":"QL1058-green-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"green","sz":"L","av":172,"ip":360,"d7":205.0,"d28":1278,"cv":0.3537,"est":false,"mix":{"Maggie":0.672,"Mary":0.24,"Elsie":0.045,"Lyn":0.043}},{"sku":"QL1058-green-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"green","sz":"M","av":353,"ip":490,"d7":102.0,"d28":991,"cv":0.4329,"est":false,"mix":{"Maggie":0.563,"Mary":0.338,"Lyn":0.055,"Elsie":0.044}},{"sku":"QL1058-green-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"green","sz":"S","av":486,"ip":190,"d7":33.0,"d28":369,"cv":0.467,"est":false,"mix":{"Maggie":0.528,"Mary":0.361,"Lyn":0.074,"Elsie":0.037}},{"sku":"QL1058-coffee-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"coffee","sz":"4XL","av":0,"ip":678,"d7":187.3,"d28":null,"cv":0.3551,"est":true,"mix":{},"pre":true},{"sku":"QL1058-coffee-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"coffee","sz":"3XL","av":127,"ip":1431,"d7":242.0,"d28":876,"cv":0.4374,"est":false,"mix":{"Maggie":0.719,"Mary":0.208,"Elsie":0.043,"Lyn":0.03}},{"sku":"QL1058-coffee-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"coffee","sz":"2XL","av":107,"ip":1520,"d7":411.0,"d28":1501,"cv":0.2646,"est":false,"mix":{"Maggie":0.755,"Mary":0.197,"Elsie":0.025,"Lyn":0.022}},{"sku":"QL1058-coffee-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"coffee","sz":"XL","av":2,"ip":3846,"d7":728.0,"d28":2483,"cv":0.2841,"est":false,"mix":{"Maggie":0.763,"Mary":0.187,"Elsie":0.026,"Lyn":0.024}},{"sku":"QL1058-coffee-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"coffee","sz":"L","av":636,"ip":980,"d7":251.0,"d28":1657,"cv":0.3589,"est":false,"mix":{"Maggie":0.688,"Mary":0.239,"Lyn":0.041,"Elsie":0.031}},{"sku":"QL1058-coffee-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"coffee","sz":"M","av":330,"ip":80,"d7":141.0,"d28":1364,"cv":0.4248,"est":false,"mix":{"Maggie":0.592,"Mary":0.329,"Lyn":0.047,"Elsie":0.032}},{"sku":"QL1058-coffee-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"coffee","sz":"S","av":192,"ip":140,"d7":39.0,"d28":491,"cv":0.4542,"est":false,"mix":{"Maggie":0.526,"Mary":0.389,"Lyn":0.068,"Elsie":0.017}},{"sku":"QL1058-black-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"black","sz":"4XL","av":0,"ip":2222,"d7":662.8,"d28":null,"cv":0.3551,"est":true,"mix":{},"pre":true},{"sku":"QL1058-black-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"black","sz":"3XL","av":841,"ip":4533,"d7":846.0,"d28":3377,"cv":0.3551,"est":false,"mix":{"Maggie":0.719,"Mary":0.207,"Elsie":0.039,"Lyn":0.035}},{"sku":"QL1058-black-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"black","sz":"2XL","av":1349,"ip":3734,"d7":1301.0,"d28":4848,"cv":0.2533,"est":false,"mix":{"Maggie":0.741,"Mary":0.192,"Lyn":0.034,"Elsie":0.032}},{"sku":"QL1058-black-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"black","sz":"XL","av":1176,"ip":9617,"d7":2367.0,"d28":8011,"cv":0.2843,"est":false,"mix":{"Maggie":0.76,"Mary":0.182,"Lyn":0.029,"Elsie":0.029}},{"sku":"QL1058-black-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"black","sz":"L","av":2608,"ip":1635,"d7":786.0,"d28":5291,"cv":0.331,"est":false,"mix":{"Maggie":0.698,"Mary":0.231,"Lyn":0.042,"Elsie":0.028}},{"sku":"QL1058-black-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"black","sz":"M","av":2966,"ip":2024,"d7":441.0,"d28":4214,"cv":0.4567,"est":false,"mix":{"Maggie":0.603,"Mary":0.311,"Lyn":0.053,"Elsie":0.033}},{"sku":"QL1058-black-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"black","sz":"S","av":1590,"ip":700,"d7":113.0,"d28":1491,"cv":0.4513,"est":false,"mix":{"Maggie":0.546,"Mary":0.367,"Lyn":0.061,"Elsie":0.026}},{"sku":"QL1058-nude-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"nude","sz":"4XL","av":0,"ip":4003,"d7":1209.1,"d28":null,"cv":0.3551,"est":true,"mix":{},"pre":true},{"sku":"QL1058-nude-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"nude","sz":"3XL","av":39,"ip":11140,"d7":1538.0,"d28":6254,"cv":0.3421,"est":false,"mix":{"Maggie":0.764,"Mary":0.179,"Elsie":0.037,"Lyn":0.019}},{"sku":"QL1058-nude-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"nude","sz":"2XL","av":71,"ip":10863,"d7":2084.0,"d28":8118,"cv":0.2274,"est":false,"mix":{"Maggie":0.761,"Mary":0.176,"Elsie":0.039,"Lyn":0.025}},{"sku":"QL1058-nude-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"nude","sz":"XL","av":1530,"ip":16033,"d7":4076.0,"d28":14047,"cv":0.2538,"est":false,"mix":{"Maggie":0.787,"Mary":0.154,"Elsie":0.035,"Lyn":0.025}},{"sku":"QL1058-nude-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"nude","sz":"L","av":4148,"ip":3090,"d7":1229.0,"d28":8868,"cv":0.3363,"est":false,"mix":{"Maggie":0.711,"Mary":0.217,"Elsie":0.038,"Lyn":0.034}},{"sku":"QL1058-nude-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"nude","sz":"M","av":1991,"ip":2950,"d7":746.0,"d28":6964,"cv":0.4312,"est":false,"mix":{"Maggie":0.622,"Mary":0.295,"Elsie":0.042,"Lyn":0.041}},{"sku":"QL1058-nude-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"nude","sz":"S","av":1724,"ip":400,"d7":193.0,"d28":2286,"cv":0.427,"est":false,"mix":{"Maggie":0.591,"Mary":0.331,"Lyn":0.041,"Elsie":0.036}},{"sku":"QL1058-Yellow-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"yellow","sz":"4XL","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Yellow-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"yellow","sz":"3XL","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Yellow-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"yellow","sz":"2XL","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Yellow-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"yellow","sz":"XL","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Yellow-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"yellow","sz":"L","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Yellow-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"yellow","sz":"M","av":0,"ip":104,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Yellow-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"yellow","sz":"S","av":0,"ip":65,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Navyblue-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"navyblue","sz":"4XL","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Navyblue-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"navyblue","sz":"3XL","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Navyblue-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"navyblue","sz":"2XL","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Navyblue-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"navyblue","sz":"XL","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Navyblue-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"navyblue","sz":"L","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Navyblue-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"navyblue","sz":"M","av":0,"ip":104,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Navyblue-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"navyblue","sz":"S","av":0,"ip":65,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Purple-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"purple","sz":"4XL","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Purple-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"purple","sz":"3XL","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Purple-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"purple","sz":"2XL","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Purple-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"purple","sz":"XL","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Purple-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"purple","sz":"L","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Purple-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"purple","sz":"M","av":0,"ip":104,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Purple-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"purple","sz":"S","av":0,"ip":65,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Pink-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"pink","sz":"4XL","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Pink-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"pink","sz":"3XL","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Pink-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"pink","sz":"2XL","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Pink-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"pink","sz":"XL","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Pink-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"pink","sz":"L","av":0,"ip":130,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Pink-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"pink","sz":"M","av":0,"ip":104,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1058-Pink-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","col":"pink","sz":"S","av":0,"ip":65,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-red-xxl","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"red","sz":"XXL","av":15,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-red-x","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"red","sz":"X","av":11,"ip":1,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-red-l","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"red","sz":"L","av":10,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-red-m","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"red","sz":"M","av":7,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-red-s","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"red","sz":"S","av":2,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-gray-xxl","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"gray","sz":"XXL","av":12,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-gray-x","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"gray","sz":"X","av":18,"ip":1,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-gray-l","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"gray","sz":"L","av":22,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-gray-m","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"gray","sz":"M","av":18,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-gray-s","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"gray","sz":"S","av":9,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-green-xxl","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"green","sz":"XXL","av":9,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-green-x","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"green","sz":"X","av":16,"ip":1,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-green-l","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"green","sz":"L","av":22,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-green-m","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"green","sz":"M","av":19,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-green-s","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"green","sz":"S","av":6,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-khaki-xxl","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"khaki","sz":"XXL","av":6,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-khaki-x","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"khaki","sz":"X","av":8,"ip":3,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-khaki-l","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"khaki","sz":"L","av":0,"ip":3,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-khaki-m","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"khaki","sz":"M","av":3,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-khaki-s","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"khaki","sz":"S","av":0,"ip":1,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-black-xxl","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"black","sz":"XXL","av":31,"ip":14,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-black-x","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"black","sz":"X","av":49,"ip":15,"d7":0.0,"d28":null,"cv":1.7172,"est":true,"mix":{},"src":"weekly model"},{"sku":"QL1047-black-l","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"black","sz":"L","av":11,"ip":1,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-black-m","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"black","sz":"M","av":1,"ip":12,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QL1047-black-s","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","col":"black","sz":"S","av":12,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1114-lightgreen-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"lightgreen","sz":"3XL","av":1,"ip":2,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.5,"Mary":0.444,"Lyn":0.056}},{"sku":"QA1114-lightgreen-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"lightgreen","sz":"2XL","av":3,"ip":1,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Mary":0.6,"Maggie":0.4}},{"sku":"QA1114-lightgreen-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"lightgreen","sz":"XL","av":1,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.5,"Mary":0.5}},{"sku":"QA1114-lightgreen-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"lightgreen","sz":"L","av":10,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Mary":0.438,"Maggie":0.312,"Lyn":0.25}},{"sku":"QA1114-lightgreen-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"lightgreen","sz":"M","av":4,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.714,"Mary":0.286}},{"sku":"QA1114-lightgreen-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"lightgreen","sz":"S","av":0,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.5,"Mary":0.5}},{"sku":"QA1114-gray-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"gray","sz":"3XL","av":2,"ip":15,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.5,"Mary":0.417,"Lyn":0.083}},{"sku":"QA1114-gray-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"gray","sz":"2XL","av":3,"ip":3,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.6,"Mary":0.371,"Lyn":0.029}},{"sku":"QA1114-gray-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"gray","sz":"XL","av":15,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.824,"Mary":0.176}},{"sku":"QA1114-gray-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"gray","sz":"L","av":5,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.733,"Mary":0.2,"Lyn":0.067}},{"sku":"QA1114-gray-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"gray","sz":"M","av":5,"ip":2,"d7":4.5,"d28":null,"cv":0.6972,"est":true,"mix":{"Maggie":0.769,"Mary":0.128,"Lyn":0.103},"src":"weekly model"},{"sku":"QA1114-gray-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"gray","sz":"S","av":9,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.75,"Mary":0.167,"Lyn":0.083}},{"sku":"QA1114-pink-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"pink","sz":"3XL","av":5,"ip":9,"d7":6.2,"d28":null,"cv":0.3316,"est":true,"mix":{"Maggie":0.722,"Mary":0.222,"Lyn":0.056},"src":"weekly model"},{"sku":"QA1114-pink-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"pink","sz":"2XL","av":0,"ip":13,"d7":14.9,"d28":null,"cv":0.3722,"est":true,"mix":{"Maggie":0.817,"Mary":0.127,"Lyn":0.056},"src":"weekly model"},{"sku":"QA1114-pink-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"pink","sz":"XL","av":9,"ip":9,"d7":13.6,"d28":null,"cv":0.1869,"est":true,"mix":{"Maggie":0.689,"Mary":0.27,"Lyn":0.041},"src":"weekly model"},{"sku":"QA1114-pink-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"pink","sz":"L","av":26,"ip":5,"d7":9.8,"d28":null,"cv":0.5989,"est":true,"mix":{"Maggie":0.638,"Mary":0.304,"Lyn":0.058},"src":"weekly model"},{"sku":"QA1114-pink-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"pink","sz":"M","av":10,"ip":3,"d7":7.4,"d28":null,"cv":0.3187,"est":true,"mix":{"Maggie":0.689,"Mary":0.222,"Lyn":0.089},"src":"weekly model"},{"sku":"QA1114-pink-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"pink","sz":"S","av":0,"ip":3,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.467,"Mary":0.467,"Lyn":0.067}},{"sku":"QA1114-yellow-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"yellow","sz":"3XL","av":4,"ip":15,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.795,"Mary":0.091,"Elsie":0.068,"Lyn":0.045}},{"sku":"QA1114-yellow-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"yellow","sz":"2XL","av":1,"ip":9,"d7":11.9,"d28":null,"cv":0.2306,"est":true,"mix":{"Maggie":0.833,"Mary":0.1,"Lyn":0.067},"src":"weekly model"},{"sku":"QA1114-yellow-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"yellow","sz":"XL","av":15,"ip":1,"d7":12.8,"d28":null,"cv":0.3304,"est":true,"mix":{"Maggie":0.794,"Mary":0.111,"Lyn":0.079,"Elsie":0.016},"src":"weekly model"},{"sku":"QA1114-yellow-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"yellow","sz":"L","av":26,"ip":5,"d7":7.4,"d28":null,"cv":0.6762,"est":true,"mix":{"Maggie":0.808,"Mary":0.135,"Lyn":0.038,"Elsie":0.019},"src":"weekly model"},{"sku":"QA1114-yellow-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"yellow","sz":"M","av":5,"ip":2,"d7":6.1,"d28":null,"cv":0.4979,"est":true,"mix":{"Maggie":0.711,"Mary":0.184,"Lyn":0.079,"Elsie":0.026},"src":"weekly model"},{"sku":"QA1114-yellow-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"yellow","sz":"S","av":2,"ip":26,"d7":23.6,"d28":null,"cv":0.5863,"est":true,"mix":{"Maggie":0.917,"Mary":0.052,"Lyn":0.031},"src":"weekly model"},{"sku":"QA1114-red-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"red","sz":"3XL","av":0,"ip":16,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.706,"Mary":0.265,"Lyn":0.029}},{"sku":"QA1114-red-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"red","sz":"2XL","av":0,"ip":17,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.8,"Mary":0.143,"Lyn":0.057}},{"sku":"QA1114-red-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"red","sz":"XL","av":0,"ip":15,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.841,"Mary":0.136,"Lyn":0.023}},{"sku":"QA1114-red-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"red","sz":"L","av":11,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.743,"Mary":0.171,"Lyn":0.086}},{"sku":"QA1114-red-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"red","sz":"M","av":9,"ip":1,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.9,"Lyn":0.1}},{"sku":"QA1114-red-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"red","sz":"S","av":1,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.692,"Lyn":0.154,"Mary":0.154}},{"sku":"QA1114-khaki-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"khaki","sz":"3XL","av":8,"ip":12,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.833,"Mary":0.146,"Lyn":0.021}},{"sku":"QA1114-khaki-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"khaki","sz":"2XL","av":0,"ip":11,"d7":10.8,"d28":null,"cv":0.2738,"est":true,"mix":{"Maggie":0.892,"Mary":0.092,"Lyn":0.015},"src":"weekly model"},{"sku":"QA1114-khaki-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"khaki","sz":"XL","av":13,"ip":7,"d7":9.1,"d28":null,"cv":0.4734,"est":true,"mix":{"Maggie":0.94,"Mary":0.036,"Lyn":0.024},"src":"weekly model"},{"sku":"QA1114-khaki-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"khaki","sz":"L","av":8,"ip":0,"d7":6.7,"d28":null,"cv":0.3049,"est":true,"mix":{"Maggie":0.889,"Mary":0.063,"Lyn":0.032,"Elsie":0.016},"src":"weekly model"},{"sku":"QA1114-khaki-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"khaki","sz":"M","av":12,"ip":1,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.914,"Mary":0.086}},{"sku":"QA1114-khaki-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"khaki","sz":"S","av":2,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.667,"Mary":0.333}},{"sku":"QA1114-brown-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"brown","sz":"3XL","av":0,"ip":6,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Mary":0.556,"Maggie":0.333,"Lyn":0.111}},{"sku":"QA1114-brown-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"brown","sz":"2XL","av":0,"ip":6,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.714,"Mary":0.19,"Lyn":0.095}},{"sku":"QA1114-brown-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"brown","sz":"XL","av":8,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.839,"Mary":0.129,"Lyn":0.032}},{"sku":"QA1114-brown-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"brown","sz":"L","av":8,"ip":1,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.667,"Mary":0.292,"Lyn":0.042}},{"sku":"QA1114-brown-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"brown","sz":"M","av":8,"ip":1,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.65,"Lyn":0.2,"Mary":0.15}},{"sku":"QA1114-brown-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"brown","sz":"S","av":0,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Mary":0.5,"Maggie":0.375,"Lyn":0.125}},{"sku":"QA1114-green-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"green","sz":"3XL","av":7,"ip":2,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.538,"Mary":0.269,"Lyn":0.154,"Elsie":0.038}},{"sku":"QA1114-green-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"green","sz":"2XL","av":5,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.771,"Lyn":0.114,"Mary":0.114}},{"sku":"QA1114-green-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"green","sz":"XL","av":18,"ip":1,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.744,"Lyn":0.128,"Mary":0.128}},{"sku":"QA1114-green-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"green","sz":"L","av":11,"ip":1,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.724,"Mary":0.207,"Lyn":0.069}},{"sku":"QA1114-green-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"green","sz":"M","av":10,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.625,"Lyn":0.312,"Mary":0.062}},{"sku":"QA1114-green-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"green","sz":"S","av":2,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Mary":0.714,"Lyn":0.143,"Maggie":0.143}},{"sku":"QA1114-white-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"white","sz":"3XL","av":9,"ip":10,"d7":14.3,"d28":null,"cv":0.2198,"est":true,"mix":{"Maggie":0.724,"Mary":0.2,"Lyn":0.076},"src":"weekly model"},{"sku":"QA1114-white-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"white","sz":"2XL","av":16,"ip":8,"d7":26.5,"d28":null,"cv":0.3028,"est":true,"mix":{"Maggie":0.777,"Mary":0.18,"Lyn":0.036},"src":"weekly model"},{"sku":"QA1114-white-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"white","sz":"XL","av":3,"ip":38,"d7":32.7,"d28":null,"cv":0.2981,"est":true,"mix":{"Maggie":0.807,"Mary":0.14,"Lyn":0.053},"src":"weekly model"},{"sku":"QA1114-white-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"white","sz":"L","av":30,"ip":2,"d7":18.2,"d28":null,"cv":0.2746,"est":true,"mix":{"Maggie":0.731,"Mary":0.207,"Lyn":0.048,"Elsie":0.014},"src":"weekly model"},{"sku":"QA1114-white-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"white","sz":"M","av":26,"ip":2,"d7":10.9,"d28":null,"cv":0.6944,"est":true,"mix":{"Maggie":0.759,"Mary":0.138,"Lyn":0.103},"src":"weekly model"},{"sku":"QA1114-white-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"white","sz":"S","av":7,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{"Maggie":0.733,"Mary":0.167,"Lyn":0.1}},{"sku":"QA1114-black-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"black","sz":"3XL","av":14,"ip":28,"d7":21.0,"d28":null,"cv":0.1934,"est":true,"mix":{"Maggie":0.659,"Mary":0.227,"Lyn":0.083,"Elsie":0.03},"src":"weekly model"},{"sku":"QA1114-black-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"black","sz":"2XL","av":1,"ip":35,"d7":33.5,"d28":null,"cv":0.2685,"est":true,"mix":{"Maggie":0.792,"Mary":0.126,"Lyn":0.082},"src":"weekly model"},{"sku":"QA1114-black-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"black","sz":"XL","av":13,"ip":49,"d7":50.0,"d28":null,"cv":0.3892,"est":true,"mix":{"Maggie":0.791,"Mary":0.119,"Lyn":0.066,"Elsie":0.025},"src":"weekly model"},{"sku":"QA1114-black-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"black","sz":"L","av":28,"ip":13,"d7":25.8,"d28":null,"cv":0.4131,"est":true,"mix":{"Maggie":0.731,"Lyn":0.148,"Mary":0.115},"src":"weekly model"},{"sku":"QA1114-black-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"black","sz":"M","av":48,"ip":3,"d7":12.6,"d28":null,"cv":0.6532,"est":true,"mix":{"Maggie":0.7,"Lyn":0.15,"Mary":0.15},"src":"weekly model"},{"sku":"QA1114-black-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","col":"black","sz":"S","av":12,"ip":0,"d7":5.5,"d28":null,"cv":0.5372,"est":true,"mix":{"Maggie":0.6,"Lyn":0.222,"Mary":0.156,"Elsie":0.022},"src":"weekly model"},{"sku":"QA1071-Lava-6XL","fam":"QA1071","prod":"QA1071 (new range)","col":"lava","sz":"6XL","av":0,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Lava-5XL","fam":"QA1071","prod":"QA1071 (new range)","col":"lava","sz":"5XL","av":9,"ip":15,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Lava-4XL","fam":"QA1071","prod":"QA1071 (new range)","col":"lava","sz":"4XL","av":10,"ip":9,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Lava-3XL","fam":"QA1071","prod":"QA1071 (new range)","col":"lava","sz":"3XL","av":21,"ip":21,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Lava-2XL","fam":"QA1071","prod":"QA1071 (new range)","col":"lava","sz":"2XL","av":29,"ip":22,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Lava-XL","fam":"QA1071","prod":"QA1071 (new range)","col":"lava","sz":"XL","av":44,"ip":32,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Lava-L","fam":"QA1071","prod":"QA1071 (new range)","col":"lava","sz":"L","av":13,"ip":6,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Lava-M","fam":"QA1071","prod":"QA1071 (new range)","col":"lava","sz":"M","av":60,"ip":45,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Lava-S","fam":"QA1071","prod":"QA1071 (new range)","col":"lava","sz":"S","av":5,"ip":8,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Lava-XS","fam":"QA1071","prod":"QA1071 (new range)","col":"lava","sz":"XS","av":3,"ip":2,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Purple-6XL","fam":"QA1071","prod":"QA1071 (new range)","col":"purple","sz":"6XL","av":0,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Purple-5XL","fam":"QA1071","prod":"QA1071 (new range)","col":"purple","sz":"5XL","av":9,"ip":15,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Purple-4XL","fam":"QA1071","prod":"QA1071 (new range)","col":"purple","sz":"4XL","av":10,"ip":9,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Purple-3XL","fam":"QA1071","prod":"QA1071 (new range)","col":"purple","sz":"3XL","av":20,"ip":20,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Purple-2XL","fam":"QA1071","prod":"QA1071 (new range)","col":"purple","sz":"2XL","av":26,"ip":22,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Purple-XL","fam":"QA1071","prod":"QA1071 (new range)","col":"purple","sz":"XL","av":43,"ip":33,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Purple-L","fam":"QA1071","prod":"QA1071 (new range)","col":"purple","sz":"L","av":9,"ip":6,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Purple-M","fam":"QA1071","prod":"QA1071 (new range)","col":"purple","sz":"M","av":58,"ip":44,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Purple-S","fam":"QA1071","prod":"QA1071 (new range)","col":"purple","sz":"S","av":5,"ip":8,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Purple-XS","fam":"QA1071","prod":"QA1071 (new range)","col":"purple","sz":"XS","av":3,"ip":2,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-khaki-6XL","fam":"QA1071","prod":"QA1071 (new range)","col":"khaki","sz":"6XL","av":0,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-khaki-5XL","fam":"QA1071","prod":"QA1071 (new range)","col":"khaki","sz":"5XL","av":14,"ip":21,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-khaki-4XL","fam":"QA1071","prod":"QA1071 (new range)","col":"khaki","sz":"4XL","av":22,"ip":20,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-khaki-3XL","fam":"QA1071","prod":"QA1071 (new range)","col":"khaki","sz":"3XL","av":38,"ip":46,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-khaki-2XL","fam":"QA1071","prod":"QA1071 (new range)","col":"khaki","sz":"2XL","av":53,"ip":66,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-khaki-XL","fam":"QA1071","prod":"QA1071 (new range)","col":"khaki","sz":"XL","av":80,"ip":62,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-khaki-L","fam":"QA1071","prod":"QA1071 (new range)","col":"khaki","sz":"L","av":23,"ip":23,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-khaki-M","fam":"QA1071","prod":"QA1071 (new range)","col":"khaki","sz":"M","av":101,"ip":86,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-khaki-S","fam":"QA1071","prod":"QA1071 (new range)","col":"khaki","sz":"S","av":11,"ip":17,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-khaki-XS","fam":"QA1071","prod":"QA1071 (new range)","col":"khaki","sz":"XS","av":29,"ip":25,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Brown-6XL","fam":"QA1071","prod":"QA1071 (new range)","col":"brown","sz":"6XL","av":0,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Brown-5XL","fam":"QA1071","prod":"QA1071 (new range)","col":"brown","sz":"5XL","av":11,"ip":19,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Brown-4XL","fam":"QA1071","prod":"QA1071 (new range)","col":"brown","sz":"4XL","av":13,"ip":14,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Brown-3XL","fam":"QA1071","prod":"QA1071 (new range)","col":"brown","sz":"3XL","av":24,"ip":33,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Brown-2XL","fam":"QA1071","prod":"QA1071 (new range)","col":"brown","sz":"2XL","av":39,"ip":32,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Brown-XL","fam":"QA1071","prod":"QA1071 (new range)","col":"brown","sz":"XL","av":60,"ip":47,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Brown-L","fam":"QA1071","prod":"QA1071 (new range)","col":"brown","sz":"L","av":11,"ip":15,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Brown-M","fam":"QA1071","prod":"QA1071 (new range)","col":"brown","sz":"M","av":78,"ip":64,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Brown-S","fam":"QA1071","prod":"QA1071 (new range)","col":"brown","sz":"S","av":8,"ip":12,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Brown-XS","fam":"QA1071","prod":"QA1071 (new range)","col":"brown","sz":"XS","av":4,"ip":4,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Beige-6XL","fam":"QA1071","prod":"QA1071 (new range)","col":"beige","sz":"6XL","av":0,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Beige-5XL","fam":"QA1071","prod":"QA1071 (new range)","col":"beige","sz":"5XL","av":15,"ip":41,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Beige-4XL","fam":"QA1071","prod":"QA1071 (new range)","col":"beige","sz":"4XL","av":30,"ip":40,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Beige-3XL","fam":"QA1071","prod":"QA1071 (new range)","col":"beige","sz":"3XL","av":200,"ip":199,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Beige-2XL","fam":"QA1071","prod":"QA1071 (new range)","col":"beige","sz":"2XL","av":195,"ip":242,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Beige-XL","fam":"QA1071","prod":"QA1071 (new range)","col":"beige","sz":"XL","av":409,"ip":463,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Beige-L","fam":"QA1071","prod":"QA1071 (new range)","col":"beige","sz":"L","av":80,"ip":283,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Beige-M","fam":"QA1071","prod":"QA1071 (new range)","col":"beige","sz":"M","av":129,"ip":227,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Beige-S","fam":"QA1071","prod":"QA1071 (new range)","col":"beige","sz":"S","av":43,"ip":67,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Beige-XS","fam":"QA1071","prod":"QA1071 (new range)","col":"beige","sz":"XS","av":31,"ip":28,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Black-6XL","fam":"QA1071","prod":"QA1071 (new range)","col":"black","sz":"6XL","av":0,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Black-5XL","fam":"QA1071","prod":"QA1071 (new range)","col":"black","sz":"5XL","av":17,"ip":20,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Black-4XL","fam":"QA1071","prod":"QA1071 (new range)","col":"black","sz":"4XL","av":39,"ip":24,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Black-3XL","fam":"QA1071","prod":"QA1071 (new range)","col":"black","sz":"3XL","av":61,"ip":93,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Black-2XL","fam":"QA1071","prod":"QA1071 (new range)","col":"black","sz":"2XL","av":71,"ip":122,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Black-XL","fam":"QA1071","prod":"QA1071 (new range)","col":"black","sz":"XL","av":129,"ip":176,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Black-L","fam":"QA1071","prod":"QA1071 (new range)","col":"black","sz":"L","av":53,"ip":112,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Black-M","fam":"QA1071","prod":"QA1071 (new range)","col":"black","sz":"M","av":125,"ip":131,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Black-S","fam":"QA1071","prod":"QA1071 (new range)","col":"black","sz":"S","av":15,"ip":35,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Black-XS","fam":"QA1071","prod":"QA1071 (new range)","col":"black","sz":"XS","av":54,"ip":33,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Pink-6XL","fam":"QA1071","prod":"QA1071 (new range)","col":"pink","sz":"6XL","av":0,"ip":0,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Pink-5XL","fam":"QA1071","prod":"QA1071 (new range)","col":"pink","sz":"5XL","av":11,"ip":19,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Pink-4XL","fam":"QA1071","prod":"QA1071 (new range)","col":"pink","sz":"4XL","av":13,"ip":14,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Pink-3XL","fam":"QA1071","prod":"QA1071 (new range)","col":"pink","sz":"3XL","av":24,"ip":33,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Pink-2XL","fam":"QA1071","prod":"QA1071 (new range)","col":"pink","sz":"2XL","av":39,"ip":32,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Pink-XL","fam":"QA1071","prod":"QA1071 (new range)","col":"pink","sz":"XL","av":55,"ip":48,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Pink-L","fam":"QA1071","prod":"QA1071 (new range)","col":"pink","sz":"L","av":11,"ip":15,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Pink-M","fam":"QA1071","prod":"QA1071 (new range)","col":"pink","sz":"M","av":78,"ip":64,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Pink-S","fam":"QA1071","prod":"QA1071 (new range)","col":"pink","sz":"S","av":8,"ip":12,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}},{"sku":"QA1071-Pink-XS","fam":"QA1071","prod":"QA1071 (new range)","col":"pink","sz":"XS","av":4,"ip":4,"d7":null,"d28":null,"cv":0.3551,"est":false,"mix":{}}]}</script>
+<script>
+const D = JSON.parse(document.getElementById('payload').textContent);
+const STORES = [["Maggie","Maggie’s Tanks"],["Lyn","Lyn’s Tanks"],["Mary","Mary’s Tanks"],["Elsie","Simply Elsie"]];
+const SC = {Maggie:"var(--accent)",Lyn:"var(--pos)",Mary:"var(--warn)",Elsie:"var(--neg)"};
+const Z = 1.96, LT = D.leadTimeDays, RV = D.reviewDays, SDLT = D.leadTimeSdDays;
+const PI_D = LT + RV, PI_W = PI_D / 7;
+const state = {gran:"daily", from:null, to:null, store:"all", surge:1, incoming:0};
+const fmt = n => (n===null||n===undefined||!isFinite(n)) ? "—" : Math.round(n).toLocaleString();
+const fmt1 = n => (n===null||n===undefined||!isFinite(n)) ? "—" : n.toFixed(1);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const dayMs = 86400000;
+const iso = d => d.toISOString().slice(0,10);
+function mondayOf(s){const d=new Date(s+"T00:00:00Z");const w=(d.getUTCDay()+6)%7;d.setUTCDate(d.getUTCDate()-w);return iso(d);}
+
+/* ---------- SKU economics. Everything downstream of surge recomputes here. ---------- */
+function calc(s, surge, useIncoming){
+  if(s.d7===null) return null;
+  const wk = s.d7 * surge, day = wk/7;
+  if(day<=0) return null;
+  const daysLeft = s.av / day;
+  const sdWk = s.cv * wk;
+  const safety = Z * Math.sqrt(PI_W*sdWk*sdWk + day*day*SDLT*SDLT);
+  const demandPI = day * PI_D;                       // lead time + review period
+  const target = demandPI + safety;
+  const incoming = useIncoming ? s.ip : 0;           // only deducted when the user accepts the risk
+  const order = Math.max(0, target - s.av - incoming);
+  const stockout = new Date(Date.parse(D.invAsOf+"T00:00:00Z") + daysLeft*dayMs);
+  let pri, pc;
+  if(daysLeft < LT){pri="Critical";pc="crit";}
+  else if(daysLeft < PI_D){pri="High";pc="high";}
+  else if(daysLeft < 21){pri="Medium";pc="med";}
+  else {pri="OK";pc="ok";}
+  return {wk,day,daysLeft,safety,demandPI,target,incoming,order,stockout,pri,pc};
+}
+function reason(s,c){
+  const r=[];
+  if(c.daysLeft<LT) r.push(`only ${fmt1(c.daysLeft)}d free-to-sell vs ${LT}d lead time`);
+  else if(c.daysLeft<PI_D) r.push(`${fmt1(c.daysLeft)}d cover, under the ${PI_D}d protection interval`);
+  else r.push(`${fmt1(c.daysLeft)}d cover`);
+  if(state.surge>1) r.push(`at ${state.surge}x surge`);
+  if(s.est) r.push("demand modelled, no direct sales history");
+  if(s.ip>0 && !state.incoming) r.push(`${fmt(s.ip)} in production but no arrival date`);
+  return r.join("; ");
+}
+const primaryStore = s => {
+  const e=Object.entries(s.mix||{}); if(!e.length) return "—";
+  e.sort((a,b)=>b[1]-a[1]);
+  const lbl=(STORES.find(x=>x[0]===e[0][0])||[,e[0][0]])[1];
+  return e.length>1 ? `${lbl} +${e.length-1}` : lbl;
+};
+const inStore = s => state.store==="all" || (s.mix && s.mix[state.store]>0);
+
+/* ---------- sales series ---------- */
+function dailyRows(){
+  return D.daily.filter(r=>r.d>=state.from && r.d<=state.to);
+}
+function seriesFor(){
+  const rows = dailyRows();
+  if(state.gran==="daily")
+    return rows.map(r=>({key:r.d,label:r.d.slice(5),vals:r,partial:r.d===D.salesAsOf&&D.salesPartial}));
+  if(state.gran==="weekly"){
+    const m=new Map();
+    rows.forEach(r=>{const k=mondayOf(r.d);
+      if(!m.has(k)) m.set(k,{key:k,label:"wk "+k.slice(5),vals:{Maggie:0,Lyn:0,Mary:0,Elsie:0},days:0,partial:false});
+      const o=m.get(k); STORES.forEach(([s])=>{ if(r[s]!==null) o.vals[s]+=r[s]; });
+      o.days++; if(r.d===D.salesAsOf&&D.salesPartial) o.partial=true;});
+    return [...m.values()].map(o=>({...o,partial:o.partial||o.days<7}));
+  }
+  // monthly comes from the complete month x store x sku export
+  const tot={};
+  D.monthly.forEach(row=>{const st=row[1];
+    D.months.forEach((mo,i)=>{const v=row[2+i]; if(!v) return;
+      tot[mo]=tot[mo]||{Maggie:0,Lyn:0,Mary:0,Elsie:0}; tot[mo][st]+=v;});});
+  return D.months.filter(mo=>tot[mo]).map(mo=>({key:mo,label:mo.slice(0,3),vals:tot[mo],
+    partial:mo==="august"}));
+}
+function storeTotals(series){
+  const t={Maggie:0,Lyn:0,Mary:0,Elsie:0};
+  series.forEach(p=>STORES.forEach(([s])=>{t[s]+=p.vals[s]||0;}));
+  return t;
+}
+
+/* ---------- render ---------- */
+function renderFreshness(){
+  const asOf=new Date(D.salesAsOf+"T00:00:00Z");
+  const age=Math.floor((Date.now()-asOf.getTime())/dayMs);
+  let cls="ok", mark="✓", msg=`<b>Last data update: ${D.salesAsOf}</b> — sales and inventory exports are current.`;
+  if(age>=1){cls="warn";mark="!";msg=`<b>Last data update: ${D.salesAsOf}</b> — this dashboard is showing data that is
+    <b>${age} day${age>1?"s":""} old</b>. Sales since then are not reflected anywhere on this page. Re-export the
+    Shopify sales file and the inventory report, then ask Claude to refresh this dashboard.`;}
+  if(age>=3){cls="crit";}
+  const extra = D.salesPartial ? ` The final day (${D.salesAsOf}) is a partial sync and is excluded from
+    averages and marked on the chart.` : "";
+  document.getElementById('freshness').innerHTML =
+    `<div class="bar ${cls}"><span class="m">${mark}</span><p>${msg}${extra}
+     This page cannot pull from Shopify on its own — no store connector is attached to it, so the data is
+     a snapshot taken when it was built.</p></div>`;
+}
+
+function renderSales(){
+  const series=seriesFor(), tot=storeTotals(series);
+  const shown = state.store==="all" ? STORES.map(s=>s[0]) : [state.store];
+  const grand = shown.reduce((a,s)=>a+tot[s],0);
+  document.getElementById('sales-sub').textContent =
+    `${series.length} ${state.gran==="daily"?"days":state.gran==="weekly"?"weeks (Mon–Sun)":"months"} shown.`;
+
+  document.getElementById('store-tiles').innerHTML =
+    STORES.filter(([s])=>shown.includes(s)).map(([s,label])=>
+      `<div class="tile"><span class="k">${label}</span><span class="v">${fmt(tot[s])}</span>
+       <span class="n">${grand?((tot[s]/grand)*100).toFixed(1):"0.0"}% of selection</span></div>`).join("")
+    + `<div class="tile hi"><span class="k">All selected</span><span class="v">${fmt(grand)}</span>
+       <span class="n">units sold</span></div>`;
+
+  const max=Math.max(1,...series.map(p=>shown.reduce((a,s)=>a+(p.vals[s]||0),0)));
+  document.getElementById('chart').innerHTML = series.map(p=>{
+    const t=shown.reduce((a,s)=>a+(p.vals[s]||0),0);
+    const segs=shown.map(s=>{const v=p.vals[s]||0; if(!v) return "";
+      return `<div class="bseg" style="height:${(v/max)*180}px;background:${SC[s]};${p.partial?"opacity:.45":""}"></div>`;}).join("");
+    return `<div class="bc" title="${esc(p.label)}: ${fmt(t)} units${p.partial?" (partial period)":""}">
+      <div class="bstack" style="height:${(t/max)*180}px">${segs}</div>
+      <div class="blab">${esc(p.label)}</div></div>`;}).join("");
+  document.getElementById('legend').innerHTML =
+    STORES.filter(([s])=>shown.includes(s)).map(([s,l])=>`<span><i style="background:${SC[s]}"></i>${l}</span>`).join("")
+    + `<span class="muted">Faded bars are incomplete periods</span>`;
+
+  // SKU-level detail only where the source data actually supports it
+  const note=document.getElementById('sales-note'), wrap=document.getElementById('sku-sales-wrap');
+  if(state.gran==="daily"){
+    note.innerHTML=`<div class="bar warn"><span class="m">!</span><p><b>SKU-level daily sales are not
+      available.</b> The daily export carries store totals only. Switch to Monthly for SKU-by-store detail,
+      or Weekly for SKU totals across all stores.</p></div>`;
+    wrap.innerHTML="";
+  } else if(state.gran==="weekly"){
+    note.innerHTML = state.store==="all" ? "" :
+      `<div class="bar warn"><span class="m">!</span><p><b>Weekly SKU sales are not split by store</b> in the
+        source. The table below is all four stores combined; the store filter applies to the chart above only.</p></div>`;
+    const wk=Object.entries(D.weekly).map(([sku,v])=>({sku,v,t:v[0]+v[1]+v[2]+v[3]}))
+      .sort((a,b)=>b.t-a.t).slice(0,40);
+    wrap.innerHTML=`<div class="scroll"><table><thead><tr><th>SKU</th>${
+      D.weekStarts.map(w=>`<th class="n">wk ${w.slice(5)}</th>`).join("")}<th class="n">4-wk total</th></tr></thead>
+      <tbody>${wk.map(r=>`<tr><td class="sku">${esc(r.sku)}</td>${
+        r.v.map((x,i)=>`<td class="n${i===4?' muted':''}">${fmt(x)}</td>`).join("")}
+        <td class="n strong">${fmt(r.t)}</td></tr>`).join("")}</tbody></table></div>
+      <p class="note">Top 40 SKUs by four-week volume. The final week is a Monday–Wednesday reading extrapolated
+      to a full week. SKUs starting 134821 are excluded throughout.</p>`;
+  } else {
+    note.innerHTML="";
+    const agg=new Map();
+    D.monthly.forEach(row=>{const sku=row[0],st=row[1];
+      if(state.store!=="all" && st!==state.store) return;
+      if(!agg.has(sku)) agg.set(sku,D.months.map(()=>0));
+      const a=agg.get(sku); D.months.forEach((m,i)=>{a[i]+=row[2+i];});});
+    const rows=[...agg.entries()].map(([sku,v])=>({sku,v,t:v.reduce((a,b)=>a+b,0)}))
+      .filter(r=>r.t>0).sort((a,b)=>b.t-a.t).slice(0,40);
+    wrap.innerHTML=`<div class="scroll"><table><thead><tr><th>SKU</th>${
+      D.months.map(m=>`<th class="n">${m.slice(0,3)}</th>`).join("")}<th class="n">Total</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr><td class="sku">${esc(r.sku)}</td>${
+        r.v.map(x=>`<td class="n">${x?fmt(x):'<span class="muted">–</span>'}</td>`).join("")}
+        <td class="n strong">${fmt(r.t)}</td></tr>`).join("")}</tbody></table></div>
+      <p class="note">Top 40 SKUs for ${state.store==="all"?"all stores":esc(STORES.find(s=>s[0]===state.store)[1])}.
+      August is month-to-date. SKUs starting 134821 are excluded throughout.</p>`;
+  }
+}
+
+function renderHealth(){
+  const rows=D.skus.filter(inStore);
+  const withVel=rows.filter(s=>s.d7!==null);
+  let av=0,ip=0,wk=0,crit=0,noHist=0;
+  const bySize={};
+  rows.forEach(s=>{av+=s.av; ip+=s.ip;
+    if(s.d7===null){noHist++; return;}
+    const c=calc(s,state.surge,state.incoming); if(!c) return;
+    wk+=c.wk; if(c.pri==="Critical") crit++;
+    const b=bySize[s.sz]=bySize[s.sz]||{av:0,ip:0,wk:0,n:0};
+    b.av+=s.av; b.ip+=s.ip; b.wk+=c.wk; b.n++;});
+  document.getElementById('health-tiles').innerHTML=`
+    <div class="tile"><span class="k">Free to sell</span><span class="v">${fmt(av)}</span><span class="n">${wk?fmt1(av/wk):"—"} weeks of cover</span></div>
+    <div class="tile"><span class="k">In production</span><span class="v">${fmt(ip)}</span><span class="n">no arrival dates supplied</span></div>
+    <div class="tile"><span class="k">Weekly demand</span><span class="v">${fmt(wk)}</span><span class="n">at ${state.surge}× surge</span></div>
+    <div class="tile ${crit?'bad':''}"><span class="k">Critical SKUs</span><span class="v">${crit}</span><span class="n">stock out inside ${LT} days</span></div>
+    <div class="tile"><span class="k">No sales history</span><span class="v">${noHist}</span><span class="n">of ${rows.length} SKUs — not forecast</span></div>`;
+  const order=["S","M","L","XL","2XL","3XL","4XL","5XL","6XL","XS"];
+  const keys=Object.keys(bySize).sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+  document.getElementById('health-table').innerHTML=
+    `<thead><tr><th>Size</th><th class="n">SKUs</th><th class="n">Weekly demand</th><th class="n">Free to sell</th>
+     <th class="n">Days cover</th><th class="n">In production</th><th class="n">Cover incl. production</th></tr></thead>
+     <tbody>${keys.map(k=>{const b=bySize[k];const d=b.wk/7;
+       const dl=d>0?b.av/d:Infinity, tot=d>0?(b.av+b.ip)/b.wk:Infinity;
+       const cls=dl<LT?"crit":dl<PI_D?"high":dl>60?"ok":"med";
+       return `<tr><td><b>${k}</b></td><td class="n">${b.n}</td><td class="n">${fmt(b.wk)}</td>
+        <td class="n">${fmt(b.av)}</td><td class="n"><span class="chip ${cls}">${fmt1(dl)}d</span></td>
+        <td class="n">${fmt(b.ip)}</td><td class="n">${fmt1(tot)} wks</td></tr>`;}).join("")}</tbody>`;
+}
+
+function ranked(){
+  // Pre-launch SKUs are excluded: a size that has never been on sale cannot run out,
+  // and its modelled demand would otherwise crowd out real stockout risk.
+  return D.skus.filter(inStore).map(s=>({s,c:calc(s,state.surge,state.incoming)}))
+    .filter(x=>x.c && x.c.day>=2 && !x.s.pre)
+    .sort((a,b)=>a.c.daysLeft-b.c.daysLeft);
+}
+function renderTop20(){
+  const list=ranked().slice(0,20);
+  const pre=D.skus.filter(s=>inStore(s)&&s.pre);
+  const preUnits=pre.reduce((a,s)=>a+s.ip,0);
+  document.getElementById('top20-note').innerHTML = pre.length
+    ? `<b>${pre.length} pre-launch SKUs are held out of this ranking</b> — the 4XL sizes have never been on sale,
+       so they cannot stock out. They hold ${fmt(preUnits)} units in production and appear in the purchase order
+       below with modelled demand, marked <span class="chip est">est</span>.`
+    : "";
+  document.getElementById('top20').innerHTML=
+   `<thead><tr><th>#</th><th>SKU</th><th>Store</th><th>Product</th><th>Colour</th><th>Size</th>
+    <th class="n">Free to sell</th><th class="n">In production</th><th class="n">Avg/day</th><th class="n">Avg/week</th>
+    <th class="n">Days left</th><th>Stockout</th><th class="n">Order qty</th><th>Priority</th></tr></thead>
+    <tbody>${list.map(({s,c},i)=>`<tr>
+      <td class="n muted">${i+1}</td><td class="sku">${esc(s.sku)}${s.est?' <span class="chip est">est</span>':''}</td>
+      <td>${esc(primaryStore(s))}</td><td>${esc(s.prod)}</td><td>${esc(s.col)}</td><td>${esc(s.sz)}</td>
+      <td class="n">${fmt(s.av)}</td><td class="n">${fmt(s.ip)}</td>
+      <td class="n">${fmt1(c.day)}</td><td class="n">${fmt(c.wk)}</td>
+      <td class="n strong">${fmt1(c.daysLeft)}</td><td class="${c.stockout.getTime()<=Date.now()?'':'muted'}">${
+      c.stockout.getTime()<=Date.now()?'<span class="chip crit">Out now</span>':c.stockout.toISOString().slice(0,10)}</td>
+      <td class="n strong">${fmt(c.order)}</td><td><span class="chip ${c.pc}">${c.pri}</span></td></tr>`).join("")}</tbody>`;
+}
+function poRows(){
+  return D.skus.filter(inStore).map(s=>({s,c:calc(s,state.surge,state.incoming)}))
+    .filter(x=>x.c && x.c.order>0).sort((a,b)=>b.c.order-a.c.order);
+}
+function renderPO(){
+  const rows=poRows();
+  const units=rows.reduce((a,x)=>a+x.c.order,0);
+  const noDate=D.skus.filter(inStore).reduce((a,s)=>a+s.ip,0);
+  document.getElementById('po-sub').innerHTML =
+    `Recommended order = demand over the ${PI_D}-day protection interval (${LT}d lead time + ${RV}d review)
+     + safety stock − free-to-sell inventory ${state.incoming?"− in-production inventory":"<b>and nothing else</b>"}.
+     ${state.incoming
+       ? `<b>In-production units are being deducted</b>, although none of them carry an arrival date — if they slip, this order is too small.`
+       : `<b>${fmt(noDate)} units in production are deliberately not deducted</b>, because the source file has no arrival date for any of them. Switch the toggle above to see the order if you trust them to land.`}`;
+  document.getElementById('po-tiles').innerHTML=`
+    <div class="tile hi"><span class="k">Total to order</span><span class="v">${fmt(units)}</span><span class="n">${rows.length} SKUs</span></div>
+    <div class="tile"><span class="k">Surge applied</span><span class="v">${state.surge}×</span><span class="n">${state.surge===1?"current run rate":"stress test"}</span></div>
+    <div class="tile"><span class="k">Lead time</span><span class="v">${LT}d</span><span class="n">assumption — not measured</span></div>
+    <div class="tile"><span class="k">In production</span><span class="v">${fmt(noDate)}</span><span class="n">${state.incoming?"deducted":"not deducted"}</span></div>`;
+  document.getElementById('po-table').innerHTML=
+   `<thead><tr><th>SKU</th><th>Product</th><th>Colour</th><th>Size</th><th class="n">Free to sell</th>
+     <th class="n">Incoming</th><th class="n">Avg/day</th><th class="n">Avg/week</th><th class="n">Safety</th>
+     <th class="n">Days left</th><th class="n">Order qty</th><th>Priority</th></tr></thead>
+    <tbody>${rows.map(({s,c})=>`<tr><td class="sku">${esc(s.sku)}${s.est?' <span class="chip est">est</span>':''}</td>
+      <td>${esc(s.prod)}</td><td>${esc(s.col)}</td><td>${esc(s.sz)}</td>
+      <td class="n">${fmt(s.av)}</td><td class="n">${fmt(c.incoming)}</td><td class="n">${fmt1(c.day)}</td>
+      <td class="n">${fmt(c.wk)}</td><td class="n">${fmt(c.safety)}</td><td class="n">${fmt1(c.daysLeft)}</td>
+      <td class="n strong">${fmt(c.order)}</td><td><span class="chip ${c.pc}">${c.pri}</span></td></tr>`).join("")}</tbody>
+    <tfoot><tr><td colspan="10">Total — ${rows.length} SKUs</td><td class="n">${fmt(units)}</td><td></td></tr></tfoot>`;
+}
+function renderAssumptions(){
+  const noHist=D.skus.filter(s=>s.d7===null).length;
+  const est=D.skus.filter(s=>s.est).length;
+  document.getElementById('assumptions').innerHTML=[
+   `<b>Lead time ${LT} days and review period ${RV} days</b> — the lead time is an input you gave, not a measured
+    figure. Goods described as "in production" imply a manufacturing lead time well beyond it. If it is really 14
+    days, every target on this page rises by roughly half.`,
+   `<b>No arrival dates anywhere.</b> All ${fmt(D.skus.reduce((a,s)=>a+s.ip,0))} in-production units lack a
+    completion or warehouse date, so by default they are not treated as confirmed incoming stock.`,
+   `<b>${noHist} of ${D.skus.length} SKUs have no sales history</b> and are not forecast — they appear in inventory
+    totals but never in the order. This covers the QA1071 range, the four new QL1058 colours (navy blue, pink,
+    purple, yellow) and several QA1114 and QL1047 variants.`,
+   `<b>${est} SKUs use modelled demand</b>, marked <span class="chip est">est</span>. The 4XL sizes have no sales
+    history at all; their demand is derived from the retired 134821 range, where 4XL sold at 0.833× the 3XL rate,
+    then discounted for customers who currently size down to 3XL. 3XL forecasts are reduced by the matching amount.`,
+   `<b>Safety stock is SKU-specific:</b> z × √(protection weeks × σ_weekly² + daily demand² × σ_leadtime²), using
+    each SKU's own volatility. Lead-time variability of ${SDLT} days is an assumption — no delivery history was supplied.`,
+   `<b>Inventory is pooled, not per store.</b> The inventory export is not split by store, so the Store column shows
+    where each SKU sells (from the monthly export), not where its stock sits. Filtering by store filters which SKUs
+    appear, not how much stock they have.`,
+   `<b>Daily sales are store totals only</b> and cover ${D.daily[0].d} to ${D.salesAsOf}. Lyn and Elsie only appear
+    from 2026-08-02. SKU-level detail exists at weekly (all stores combined) and monthly (split by store).`,
+   `<b>This page cannot refresh itself.</b> No Shopify connector is attached, so the data is a snapshot. The banner
+    at the top counts the days since the last export and warns when it is stale.`
+  ].map(t=>`<li>${t}</li>`).join("");
+  document.getElementById('foot').innerHTML =
+    `Sales data to ${D.salesAsOf} · inventory to ${D.invAsOf} · SKUs beginning 134821 excluded from every
+     calculation · built from the Maggies Tank_COE export, the Order issue tracker and the Inventory Order workbook.`;
+}
+
+/* ---------- CSV ---------- */
+function buildCSV(){
+  const rows=D.skus.map(s=>({s,c:calc(s,state.surge,state.incoming)})).filter(x=>x.c&&x.c.order>0)
+    .sort((a,b)=>b.c.order-a.c.order);
+  const head=["Date generated","Store","Product","SKU","Color","Size","Available inventory","Incoming inventory",
+    "Avg daily sales","Avg weekly sales","Surge multiplier","Lead time (days)","Safety stock",
+    "Days of inventory remaining","Recommended order qty","Priority","Reason for reorder"];
+  const q=v=>{const t=String(v??"");return /[",\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t;};
+  const gen=new Date().toISOString().slice(0,10);
+  const body=rows.map(({s,c})=>[gen,primaryStore(s),s.prod,s.sku,s.col,s.sz,s.av,c.incoming,
+    c.day.toFixed(2),Math.round(c.wk),state.surge+"x",LT,Math.round(c.safety),c.daysLeft.toFixed(1),
+    Math.round(c.order),c.pri,reason(s,c)].map(q).join(","));
+  return {csv:[head.join(","),...body].join("\n"), n:rows.length};
+}
+document.getElementById('export').addEventListener('click', async ()=>{
+  const msg=document.getElementById('export-msg'), btn=document.getElementById('export');
+  const {csv,n}=buildCSV();
+  if(!n){msg.textContent="Nothing to export — no SKU needs an order at these settings.";return;}
+  const dl = window.claude && claude.use ? await claude.use("downloads") : null;
+  if(!dl){msg.textContent="File saving isn’t available in this view.";return;}
+  const name=`purchase_order_${D.invAsOf}_surge${String(state.surge).replace(".","p")}`;
+  btn.disabled=true; msg.textContent="Waiting for you to confirm the download…";
+  try{ await dl.save({filename:name+".csv", data:csv}); msg.textContent=`Saved — ${n} SKUs.`; }
+  catch(e){
+    if(e && e.code==="extension_not_enabled"){
+      try{ await dl.save({filename:name+".txt", data:csv}); msg.textContent=`Saved as .txt — ${n} SKUs. Rename to .csv to open in Excel.`; }
+      catch(e2){ msg.textContent = e2 && e2.code==="declined" ? "Download cancelled." : "Couldn’t save the file."; }
+    } else if(e && e.code==="declined"){ msg.textContent="Download cancelled."; }
+    else if(e && e.code==="rate_limited"){ msg.textContent="A download prompt is already open — finish that one first."; }
+    else { msg.textContent="Couldn’t save the file."; }
+  } finally { btn.disabled=false; }
+});
+
+/* ---------- wiring ---------- */
+function seg(id,attr,key,cast){
+  document.getElementById(id).addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    [...e.currentTarget.querySelectorAll('button')].forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    state[key]=cast(b.dataset[attr]); if(key==="gran") setRange(); render();});
+}
+function setRange(){
+  const f=document.getElementById('from'), t=document.getElementById('to');
+  if(state.gran==="monthly"){ f.disabled=true; t.disabled=true; }
+  else { f.disabled=false; t.disabled=false;
+    const lo=D.daily[0].d, hi=D.daily[D.daily.length-1].d;
+    f.min=lo; f.max=hi; t.min=lo; t.max=hi;
+    if(!f.value||f.value<lo) f.value=lo;
+    if(!t.value||t.value>hi) t.value=hi;
+    state.from=f.value; state.to=t.value; }
+}
+function render(){ renderFreshness(); renderSales(); renderHealth(); renderTop20(); renderPO(); renderAssumptions(); }
+seg('gran','g','gran',v=>v); seg('surge','s','surge',Number); seg('incoming','i','incoming',Number);
+document.getElementById('store').addEventListener('change',e=>{state.store=e.target.value;render();});
+['from','to'].forEach(id=>document.getElementById(id).addEventListener('change',e=>{
+  state[id]=e.target.value; render();}));
+setRange(); render();
+</script>
