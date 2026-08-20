@@ -1,0 +1,1136 @@
+<title>Chargeback Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f3f4f7;
+  --surface: #ffffff;
+  --surface-2: #f8f9fb;
+  --ink: #10141b;
+  --ink-2: #545d6b;
+  --muted: #838d9c;
+  --line: #e3e6ec;
+  --line-strong: #ccd2dc;
+  --accent: #1f4f9e;
+  --accent-soft: #e9f0fb;
+  --open: #eda100;
+  --won: #2a78d6;
+  --lost: #d03b3b;
+  --open-ink: #7a5400;
+  --won-ink: #1c5cab;
+  --lost-ink: #a52c2c;
+  --open-soft: #fbf1dd;
+  --won-soft: #e6eefb;
+  --lost-soft: #fae9e9;
+  --flag: #a52c2c;
+  --flag-soft: #fae9e9;
+  --shadow: 0 1px 2px rgba(16, 20, 27, .05), 0 1px 12px rgba(16, 20, 27, .04);
+  --step-0: 0.8125rem;
+  --step-1: 0.9375rem;
+  --step-2: 1.125rem;
+  --step-3: 1.5rem;
+  --step-4: 2.125rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0c0f14;
+    --surface: #151a22;
+    --surface-2: #1b212b;
+    --ink: #eef1f5;
+    --ink-2: #a9b3c1;
+    --muted: #7d8798;
+    --line: #252c37;
+    --line-strong: #39424f;
+    --accent: #7aa9f0;
+    --accent-soft: #18263a;
+    --open: #c98500;
+    --won: #3987e5;
+    --lost: #d03b3b;
+    --open-ink: #e0a534;
+    --won-ink: #79aeef;
+    --lost-ink: #e88686;
+    --open-soft: #2c2415;
+    --won-soft: #16263c;
+    --lost-soft: #331b1c;
+    --flag: #e88686;
+    --flag-soft: #331b1c;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0c0f14;
+  --surface: #151a22;
+  --surface-2: #1b212b;
+  --ink: #eef1f5;
+  --ink-2: #a9b3c1;
+  --muted: #7d8798;
+  --line: #252c37;
+  --line-strong: #39424f;
+  --accent: #7aa9f0;
+  --accent-soft: #18263a;
+  --open: #c98500;
+  --won: #3987e5;
+  --lost: #d03b3b;
+  --open-ink: #e0a534;
+  --won-ink: #79aeef;
+  --lost-ink: #e88686;
+  --open-soft: #2c2415;
+  --won-soft: #16263c;
+  --lost-soft: #331b1c;
+  --flag: #e88686;
+  --flag-soft: #331b1c;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: var(--step-1);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 72px; display: flex; flex-direction: column; gap: 18px; }
+h1, h2 { margin: 0; font-weight: 600; text-wrap: balance; letter-spacing: -0.015em; }
+h1 { font-size: var(--step-3); }
+h2 { font-size: var(--step-2); }
+p { margin: 0; }
+a { color: var(--accent); }
+.mono { font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace; }
+.num { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums; }
+.eyebrow {
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 500;
+}
+.sub { color: var(--ink-2); font-size: var(--step-0); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+.band { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
+.band-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+
+/* header */
+.masthead { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: flex-start; justify-content: space-between; }
+.masthead .id { display: flex; flex-direction: column; gap: 2px; }
+.source-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dot-sep { color: var(--line-strong); }
+
+/* controls */
+button, select, input {
+  font: inherit; font-size: var(--step-0); color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 6px; padding: 6px 10px;
+}
+button { cursor: pointer; }
+button:hover { border-color: var(--accent); color: var(--accent); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
+.btn-primary:hover { color: #fff; filter: brightness(1.08); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[type="date"], input[type="search"], select { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; }
+label.field { display: flex; flex-direction: column; gap: 4px; }
+label.field > span { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+
+/* date bar */
+.datebar { position: sticky; top: 0; z-index: 6; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  border-radius: 999px; padding: 5px 12px; background: var(--surface-2);
+  border: 1px solid var(--line); color: var(--ink-2); font-size: var(--step-0);
+}
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
+.chip[aria-pressed="true"]:hover { color: #fff; }
+.range-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.range-row .arrow { color: var(--muted); padding-bottom: 8px; }
+.range-note { margin-left: auto; text-align: right; }
+
+/* kpis */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; box-shadow: var(--shadow); }
+.kpi { background: var(--surface); padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 6px; }
+.kpi .v { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-size: var(--step-4); font-weight: 500; line-height: 1.05; letter-spacing: -0.02em; }
+.kpi .foot { font-size: 0.75rem; color: var(--muted); }
+.kpi.open .v { color: var(--open-ink); }
+.kpi.won .v { color: var(--won-ink); }
+.kpi.lost .v { color: var(--lost-ink); }
+.kpi .swatch-label { display: flex; align-items: center; gap: 6px; }
+.sw { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.sw.open { background: var(--open); } .sw.won { background: var(--won); } .sw.lost { background: var(--lost); }
+
+/* tables */
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+table { width: 100%; border-collapse: collapse; font-size: var(--step-0); background: var(--surface); }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+thead th {
+  position: sticky; top: 0; background: var(--surface-2); z-index: 1;
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-weight: 500;
+  font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted);
+  border-bottom: 1px solid var(--line-strong);
+}
+th.n, td.n { text-align: right; font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: var(--surface-2); }
+tr.total td { font-weight: 600; background: var(--surface-2); border-top: 1px solid var(--line-strong); }
+tr.total:hover td { background: var(--surface-2); }
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable:hover { color: var(--accent); }
+th .caret { color: var(--accent); }
+.empty { padding: 26px 16px; text-align: center; color: var(--muted); font-size: var(--step-0); background: var(--surface); }
+
+/* pills */
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px 2px 7px; border-radius: 999px; font-size: 0.75rem; font-weight: 500; border: 1px solid transparent; }
+.pill .sw { width: 8px; height: 8px; border-radius: 50%; }
+.pill.open { background: var(--open-soft); color: var(--open-ink); border-color: var(--open); }
+.pill.won { background: var(--won-soft); color: var(--won-ink); border-color: var(--won); }
+.pill.lost { background: var(--lost-soft); color: var(--lost-ink); border-color: var(--lost); }
+
+/* chart */
+.chart-head { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--ink-2); }
+.chart-box { position: relative; }
+.chart-box svg { display: block; width: 100%; height: auto; }
+.tip {
+  position: absolute; pointer-events: none; opacity: 0; transition: opacity .1s;
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(16,20,27,.14); padding: 8px 10px; font-size: 0.75rem; min-width: 140px; z-index: 3;
+}
+.tip .tip-t { font-weight: 600; margin-bottom: 4px; }
+.tip .tip-r { display: flex; justify-content: space-between; gap: 14px; color: var(--ink-2); }
+.tip .tip-r b { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-weight: 500; color: var(--ink); }
+
+/* notices */
+.notice { display: flex; gap: 10px; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--flag); background: var(--flag-soft); color: var(--flag); font-size: var(--step-0); }
+.notice.info { border-color: var(--line-strong); background: var(--surface-2); color: var(--ink-2); }
+.notice .mark { font-weight: 700; flex: none; }
+.notice ul { margin: 6px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; }
+.sample-flag { background: var(--open-soft); border-color: var(--open); color: var(--open-ink); }
+
+/* filters */
+.filters { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: flex-end; }
+.filters .grow { flex: 1 1 190px; min-width: 150px; }
+details { border-top: 1px solid var(--line); padding-top: 12px; }
+details > summary { cursor: pointer; font-size: var(--step-0); color: var(--ink-2); }
+details > summary:hover { color: var(--accent); }
+details .body { padding-top: 10px; display: flex; flex-direction: column; gap: 10px; font-size: var(--step-0); color: var(--ink-2); }
+code { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-size: 0.85em; background: var(--surface-2); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+pre { margin: 0; overflow-x: auto; background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-size: 0.75rem; color: var(--ink-2); }
+textarea { width: 100%; min-height: 120px; font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-size: 0.75rem; border: 1px solid var(--line-strong); border-radius: 6px; padding: 8px 10px; background: var(--surface); color: var(--ink); }
+.hidden { display: none !important; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+@media (max-width: 620px) {
+  .kpi .v { font-size: var(--step-3); }
+  .range-note { margin-left: 0; text-align: left; }
+}
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="id">
+      <p class="eyebrow">Shopify disputes &middot; four stores</p>
+      <h1>Chargeback Monitor</h1>
+      <p class="source-line sub">
+        <span id="source-name">No data loaded</span>
+        <span class="dot-sep">&bull;</span>
+        <span id="source-count" class="num">0 cases</span>
+        <span class="dot-sep">&bull;</span>
+        <span id="source-time">&mdash;</span>
+      </p>
+    </div>
+    <div class="row-actions">
+      <input type="file" id="file" accept=".json,.csv,application/json,text/csv" class="hidden">
+      <button class="btn-primary" id="btn-load">Load export file</button>
+      <button id="btn-sample">Load sample data</button>
+      <button id="btn-clear" class="hidden">Clear data</button>
+    </div>
+  </header>
+
+  <div id="sample-banner" class="notice sample-flag hidden">
+    <span class="mark">&#9888;</span>
+    <span><b>Sample data &mdash; not your stores.</b> These figures are made up so the dashboard can be tried out. Run <code>python chargebacks_export.py</code> and load <code>chargebacks.json</code> for real numbers.</span>
+  </div>
+
+  <div id="empty-state" class="card band">
+    <h2>Load a chargeback export to begin</h2>
+    <p class="sub">Every number on this page comes from one file &mdash; nothing is fetched or estimated here.</p>
+    <ol class="sub" style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+      <li>Put each store's credentials in <code>.env</code> (see <code>.env.example</code>).</li>
+      <li>Run <code>python chargebacks_export.py</code> &mdash; it writes <code>chargebacks.json</code> and <code>chargebacks.csv</code>.</li>
+      <li>Press <b>Load export file</b> above and pick either file.</li>
+    </ol>
+    <p class="sub">The file stays in this browser. Nothing is uploaded.</p>
+  </div>
+
+  <!-- DATE FILTER -->
+  <section class="card band datebar" id="sec-date" hidden>
+    <div class="chips" id="presets" role="group" aria-label="Quick date ranges"></div>
+    <div class="range-row">
+      <label class="field"><span>From date</span><input type="date" id="from"></label>
+      <span class="arrow">&rarr;</span>
+      <label class="field"><span>To date</span><input type="date" id="to"></label>
+      <div class="range-note sub" id="range-note"></div>
+    </div>
+  </section>
+
+  <div id="reconcile" class="notice hidden"></div>
+  <div id="data-notes" class="notice info hidden"></div>
+
+  <!-- HEADLINE NUMBERS -->
+  <section id="sec-kpi" hidden>
+    <div class="kpis">
+      <div class="kpi">
+        <p class="eyebrow">Total chargebacks</p>
+        <p class="v" id="k-total">0</p>
+        <p class="foot" id="k-total-foot">created in range</p>
+      </div>
+      <div class="kpi open">
+        <p class="eyebrow swatch-label"><i class="sw open"></i>Open</p>
+        <p class="v" id="k-open">0</p>
+        <p class="foot">still open or under review</p>
+      </div>
+      <div class="kpi won">
+        <p class="eyebrow swatch-label"><i class="sw won"></i>Won</p>
+        <p class="v" id="k-won">0</p>
+        <p class="foot" id="k-won-foot">resolved in our favour</p>
+      </div>
+      <div class="kpi lost">
+        <p class="eyebrow swatch-label"><i class="sw lost"></i>Lost</p>
+        <p class="v" id="k-lost">0</p>
+        <p class="foot">resolved against us</p>
+      </div>
+      <div class="kpi">
+        <p class="eyebrow">Win rate</p>
+        <p class="v" id="k-rate">&mdash;</p>
+        <p class="foot" id="k-rate-foot">won &divide; (won + lost)</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- STORE BREAKDOWN -->
+  <section class="card band" id="sec-store" hidden>
+    <div class="band-head">
+      <h2>Store breakdown</h2>
+      <p class="sub" id="store-note"></p>
+    </div>
+    <div class="scroll">
+      <table id="store-table">
+        <thead><tr>
+          <th>Store</th><th class="n">Total</th><th class="n">Open</th><th class="n">Won</th><th class="n">Lost</th><th class="n">Win rate</th><th class="n">Amount</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- TREND -->
+  <section class="card band" id="sec-trend" hidden>
+    <div class="band-head">
+      <h2>Chargeback trend</h2>
+      <div class="chips" id="trend-toggle" role="group" aria-label="Trend grouping">
+        <button class="chip" data-mode="daily" aria-pressed="false">Daily</button>
+        <button class="chip" data-mode="weekly" aria-pressed="false">Weekly</button>
+        <button class="chip" data-mode="monthly" aria-pressed="false">Monthly</button>
+      </div>
+    </div>
+    <div class="chart-head">
+      <p class="sub" id="trend-note"></p>
+      <div class="legend">
+        <span><i class="sw open"></i>Open</span>
+        <span><i class="sw won"></i>Won</span>
+        <span><i class="sw lost"></i>Lost</span>
+      </div>
+    </div>
+    <div class="chart-box" id="chart-box">
+      <div id="chart" role="img" aria-label="Chargebacks per period, split by status"></div>
+      <div class="tip" id="tip"></div>
+    </div>
+    <div class="scroll">
+      <table id="trend-table">
+        <thead><tr>
+          <th>Period</th><th class="n">Total chargebacks</th><th class="n">Open</th><th class="n">Won</th><th class="n">Lost</th><th class="n">Win rate</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- AUDIT -->
+  <section class="card band" id="sec-audit" hidden>
+    <div class="band-head">
+      <h2>Audit table</h2>
+      <p class="sub" id="audit-count"></p>
+    </div>
+    <p class="sub">Every case behind the numbers above. Filters here narrow this table only &mdash; the headline figures stay on the selected date range.</p>
+    <div class="filters">
+      <label class="field"><span>Store</span><select id="f-store"></select></label>
+      <label class="field"><span>Status</span><select id="f-status">
+        <option value="">All</option>
+        <option value="Open">Open</option>
+        <option value="Won">Won (all)</option>
+        <option value="Won:defended">Won &mdash; defended</option>
+        <option value="Won:prevented">Won &mdash; prevented by Shopify</option>
+        <option value="Lost">Lost</option>
+      </select></label>
+      <label class="field"><span>Reason</span><select id="f-reason"></select></label>
+      <label class="field grow"><span>Order number</span><input type="search" id="f-order" placeholder="Search #1234"></label>
+      <button id="f-clear">Clear filters</button>
+      <button id="btn-csv">Copy as CSV</button>
+    </div>
+    <div class="scroll">
+      <table id="audit-table">
+        <thead><tr>
+          <th class="sortable" data-sort="date">Chargeback date</th>
+          <th class="sortable" data-sort="store">Store</th>
+          <th class="sortable" data-sort="order">Order number</th>
+          <th class="sortable" data-sort="customer">Customer</th>
+          <th class="sortable n" data-sort="amount">Chargeback amount</th>
+          <th>Currency</th>
+          <th class="sortable" data-sort="reason">Reason</th>
+          <th class="sortable" data-sort="status">Status</th>
+          <th class="sortable" data-sort="outcome">Outcome date</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <textarea id="csv-out" class="hidden" readonly aria-label="CSV of the filtered audit table"></textarea>
+
+    <details>
+      <summary>How statuses are mapped, and what is counted</summary>
+      <div class="body">
+        <p>Shopify reports more than three dispute statuses. Each one is folded into exactly one of the three used here:</p>
+        <div class="scroll"><table>
+          <thead><tr><th>Reported here</th><th>Shopify status</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill open"><i class="sw open"></i>Open</span></td><td class="mono">needs_response, under_review, warning_needs_response, warning_under_review, response_disabled</td></tr>
+            <tr><td><span class="pill won"><i class="sw won"></i>Won</span></td><td class="mono">won, warning_closed, prevented</td></tr>
+            <tr><td><span class="pill lost"><i class="sw lost"></i>Lost</span></td><td class="mono">lost, accepted, charge_refunded</td></tr>
+          </tbody>
+        </table></div>
+        <p><b>Prevented cases count as won.</b> Shopify blocks some disputes before any money moves and marks them <code>prevented</code> &mdash; no loss, but no defence was mounted either. They are folded into Won so that Total = Open + Won + Lost holds, labelled <span class="sub">prevented</span> in the table below, counted separately under the Won figure, and selectable on their own in the Status filter. Filter to <b>Won &mdash; defended</b> to see the win rate on cases actually fought.</p>
+        <p><b>One case, one row.</b> Rows are keyed on the Shopify dispute ID, so an order with several transactions still counts once. A repeated dispute ID is dropped and reported in the data notes above. Only cases Shopify records as separate disputes appear as separate rows.</p>
+        <p><b>Dates.</b> Filtering uses the date the dispute was created (Shopify's <code>initiated_at</code>), in the store's own timezone. Outcome date is the date the case was finalised.</p>
+        <p><b>Win rate.</b> Won &divide; (Won + Lost) &times; 100. Open cases are excluded from the divisor. With no closed cases in range, the rate reads &ldquo;&mdash;&rdquo;.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Where the data comes from &middot; paste an export</summary>
+      <div class="body">
+        <p>The dashboard reads the JSON or CSV written by <code>chargebacks_export.py</code>, which pulls <code>shopify_payments/disputes.json</code> from all four stores. Expected columns:</p>
+        <pre>dispute_id, store, created_at, created_date, order_number, order_id,
+customer, amount, currency, reason, status, status_raw, case_type,
+outcome_date, evidence_due_by</pre>
+        <p>Any CSV with a date, store, status and amount column works &mdash; common header spellings are recognised. Or paste an export directly:</p>
+        <textarea id="paste-in" placeholder="Paste chargebacks.json or CSV here"></textarea>
+        <div class="row-actions"><button id="btn-paste">Load pasted data</button><span class="sub" id="paste-msg"></span></div>
+      </div>
+    </details>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- helpers ---------- */
+  const $ = (sel) => document.querySelector(sel);
+  const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const pad2 = (n) => String(n).padStart(2, "0");
+  const toISO = (d) => d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  const fromISO = (s) => { const p = s.split("-").map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+  const addDays = (s, n) => { const d = fromISO(s); d.setDate(d.getDate() + n); return toISO(d); };
+  const mondayOf = (s) => { const d = fromISO(s); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return toISO(d); };
+  const firstOfMonth = (s) => s.slice(0, 8) + "01";
+  const todayISO = () => toISO(new Date());
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const prettyDate = (s) => (s ? MONTHS[Number(s.slice(5, 7)) - 1] + " " + Number(s.slice(8, 10)) + ", " + s.slice(0, 4) : "—");
+  const shortDate = (s) => MONTHS[Number(s.slice(5, 7)) - 1] + " " + Number(s.slice(8, 10));
+  const int = (n) => n.toLocaleString("en-US");
+  const money = (n, cur) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (cur ? " " + cur : "");
+  const STATUSES = ["Open", "Won", "Lost"];
+
+  const RAW_STATUS = {
+    needs_response: "Open", under_review: "Open", warning_needs_response: "Open",
+    warning_under_review: "Open", response_disabled: "Open", inquiry: "Open", pending: "Open",
+    won: "Won", warning_closed: "Won", prevented: "Won", closed_won: "Won",
+    lost: "Lost", accepted: "Lost", charge_refunded: "Lost", refunded: "Lost", closed_lost: "Lost"
+  };
+  const DEFAULT_STORES = ["Maggie's Tanks", "Mary's Tanks", "Lyn's Tanks", "Simply Elsie"];
+
+  const normKey = (s) => String(s).trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  const ALIASES = {
+    dispute_id: ["dispute_id", "disputeid", "id", "chargeback_id", "case_id"],
+    store: ["store", "store_name", "shop", "shop_name"],
+    created: ["created_date", "chargeback_date", "created_at", "initiated_at", "date", "dispute_date", "opened"],
+    order_number: ["order_number", "order", "order_name", "order_no", "order_num"],
+    order_id: ["order_id"],
+    customer: ["customer", "customer_name", "name", "buyer"],
+    amount: ["amount", "chargeback_amount", "dispute_amount", "value"],
+    currency: ["currency", "currency_code"],
+    reason: ["reason", "chargeback_reason", "dispute_reason", "network_reason"],
+    status: ["status", "state", "outcome"],
+    status_raw: ["status_raw", "shopify_status", "raw_status"],
+    outcome_date: ["outcome_date", "finalized_on", "finalised_on", "closed_on", "closed_at", "resolved_date"]
+  };
+  function fieldFor(header) {
+    const key = normKey(header);
+    for (const field in ALIASES) if (ALIASES[field].indexOf(key) !== -1) return field;
+    return null;
+  }
+
+  function parseDate(value) {
+    if (!value) return "";
+    const s = String(value).trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+    let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (m) return m[3] + "-" + pad2(m[1]) + "-" + pad2(m[2]);
+    const d = new Date(s);
+    return isNaN(d) ? "" : toISO(d);
+  }
+  function parseAmount(value) {
+    if (value === 0) return 0;
+    if (!value) return null;
+    const n = parseFloat(String(value).replace(/[^0-9.\-]/g, ""));
+    return isNaN(n) ? null : n;
+  }
+  function prettyReason(r) {
+    if (!r) return "—";
+    const t = String(r).replace(/_/g, " ").trim();
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  }
+
+  function parseCSV(text) {
+    const rows = []; let row = [], field = "", quoted = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (quoted) {
+        if (ch === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else quoted = false; }
+        else field += ch;
+      } else if (ch === '"') quoted = true;
+      else if (ch === ",") { row.push(field); field = ""; }
+      else if (ch === "\n") { row.push(field); field = ""; rows.push(row); row = []; }
+      else if (ch !== "\r") field += ch;
+    }
+    if (field !== "" || row.length) { row.push(field); rows.push(row); }
+    return rows.filter((r) => r.some((c) => String(c).trim() !== ""));
+  }
+
+  /* ---------- normalisation ---------- */
+  function normalize(payload) {
+    const raw = payload.chargebacks || [];
+    const notes = (payload.warnings || []).slice();
+    const rows = [];
+    const seen = Object.create(null);
+    let duplicates = 0, undated = 0;
+    const unknown = Object.create(null);
+
+    raw.forEach((r, i) => {
+      const id = String(r.dispute_id || "").trim();
+      const store = String(r.store || "").trim() || "Unspecified store";
+      const created = parseDate(r.created || r.created_at);
+      const key = id || [store, r.order_number, created, r.amount].join("|");
+      if (seen[key]) { duplicates++; return; }
+      seen[key] = true;
+      if (!created) undated++;
+
+      let status = null;
+      const direct = String(r.status || "").trim().toLowerCase();
+      if (direct === "open" || direct === "won" || direct === "lost") {
+        status = direct.charAt(0).toUpperCase() + direct.slice(1);
+      } else {
+        status = RAW_STATUS[normKey(r.status_raw || "")] || RAW_STATUS[normKey(r.status || "")] || null;
+      }
+      if (!status) {
+        const label = String(r.status_raw || r.status || "(blank)");
+        unknown[label] = (unknown[label] || 0) + 1;
+        status = "Open";
+      }
+
+      rows.push({
+        id: id || "row-" + (i + 1),
+        hasId: Boolean(id),
+        store: store,
+        date: created,
+        order: String(r.order_number || r.order_id || "").trim(),
+        customer: String(r.customer || "").trim(),
+        amount: parseAmount(r.amount),
+        currency: String(r.currency || "").trim().toUpperCase(),
+        reason: String(r.reason || "").trim(),
+        status: status,
+        statusRaw: String(r.status_raw || r.status || "").trim(),
+        prevented: normKey(r.status_raw || r.status || "") === "prevented",
+        outcome: parseDate(r.outcome_date)
+      });
+    });
+
+    if (duplicates) notes.push(duplicates + " repeated case" + (duplicates > 1 ? "s were" : " was") + " dropped so nothing is counted twice.");
+    if (undated) notes.push(undated + " case" + (undated > 1 ? "s have" : " has") + " no chargeback date and cannot appear in any date range.");
+    Object.keys(unknown).forEach((k) => notes.push("Status “" + k + "” is not a known Shopify status — " + unknown[k] + " case(s) counted as Open."));
+    const noId = rows.filter((r) => !r.hasId).length;
+    if (noId) notes.push(noId + " case(s) have no dispute ID — matched on store, order and date instead.");
+
+    const stores = (payload.stores && payload.stores.length ? payload.stores.slice() : DEFAULT_STORES.slice());
+    rows.forEach((r) => { if (stores.indexOf(r.store) === -1) stores.push(r.store); });
+
+    return { rows: rows, stores: stores, notes: notes, generated: payload.generated_at || "", label: payload._label || "" };
+  }
+
+  /* ---------- state ---------- */
+  const state = {
+    data: null, isSample: false, from: "", to: "", preset: "all", trend: "daily",
+    sort: { key: "date", dir: -1 },
+    filters: { store: "", status: "", reason: "", order: "" }
+  };
+  let lastPeriods = [];
+
+  function bounds() {
+    const dated = state.data.rows.filter((r) => r.date).map((r) => r.date).sort();
+    return dated.length ? { min: dated[0], max: dated[dated.length - 1] } : { min: todayISO(), max: todayISO() };
+  }
+
+  const PRESETS = [
+    { id: "all", label: "All dates" },
+    { id: "today", label: "Today" },
+    { id: "yesterday", label: "Yesterday" },
+    { id: "thisweek", label: "This week" },
+    { id: "lastweek", label: "Last week" },
+    { id: "thismonth", label: "This month" },
+    { id: "lastmonth", label: "Last month" },
+    { id: "custom", label: "Custom range" }
+  ];
+  function applyPreset(id) {
+    const t = todayISO();
+    const b = bounds();
+    if (id === "all") { state.from = b.min; state.to = b.max; }
+    else if (id === "today") { state.from = t; state.to = t; }
+    else if (id === "yesterday") { state.from = addDays(t, -1); state.to = state.from; }
+    else if (id === "thisweek") { state.from = mondayOf(t); state.to = addDays(state.from, 6); }
+    else if (id === "lastweek") { state.from = addDays(mondayOf(t), -7); state.to = addDays(state.from, 6); }
+    else if (id === "thismonth") { state.from = firstOfMonth(t); state.to = toISO(new Date(fromISO(t).getFullYear(), fromISO(t).getMonth() + 1, 0)); }
+    else if (id === "lastmonth") {
+      const d = fromISO(t);
+      state.from = toISO(new Date(d.getFullYear(), d.getMonth() - 1, 1));
+      state.to = toISO(new Date(d.getFullYear(), d.getMonth(), 0));
+    }
+    state.preset = id;
+  }
+  function detectPreset() {
+    for (const p of PRESETS) {
+      if (p.id === "custom") continue;
+      const keep = { from: state.from, to: state.to };
+      applyPreset(p.id);
+      const match = state.from === keep.from && state.to === keep.to;
+      state.from = keep.from; state.to = keep.to;
+      if (match) return p.id;
+    }
+    return "custom";
+  }
+
+  /* ---------- aggregation ---------- */
+  const blank = () => ({ total: 0, Open: 0, Won: 0, Lost: 0, prevented: 0, amounts: {} });
+  function tally(bucket, row) {
+    bucket.total++;
+    bucket[row.status]++;
+    if (row.prevented) bucket.prevented++;
+    if (row.amount != null) {
+      const cur = row.currency || "—";
+      bucket.amounts[cur] = (bucket.amounts[cur] || 0) + row.amount;
+    }
+  }
+  function winRate(b) {
+    const closed = b.Won + b.Lost;
+    return closed ? (b.Won / closed) * 100 : null;
+  }
+  const rateText = (b) => { const r = winRate(b); return r == null ? "—" : r.toFixed(1) + "%"; };
+  function amountText(amounts) {
+    const keys = Object.keys(amounts).sort();
+    if (!keys.length) return "—";
+    return keys.map((k) => money(amounts[k], k === "—" ? "" : k)).join(" · ");
+  }
+  const inRange = (r) => r.date && r.date >= state.from && r.date <= state.to;
+
+  function periodsFor(rows) {
+    const map = new Map();
+    rows.forEach((r) => {
+      let key, label;
+      if (state.trend === "daily") { key = r.date; label = prettyDate(r.date); }
+      else if (state.trend === "weekly") { key = mondayOf(r.date); label = shortDate(key) + " – " + shortDate(addDays(key, 6)); }
+      else { key = r.date.slice(0, 7); label = MONTHS[Number(key.slice(5, 7)) - 1] + " " + key.slice(0, 4); }
+      if (!map.has(key)) { const b = blank(); b.key = key; b.label = label; map.set(key, b); }
+      tally(map.get(key), r);
+    });
+    return Array.from(map.values()).sort((a, b) => (a.key < b.key ? -1 : 1));
+  }
+
+  /* ---------- rendering ---------- */
+  function render() {
+    if (!state.data) return;
+    const rows = state.data.rows;
+    const ranged = rows.filter(inRange);
+
+    const overall = blank();
+    ranged.forEach((r) => tally(overall, r));
+
+    renderPresets();
+    $("#from").value = state.from;
+    $("#to").value = state.to;
+    const b = bounds();
+    $("#range-note").innerHTML = ranged.length
+      ? esc(prettyDate(state.from)) + " to " + esc(prettyDate(state.to)) + " &middot; <span class=\"num\">" + int(ranged.length) + "</span> of <span class=\"num\">" + int(rows.length) + "</span> cases<br>data covers " + esc(prettyDate(b.min)) + " &ndash; " + esc(prettyDate(b.max))
+      : "No cases in this range &middot; data covers " + esc(prettyDate(b.min)) + " &ndash; " + esc(prettyDate(b.max));
+
+    $("#k-total").textContent = int(overall.total);
+    $("#k-open").textContent = int(overall.Open);
+    $("#k-won").textContent = int(overall.Won);
+    $("#k-lost").textContent = int(overall.Lost);
+    $("#k-rate").textContent = rateText(overall);
+    $("#k-total-foot").textContent = amountText(overall.amounts) === "—" ? "created in range" : amountText(overall.amounts) + " disputed";
+    $("#k-won-foot").textContent = overall.prevented
+      ? int(overall.Won - overall.prevented) + " defended · " + int(overall.prevented) + " prevented by Shopify"
+      : "resolved in our favour";
+    $("#k-rate-foot").textContent = (overall.Won + overall.Lost) ? overall.Won + " won of " + (overall.Won + overall.Lost) + " closed" : "no closed cases in range";
+
+    const byStore = renderStores(ranged);
+    lastPeriods = periodsFor(ranged.filter((r) => r.date));
+    renderTrendTable(lastPeriods);
+    renderChart(lastPeriods);
+    renderAudit(ranged);
+    renderChecks(overall, byStore, lastPeriods, ranged);
+    renderNotes();
+  }
+
+  function renderPresets() {
+    const host = $("#presets");
+    host.innerHTML = PRESETS.map((p) =>
+      '<button class="chip" data-preset="' + p.id + '" aria-pressed="' + (state.preset === p.id) + '">' + esc(p.label) + "</button>"
+    ).join("");
+  }
+
+  function renderStores(ranged) {
+    const buckets = new Map();
+    state.data.stores.forEach((s) => { const b = blank(); b.store = s; buckets.set(s, b); });
+    ranged.forEach((r) => {
+      if (!buckets.has(r.store)) { const b = blank(); b.store = r.store; buckets.set(r.store, b); }
+      tally(buckets.get(r.store), r);
+    });
+    const list = Array.from(buckets.values());
+    const totals = blank();
+    list.forEach((b) => {
+      totals.total += b.total; totals.Open += b.Open; totals.Won += b.Won; totals.Lost += b.Lost;
+      Object.keys(b.amounts).forEach((c) => { totals.amounts[c] = (totals.amounts[c] || 0) + b.amounts[c]; });
+    });
+
+    const body = list.map((b) =>
+      "<tr><td>" + esc(b.store) + "</td>" +
+      '<td class="n">' + int(b.total) + "</td>" +
+      '<td class="n">' + int(b.Open) + "</td>" +
+      '<td class="n">' + int(b.Won) + "</td>" +
+      '<td class="n">' + int(b.Lost) + "</td>" +
+      '<td class="n">' + rateText(b) + "</td>" +
+      '<td class="n">' + esc(amountText(b.amounts)) + "</td></tr>"
+    ).join("") +
+      '<tr class="total"><td>TOTAL</td>' +
+      '<td class="n">' + int(totals.total) + "</td>" +
+      '<td class="n">' + int(totals.Open) + "</td>" +
+      '<td class="n">' + int(totals.Won) + "</td>" +
+      '<td class="n">' + int(totals.Lost) + "</td>" +
+      '<td class="n">' + rateText(totals) + "</td>" +
+      '<td class="n">' + esc(amountText(totals.amounts)) + "</td></tr>";
+    $("#store-table").tBodies[0].innerHTML = body;
+    $("#store-note").textContent = list.length + " stores · " + prettyDate(state.from) + " – " + prettyDate(state.to);
+    return { list: list, totals: totals };
+  }
+
+  function renderTrendTable(periods) {
+    $("#trend-toggle").querySelectorAll("button").forEach((btn) => {
+      btn.setAttribute("aria-pressed", String(btn.dataset.mode === state.trend));
+    });
+    const labels = { daily: "one row per day", weekly: "weeks run Monday to Sunday", monthly: "calendar months" };
+    $("#trend-note").textContent = periods.length
+      ? periods.length + " " + (state.trend === "daily" ? "day" : state.trend === "weekly" ? "week" : "month") + (periods.length > 1 ? "s" : "") + " with activity · " + labels[state.trend]
+      : labels[state.trend];
+    $("#trend-table").tBodies[0].innerHTML = periods.length
+      ? periods.map((p) =>
+        "<tr><td>" + esc(p.label) + "</td>" +
+        '<td class="n">' + int(p.total) + "</td>" +
+        '<td class="n">' + int(p.Open) + "</td>" +
+        '<td class="n">' + int(p.Won) + "</td>" +
+        '<td class="n">' + int(p.Lost) + "</td>" +
+        '<td class="n">' + rateText(p) + "</td></tr>"
+      ).join("")
+      : '<tr><td colspan="6" class="empty">No chargebacks in this range.</td></tr>';
+  }
+
+  function niceStep(max) {
+    const raw = max / 4;
+    const mag = Math.pow(10, Math.floor(Math.log10(raw || 1)));
+    const n = raw / mag;
+    const m = n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10;
+    return Math.max(1, m * mag);
+  }
+  function barPath(x, y, w, h, r) {
+    r = Math.max(0, Math.min(r, w / 2, h));
+    return "M" + x + "," + (y + h) + " L" + x + "," + (y + r) + " Q" + x + "," + y + " " + (x + r) + "," + y +
+      " L" + (x + w - r) + "," + y + " Q" + (x + w) + "," + y + " " + (x + w) + "," + (y + r) +
+      " L" + (x + w) + "," + (y + h) + " Z";
+  }
+
+  function renderChart(periods) {
+    const host = $("#chart");
+    if (!periods.length) { host.innerHTML = '<div class="empty">No chargebacks in this range.</div>'; return; }
+    const W = Math.max(320, host.clientWidth || 720), H = 216;
+    const pad = { t: 12, r: 8, b: 34, l: 42 };
+    const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+    const max = Math.max(1, ...periods.map((p) => p.total));
+    const step = niceStep(max);
+    const top = Math.max(step, Math.ceil(max / step) * step);
+    const band = pw / periods.length;
+    const bw = Math.max(3, Math.min(38, band * 0.62));
+    const y = (v) => pad.t + ph - (v / top) * ph;
+    const colors = { Open: "var(--open)", Won: "var(--won)", Lost: "var(--lost)" };
+
+    let svg = '<svg viewBox="0 0 ' + W + " " + H + '" width="' + W + '" height="' + H + '" aria-hidden="true">';
+    for (let v = 0; v <= top + 0.001; v += step) {
+      svg += '<line x1="' + pad.l + '" y1="' + y(v) + '" x2="' + (W - pad.r) + '" y2="' + y(v) +
+        '" stroke="var(--line)" stroke-width="1" shape-rendering="crispEdges"/>' +
+        '<text x="' + (pad.l - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end" font-size="10.5" fill="var(--muted)" font-family="IBM Plex Mono, monospace">' + v + "</text>";
+    }
+    const every = Math.max(1, Math.ceil(periods.length / Math.max(1, Math.floor(pw / 64))));
+    periods.forEach((p, i) => {
+      const x = pad.l + band * i + (band - bw) / 2;
+      let cursor = pad.t + ph, drawn = 0;
+      const stack = STATUSES.filter((s) => p[s] > 0);
+      stack.forEach((s, k) => {
+        const full = (p[s] / top) * ph;
+        const isTop = k === stack.length - 1;
+        const gap = drawn === 0 ? 0 : 2;
+        const h = Math.max(1, full - gap);
+        const yy = cursor - full;
+        svg += '<path d="' + barPath(x, yy, bw, h, isTop ? 4 : 0) + '" fill="' + colors[s] + '"/>';
+        cursor -= full; drawn++;
+      });
+      if (i % every === 0) {
+        const cx = x + bw / 2;
+        const anchor = cx > W - pad.r - 30 ? "end" : cx < pad.l + 30 ? "start" : "middle";
+        const tx = anchor === "end" ? W - pad.r : anchor === "start" ? pad.l : cx;
+        svg += '<text x="' + tx + '" y="' + (H - 12) + '" text-anchor="' + anchor + '" font-size="10.5" fill="var(--muted)" font-family="IBM Plex Mono, monospace">' +
+          esc(state.trend === "daily" ? shortDate(p.key) : p.label) + "</text>";
+      }
+      svg += '<rect class="hit" data-i="' + i + '" x="' + (pad.l + band * i) + '" y="' + pad.t + '" width="' + band + '" height="' + ph + '" fill="transparent"/>';
+    });
+    svg += '<line x1="' + pad.l + '" y1="' + (pad.t + ph) + '" x2="' + (W - pad.r) + '" y2="' + (pad.t + ph) + '" stroke="var(--line-strong)" stroke-width="1" shape-rendering="crispEdges"/></svg>';
+    host.innerHTML = svg;
+    host.setAttribute("aria-label", "Chargebacks per " + state.trend.replace("ly", "") + ", split into open, won and lost. The same figures are listed in the table below.");
+
+    const tip = $("#tip"), box = $("#chart-box");
+    host.querySelectorAll(".hit").forEach((rect) => {
+      rect.addEventListener("mouseenter", () => {
+        const p = periods[Number(rect.dataset.i)];
+        tip.innerHTML = '<div class="tip-t">' + esc(p.label) + "</div>" +
+          '<div class="tip-r"><span>Total</span><b>' + int(p.total) + "</b></div>" +
+          STATUSES.map((s) => '<div class="tip-r"><span><i class="sw ' + s.toLowerCase() + '" style="display:inline-block;margin-right:5px"></i>' + s + "</span><b>" + int(p[s]) + "</b></div>").join("");
+        tip.style.opacity = "1";
+        const scale = box.clientWidth / W;
+        const cx = (pad.l + band * Number(rect.dataset.i) + band / 2) * scale;
+        tip.style.left = Math.max(0, Math.min(box.clientWidth - tip.offsetWidth, cx - tip.offsetWidth / 2)) + "px";
+        tip.style.top = "6px";
+      });
+      rect.addEventListener("mouseleave", () => { tip.style.opacity = "0"; });
+    });
+  }
+
+  function auditRows(ranged) {
+    const f = state.filters;
+    const q = f.order.trim().toLowerCase().replace(/^#/, "");
+    const statusOf = (r) => (f.status.indexOf(":") === -1 ? r.status : r.status + ":" + (r.prevented ? "prevented" : "defended"));
+    let list = ranged.filter((r) =>
+      (!f.store || r.store === f.store) &&
+      (!f.status || statusOf(r) === f.status) &&
+      (!f.reason || r.reason === f.reason) &&
+      (!q || r.order.toLowerCase().replace(/^#/, "").indexOf(q) !== -1)
+    );
+    const k = state.sort.key, dir = state.sort.dir;
+    const get = { date: "date", store: "store", order: "order", customer: "customer", amount: "amount", reason: "reason", status: "status", outcome: "outcome" }[k];
+    list = list.slice().sort((a, x) => {
+      let va = a[get], vx = x[get];
+      if (get === "amount") { va = va == null ? -Infinity : va; vx = vx == null ? -Infinity : vx; return (va - vx) * dir; }
+      va = String(va || ""); vx = String(vx || "");
+      return va === vx ? 0 : (va < vx ? -1 : 1) * dir;
+    });
+    return list;
+  }
+
+  function renderAudit(ranged) {
+    const storeSel = $("#f-store"), reasonSel = $("#f-reason");
+    const stores = state.data.stores.slice();
+    storeSel.innerHTML = '<option value="">All stores</option>' + stores.map((s) => '<option' + (state.filters.store === s ? " selected" : "") + ">" + esc(s) + "</option>").join("");
+    const reasons = Array.from(new Set(state.data.rows.map((r) => r.reason).filter(Boolean))).sort();
+    reasonSel.innerHTML = '<option value="">All reasons</option>' + reasons.map((r) => '<option value="' + esc(r) + '"' + (state.filters.reason === r ? " selected" : "") + ">" + esc(prettyReason(r)) + "</option>").join("");
+    $("#f-status").value = state.filters.status;
+    $("#f-order").value = state.filters.order;
+
+    document.querySelectorAll("#audit-table th.sortable").forEach((th) => {
+      const active = th.dataset.sort === state.sort.key;
+      th.innerHTML = th.textContent.replace(/[ ▲▼]+$/, "") + (active ? ' <span class="caret">' + (state.sort.dir === 1 ? "▲" : "▼") + "</span>" : "");
+      th.setAttribute("aria-sort", active ? (state.sort.dir === 1 ? "ascending" : "descending") : "none");
+    });
+
+    const list = auditRows(ranged);
+    $("#audit-count").textContent = list.length === ranged.length
+      ? int(list.length) + " cases in range"
+      : int(list.length) + " of " + int(ranged.length) + " cases in range";
+    $("#audit-table").tBodies[0].innerHTML = list.length
+      ? list.map((r) =>
+        "<tr>" +
+        '<td class="num">' + esc(prettyDate(r.date)) + "</td>" +
+        "<td>" + esc(r.store) + "</td>" +
+        '<td class="mono">' + esc(r.order || "—") + "</td>" +
+        "<td>" + esc(r.customer || "—") + "</td>" +
+        '<td class="n">' + (r.amount == null ? "—" : esc(money(r.amount))) + "</td>" +
+        '<td class="mono">' + esc(r.currency || "—") + "</td>" +
+        "<td>" + esc(prettyReason(r.reason)) + "</td>" +
+        '<td><span class="pill ' + r.status.toLowerCase() + '" title="Shopify status: ' + esc(r.statusRaw || "n/a") + '"><i class="sw ' + r.status.toLowerCase() + '"></i>' + r.status + "</span>" +
+        (r.prevented ? ' <span class="sub">prevented</span>' : "") + "</td>" +
+        '<td class="num">' + esc(r.outcome ? prettyDate(r.outcome) : "—") + "</td>" +
+        "</tr>"
+      ).join("")
+      : '<tr><td colspan="9" class="empty">No cases match these filters.</td></tr>';
+    return list;
+  }
+
+  function renderChecks(overall, byStore, periods, ranged) {
+    const problems = [];
+    if (overall.total !== overall.Open + overall.Won + overall.Lost) {
+      problems.push("Total (" + overall.total + ") does not equal Open + Won + Lost (" + (overall.Open + overall.Won + overall.Lost) + ").");
+    }
+    if (byStore.totals.total !== overall.total) {
+      problems.push("Store breakdown adds up to " + byStore.totals.total + " but the headline total is " + overall.total + ".");
+    }
+    const periodTotal = periods.reduce((a, p) => a + p.total, 0);
+    if (periodTotal !== overall.total) {
+      problems.push("The trend covers " + periodTotal + " cases but the headline total is " + overall.total + " — cases without a date are excluded from the trend.");
+    }
+    if (ranged.length !== overall.total) {
+      problems.push("The audit table holds " + ranged.length + " cases for this range against a headline total of " + overall.total + ".");
+    }
+    const box = $("#reconcile");
+    if (problems.length) {
+      box.innerHTML = '<span class="mark">&#9888;</span><div><b>These numbers do not reconcile.</b><ul>' +
+        problems.map((p) => "<li>" + esc(p) + "</li>").join("") + "</ul></div>";
+      box.classList.remove("hidden");
+    } else {
+      box.classList.add("hidden");
+    }
+  }
+
+  function renderNotes() {
+    const box = $("#data-notes");
+    const notes = state.data.notes;
+    if (!notes.length) { box.classList.add("hidden"); return; }
+    box.innerHTML = '<span class="mark">i</span><div><b>Data notes</b><ul>' + notes.map((n) => "<li>" + esc(n) + "</li>").join("") + "</ul></div>";
+    box.classList.remove("hidden");
+  }
+
+  /* ---------- loading ---------- */
+  function mapPayload(payload) {
+    payload.chargebacks = payload.chargebacks.map((row) => {
+      const out = {};
+      Object.keys(row).forEach((key) => { const f = fieldFor(key); if (f && out[f] == null) out[f] = row[key]; });
+      return out;
+    });
+    return payload;
+  }
+
+  function toPayload(text, filename) {
+    const trimmed = text.trim();
+    if (!trimmed) throw new Error("The file is empty.");
+    if (trimmed.charAt(0) === "{" || trimmed.charAt(0) === "[") {
+      const parsed = JSON.parse(trimmed);
+      const payload = Array.isArray(parsed) ? { chargebacks: parsed } : parsed;
+      if (!payload.chargebacks) throw new Error("No “chargebacks” list in this JSON.");
+      mapPayload(payload);
+      payload._label = payload._label || filename || "chargebacks.json";
+      return payload;
+    }
+    const rows = parseCSV(trimmed);
+    if (rows.length < 2) throw new Error("This CSV has no data rows.");
+    const fields = rows[0].map(fieldFor);
+    if (fields.indexOf("created") === -1) throw new Error("No chargeback-date column found in this CSV.");
+    const records = rows.slice(1).map((cells) => {
+      const out = {};
+      fields.forEach((f, i) => { if (f && out[f] == null) out[f] = cells[i]; });
+      return out;
+    });
+    return { chargebacks: records, _label: filename || "pasted CSV" };
+  }
+
+  function load(payload, isSample) {
+    state.data = normalize(payload);
+    state.isSample = Boolean(isSample);
+    state.filters = { store: "", status: "", reason: "", order: "" };
+    applyPreset("all");
+    ["sec-date", "sec-kpi", "sec-store", "sec-trend", "sec-audit"].forEach((id) => { $("#" + id).hidden = false; });
+    $("#empty-state").classList.add("hidden");
+    $("#btn-clear").classList.remove("hidden");
+    $("#sample-banner").classList.toggle("hidden", !isSample);
+    $("#source-name").textContent = isSample ? "Sample data" : (state.data.label || "Loaded export");
+    $("#source-count").textContent = int(state.data.rows.length) + " case" + (state.data.rows.length === 1 ? "" : "s");
+    $("#source-time").textContent = state.data.generated ? "exported " + state.data.generated.replace("T", " ").slice(0, 16) + " UTC" : "loaded " + prettyDate(todayISO());
+    try { localStorage.setItem("cb-monitor", JSON.stringify({ payload: payload, isSample: Boolean(isSample) })); } catch (e) { /* private mode */ }
+    render();
+  }
+
+  function readFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try { load(toPayload(String(reader.result), file.name), false); }
+      catch (err) { alert("That file could not be read: " + err.message); }
+    };
+    reader.readAsText(file);
+  }
+
+  /* ---------- sample data ---------- */
+  function sampleData() {
+    let seed = 7841;
+    const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+    const pick = (arr) => arr[Math.floor(rnd() * arr.length)];
+    const stores = [
+      { name: "Maggie's Tanks", cur: "USD", weight: 4 },
+      { name: "Mary's Tanks", cur: "USD", weight: 3 },
+      { name: "Lyn's Tanks", cur: "USD", weight: 2 },
+      { name: "Simply Elsie", cur: "CAD", weight: 2 }
+    ];
+    const pool = [];
+    stores.forEach((s) => { for (let i = 0; i < s.weight; i++) pool.push(s); });
+    const reasons = ["fraudulent", "product_not_received", "product_unacceptable", "subscription_canceled", "duplicate", "credit_not_processed", "customer_initiated"];
+    const first = ["Dana", "Marcus", "Priya", "Tom", "Elena", "Jorge", "Aisha", "Ken", "Rosa", "Ivan", "Nina", "Leo", "Grace", "Omar"];
+    const last = ["Whitfield", "Okafor", "Lindqvist", "Barrera", "Nakamura", "Delacroix", "Mensah", "Halloran", "Petrov", "Silva", "Byrne", "Aziz"];
+    const today = todayISO();
+    const rows = [];
+    for (let i = 0; i < 74; i++) {
+      const store = pick(pool);
+      const age = Math.floor(rnd() * 118);
+      const created = addDays(today, -age);
+      let status, raw, outcome = "";
+      if (age < 32 && rnd() < 0.72) { status = "Open"; raw = rnd() < 0.5 ? "needs_response" : "under_review"; }
+      else if (rnd() < 0.63) { status = "Won"; raw = "won"; outcome = addDays(created, 24 + Math.floor(rnd() * 30)); }
+      else { status = "Lost"; raw = "lost"; outcome = addDays(created, 26 + Math.floor(rnd() * 34)); }
+      if (outcome > today) { status = "Open"; raw = "under_review"; outcome = ""; }
+      rows.push({
+        dispute_id: "smp_" + (912400 + i * 7),
+        store: store.name,
+        created_at: created,
+        order_number: "#" + (1180 + Math.floor(rnd() * 6400)),
+        customer: pick(first) + " " + pick(last),
+        amount: (28 + rnd() * 372).toFixed(2),
+        currency: store.cur,
+        reason: pick(reasons),
+        status: status,
+        status_raw: raw,
+        outcome_date: outcome
+      });
+    }
+    return { chargebacks: rows, stores: stores.map((s) => s.name), _label: "Sample data", generated_at: "" };
+  }
+
+  function embedded() {
+    const tag = document.getElementById("embedded-data");
+    if (!tag) return null;
+    try {
+      const payload = JSON.parse(tag.textContent);
+      return payload && payload.chargebacks ? mapPayload(payload) : null;
+    } catch (e) { return null; }
+  }
+
+  /* ---------- wiring ---------- */
+  $("#btn-load").addEventListener("click", () => $("#file").click());
+  $("#file").addEventListener("change", (e) => { if (e.target.files[0]) readFile(e.target.files[0]); e.target.value = ""; });
+  $("#btn-sample").addEventListener("click", () => load(sampleData(), true));
+  $("#btn-clear").addEventListener("click", () => {
+    try { localStorage.removeItem("cb-monitor"); } catch (e) { /* ignore */ }
+    const snapshot = embedded();
+    if (snapshot) { load(snapshot, false); return; }
+    state.data = null;
+    ["sec-date", "sec-kpi", "sec-store", "sec-trend", "sec-audit"].forEach((id) => { $("#" + id).hidden = true; });
+    $("#empty-state").classList.remove("hidden");
+    $("#sample-banner").classList.add("hidden");
+    $("#reconcile").classList.add("hidden");
+    $("#data-notes").classList.add("hidden");
+    $("#btn-clear").classList.add("hidden");
+    $("#source-name").textContent = "No data loaded";
+    $("#source-count").textContent = "0 cases";
+    $("#source-time").textContent = "—";
+  });
+  $("#btn-paste").addEventListener("click", () => {
+    const text = $("#paste-in").value;
+    try { load(toPayload(text, "pasted export"), false); $("#paste-msg").textContent = "Loaded."; }
+    catch (err) { $("#paste-msg").textContent = "Could not read that: " + err.message; }
+  });
+  $("#presets").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-preset]");
+    if (!btn) return;
+    if (btn.dataset.preset === "custom") { state.preset = "custom"; renderPresets(); $("#from").focus(); return; }
+    applyPreset(btn.dataset.preset);
+    render();
+  });
+  ["from", "to"].forEach((id) => {
+    $("#" + id).addEventListener("change", (e) => {
+      state[id] = e.target.value || state[id];
+      if (state.from > state.to) { if (id === "from") state.to = state.from; else state.from = state.to; }
+      state.preset = detectPreset();
+      render();
+    });
+  });
+  $("#trend-toggle").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-mode]");
+    if (!btn) return;
+    state.trend = btn.dataset.mode;
+    render();
+  });
+  $("#f-store").addEventListener("change", (e) => { state.filters.store = e.target.value; render(); });
+  $("#f-status").addEventListener("change", (e) => { state.filters.status = e.target.value; render(); });
+  $("#f-reason").addEventListener("change", (e) => { state.filters.reason = e.target.value; render(); });
+  $("#f-order").addEventListener("input", (e) => { state.filters.order = e.target.value; render(); });
+  $("#f-clear").addEventListener("click", () => { state.filters = { store: "", status: "", reason: "", order: "" }; render(); });
+  document.querySelectorAll("#audit-table th.sortable").forEach((th) => {
+    th.addEventListener("click", () => {
+      const key = th.dataset.sort;
+      if (state.sort.key === key) state.sort.dir *= -1;
+      else state.sort = { key: key, dir: key === "date" || key === "outcome" || key === "amount" ? -1 : 1 };
+      render();
+    });
+  });
+  $("#btn-csv").addEventListener("click", () => {
+    const cols = ["Chargeback date", "Store", "Order number", "Customer", "Amount", "Currency", "Reason", "Status", "Outcome date"];
+    const cell = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+    const list = auditRows(state.data.rows.filter(inRange));
+    const csv = [cols.join(",")].concat(list.map((r) =>
+      [r.date, r.store, r.order, r.customer, r.amount == null ? "" : r.amount, r.currency, r.reason, r.status, r.outcome].map(cell).join(",")
+    )).join("\n");
+    const out = $("#csv-out");
+    const fallback = () => { out.classList.remove("hidden"); out.value = csv; out.select(); $("#btn-csv").textContent = "Select all and copy"; };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(csv).then(() => {
+        $("#btn-csv").textContent = "Copied " + list.length + " rows";
+        setTimeout(() => { $("#btn-csv").textContent = "Copy as CSV"; }, 2200);
+      }).catch(fallback);
+    } else fallback();
+  });
+
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { if (state.data) renderChart(lastPeriods); }, 140);
+  });
+
+  let restored = false;
+  try {
+    const saved = localStorage.getItem("cb-monitor");
+    if (saved) { const parsed = JSON.parse(saved); load(parsed.payload, parsed.isSample); restored = true; }
+  } catch (e) { /* nothing saved */ }
+  if (!restored) { const snapshot = embedded(); if (snapshot) load(snapshot, false); }
+})();
+</script>

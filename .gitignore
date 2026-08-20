@@ -10,3 +10,6 @@ venv/
 
 # Local data exports - business/customer data, not source code
 *.csv
+
+# Local data exports - dispute/customer data, not source code
+chargebacks.json
