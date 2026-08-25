@@ -23,10 +23,7 @@ def mary_paths():
 STORES=[
  ("Simply Elsie",7356,"UTC",elsie.W,elsie.DAILY_CREATED,elsie.DAILY_CLOSED,elsie.TOTALS),
  ("Maggie's Tanks",6576,"UTC",maggies.W,maggies.DAILY_CREATED,maggies.DAILY_CLOSED,maggies.TOTALS),
- ("Mary's Tanks",6377,"UTC+10",mary_paths(),
-    [260,197,190,158,152,182,198,173,205,203,156,201,216,228,229,263,195,146,138,231,277,312,324,237,219,276,374,336,376,392,339,288,306,368,374,356,360,360,282,260,387,482,446,346,318,271,283,320],
-    [345,257,267,224,181,294,589,231,261,283,200,238,278,306,286,376,311,223,187,309,376,390,436,332,292,339,461,397,325,365,374,356,297,333,376,315,339,363,292,242,440,515,516,387,561,628,336,308],
-    mary.TOTALS),
+ ("Mary's Tanks",6377,"UTC+10",mary_paths(),mary.DAILY_CREATED,mary.DAILY_CLOSED,mary.TOTALS),
  ("Lyn's Tanks",6527,"UTC",lyns.W,lyns.DAILY_CREATED,lyns.DAILY_CLOSED,lyns.TOTALS),
 ]
 
@@ -55,7 +52,7 @@ def expand(week):
 DAYS=[]
 import datetime as dt
 d0=dt.date(2026,7,1)
-for k in range(48): DAYS.append((d0+dt.timedelta(days=k)).isoformat())
+for k in range(56): DAYS.append((d0+dt.timedelta(days=k)).isoformat())
 WEEKS=[]
 for s,e in zip(nodes.WEEKS,nodes.WEEK_END):
     a=dt.date.fromisoformat(s); b=dt.date.fromisoformat(e)
@@ -63,10 +60,10 @@ for s,e in zip(nodes.WEEKS,nodes.WEEK_END):
                   "label":f"{a.day}–{b.day} {b.strftime('%b')}" if a.month==b.month
                           else f"{a.day} {a.strftime('%b')}–{b.day} {b.strftime('%b')}"})
 
-out={"generated":"2026-08-17","from":"2026-07-01","to":"2026-08-17",
+out={"generated":"2026-08-25","from":"2026-07-01","to":"2026-08-25",
      "days":DAYS,"weeks":WEEKS,"issues":ISSUES,"stores":[]}
 for name,sid,tz,W,dc,dl,tot in STORES:
-    assert len(dc)==48 and len(dl)==48, name
+    assert len(dc)==56 and len(dl)==56, name
     wk=[expand(w) for w in W]
     dayDelta = tot["created"] - sum(dc)
     if dayDelta: print(f"NOTE {name}: daily series {sum(dc):,} vs period total {tot['created']:,} (delta {dayDelta}, {dayDelta/tot['created']*100:.2f}% - tz boundary)")
