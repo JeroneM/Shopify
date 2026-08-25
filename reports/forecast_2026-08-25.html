@@ -1,0 +1,306 @@
+<title>Tank Reorder Forecast</title>
+<style>
+:root{
+  color-scheme: light;
+  --ground:#F1F4F5; --surface:#FFFFFF; --surface-2:#F7F9FA; --surface-3:#ECF0F2;
+  --ink:#131719; --ink-2:#55636A; --ink-3:#7D8A91;
+  --rule:#DCE3E6; --rule-2:#EDF1F2;
+  --accent:#14595F; --accent-soft:#E2EFF0; --accent-ink:#0E4449;
+  --pos:#2a78d6; --neg:#e34948;
+  --warn:#8A5B00; --warn-bg:#FBF0DA;
+  --crit:#9C2B2B; --crit-bg:#FBE4E4;
+  --ok:#0B6B4F; --ok-bg:#DFF1EA;
+  --shadow:0 1px 2px rgba(19,23,25,.05), 0 8px 24px -16px rgba(19,23,25,.25);
+  --serif: ui-serif, "Iowan Old Style", "Source Serif 4", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  color-scheme: dark;
+  --ground:#0E1214; --surface:#181D20; --surface-2:#1E2427; --surface-3:#232A2E;
+  --ink:#E9EEF0; --ink-2:#9DAAB1; --ink-3:#77858C;
+  --rule:#2A3337; --rule-2:#222A2D;
+  --accent:#5FBCC1; --accent-soft:#15302F; --accent-ink:#8FD6D9;
+  --pos:#3987e5; --neg:#e66767;
+  --warn:#E4B155; --warn-bg:#2E2415;
+  --crit:#EE8A8A; --crit-bg:#331A1A;
+  --ok:#5FC3A2; --ok-bg:#122A22;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --ground:#0E1214; --surface:#181D20; --surface-2:#1E2427; --surface-3:#232A2E;
+  --ink:#E9EEF0; --ink-2:#9DAAB1; --ink-3:#77858C;
+  --rule:#2A3337; --rule-2:#222A2D;
+  --accent:#5FBCC1; --accent-soft:#15302F; --accent-ink:#8FD6D9;
+  --pos:#3987e5; --neg:#e66767;
+  --warn:#E4B155; --warn-bg:#2E2415;
+  --crit:#EE8A8A; --crit-bg:#331A1A;
+  --ok:#5FC3A2; --ok-bg:#122A22;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1320px;margin:0 auto;padding:clamp(20px,3vw,36px) clamp(12px,3vw,32px) 90px;display:flex;flex-direction:column;gap:30px}
+h1,h2,h3{font-family:var(--serif);font-weight:600;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:clamp(1.6rem,3.2vw,2.3rem);line-height:1.1}
+h2{font-size:1.3rem} h3{font-size:1rem}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.sub{color:var(--ink-2);font-size:.92rem;max-width:78ch}
+section{display:flex;flex-direction:column;gap:14px}
+.shead{display:flex;flex-direction:column;gap:5px}
+
+/* controls */
+.controls{position:sticky;top:0;z-index:20;background:var(--surface);border:1px solid var(--rule);
+  border-radius:5px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:16px 22px;align-items:flex-end;box-shadow:var(--shadow)}
+.ctl{display:flex;flex-direction:column;gap:5px;min-width:0}
+.ctl > label{font-family:var(--mono);font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.seg{display:flex;background:var(--surface-3);border-radius:4px;padding:2px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--ink-2);font-family:var(--sans);font-size:.82rem;
+  padding:5px 11px;border-radius:3px;cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input[type=date],select{font-family:var(--sans);font-size:.82rem;padding:6px 8px;border:1px solid var(--rule);
+  border-radius:4px;background:var(--surface);color:var(--ink)}
+input[type=date]:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.dates{display:flex;gap:6px;align-items:center}
+.dates span{color:var(--ink-3);font-size:.8rem}
+.btn{font-family:var(--sans);font-size:.85rem;font-weight:600;padding:9px 16px;border-radius:4px;
+  border:1px solid var(--accent);background:var(--accent);color:var(--surface);cursor:pointer}
+:root[data-theme="dark"] .btn,:root:not([data-theme="light"]) .btn{color:#0E1214}
+@media(prefers-color-scheme: light){:root:not([data-theme="dark"]) .btn{color:#fff}}
+.btn:hover{filter:brightness(1.08)} .btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.btn.ghost{background:transparent;color:var(--accent);border-color:var(--rule)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+/* banners */
+.bar{display:flex;gap:12px;align-items:flex-start;border-radius:4px;padding:13px 16px;font-size:.88rem}
+.bar.warn{background:var(--warn-bg);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);color:var(--ink-2)}
+.bar.crit{background:var(--crit-bg);border:1px solid color-mix(in srgb,var(--crit) 32%,transparent);color:var(--ink-2)}
+.bar.ok{background:var(--ok-bg);border:1px solid color-mix(in srgb,var(--ok) 28%,transparent);color:var(--ink-2)}
+.bar b{color:var(--ink)}
+.bar .m{font-family:var(--mono);font-weight:700;flex:none}
+.bar.warn .m{color:var(--warn)} .bar.crit .m{color:var(--crit)} .bar.ok .m{color:var(--ok)}
+
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--rule);
+  border:1px solid var(--rule);border-radius:5px;overflow:hidden}
+.tile{background:var(--surface);padding:15px 17px;display:flex;flex-direction:column;gap:4px}
+.tile .k{font-family:var(--mono);font-size:.62rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.tile .v{font-family:var(--serif);font-size:1.65rem;line-height:1.05;font-variant-numeric:tabular-nums}
+.tile .n{font-size:.75rem;color:var(--ink-2)}
+.tile.hi{background:var(--accent-soft)} .tile.hi .v{color:var(--accent-ink)}
+.tile.bad .v{color:var(--crit)}
+
+/* chart */
+.chart{background:var(--surface);border:1px solid var(--rule);border-radius:5px;padding:18px}
+.bars{display:flex;align-items:flex-end;gap:3px;height:190px;overflow-x:auto;padding-bottom:2px}
+.bc{flex:1 0 16px;min-width:16px;display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:5px}
+.bstack{display:flex;flex-direction:column-reverse;gap:1px;border-radius:3px 3px 0 0;overflow:hidden;min-height:2px}
+.bseg{min-height:1px}
+.blab{font-family:var(--mono);font-size:.58rem;color:var(--ink-3);text-align:center;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;font-size:.78rem;color:var(--ink-2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+/* tables */
+.scroll{overflow-x:auto;border:1px solid var(--rule);border-radius:5px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.8rem}
+th,td{padding:7px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--rule-2)}
+thead th{position:sticky;top:0;background:var(--surface-2);font-family:var(--mono);font-size:.61rem;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);font-weight:600;border-bottom:1px solid var(--rule);z-index:1}
+tbody tr:hover{background:var(--surface-2)}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+td.sku{font-family:var(--mono);font-size:.75rem;font-weight:600}
+td.strong{font-weight:700}
+tfoot td{font-weight:700;background:var(--surface-2);border-top:2px solid var(--rule)}
+.chip{display:inline-block;padding:2px 7px;border-radius:2px;font-family:var(--mono);font-size:.63rem;letter-spacing:.03em;white-space:nowrap}
+.chip.crit{background:var(--crit-bg);color:var(--crit)}
+.chip.high{background:var(--warn-bg);color:var(--warn)}
+.chip.med{background:var(--surface-3);color:var(--ink-2)}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.chip.est{background:color-mix(in srgb,var(--pos) 14%,transparent);color:var(--pos)}
+.muted{color:var(--ink-3)}
+.note{font-size:.79rem;color:var(--ink-3);max-width:78ch}
+details{background:var(--surface);border:1px solid var(--rule);border-radius:5px;padding:14px 17px}
+summary{cursor:pointer;font-weight:600;font-size:.92rem}
+details ul{margin:10px 0 0;padding-left:20px;font-size:.85rem;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+footer{border-top:1px solid var(--rule);padding-top:18px;font-size:.79rem;color:var(--ink-3)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<style>
+.hero{display:flex;flex-wrap:wrap;gap:2px;background:var(--rule);border:1px solid var(--rule);border-radius:5px;overflow:hidden}
+.hero>div{background:var(--surface);padding:20px 24px;flex:1 1 200px;display:flex;flex-direction:column;gap:5px}
+.hero .big{background:var(--accent-soft)}
+.hero .k{font-family:var(--mono);font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.hero .v{font-family:var(--serif);font-size:2.3rem;line-height:1;font-variant-numeric:tabular-nums}
+.hero .big .v{color:var(--accent-ink)}
+.hero .n{font-size:.79rem;color:var(--ink-2)}
+td.pri-Critical{font-weight:700}
+tr.r-Critical td:first-child{box-shadow:inset 3px 0 0 var(--crit)}
+tr.r-High td:first-child{box-shadow:inset 3px 0 0 var(--warn)}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Maggie&rsquo;s &middot; Lyn&rsquo;s &middot; Mary&rsquo;s &middot; Simply Elsie &middot; 25 August 2026</p>
+  <h1>Tank Reorder Forecast</h1>
+  <p class="sub">Average daily sales per SKU from the Coefficient sheet, measured against current stock
+  plus everything already in production.</p>
+</header>
+
+<div class="hero">
+  <div class="big"><span class="k">Additional units to order now</span><span class="v" id="h-order">—</span>
+    <span class="n" id="h-skus"></span></div>
+  <div><span class="k">Demand</span><span class="v" id="h-daily">—</span><span class="n">units per day, all SKUs</span></div>
+  <div><span class="k">Total stock</span><span class="v" id="h-stock">—</span><span class="n" id="h-days"></span></div>
+  <div><span class="k">At risk</span><span class="v" id="h-crit">—</span><span class="n">SKUs with under 7 days left</span></div>
+</div>
+
+<div class="bar crit"><span class="m">!</span><p><b>Your sales are current to today. Your stock file is from 13 August.</b>
+  Roughly <b id="b-sold">—</b> units have sold across these SKUs in the 12 days since that file was cut, so the
+  stock column below is optimistic. Use the toggle to subtract what has sold since — that view is an estimate,
+  but it is closer to what is actually on the floor. Send a fresh inventory export and neither estimate is needed.</p></div>
+
+<div class="controls">
+  <div class="ctl"><label>Stock basis</label>
+    <div class="seg" id="basis">
+      <button data-a="0" aria-pressed="true">As supplied — 13 Aug</button>
+      <button data-a="1" aria-pressed="false">Less units sold since</button>
+    </div>
+  </div>
+  <div class="ctl"><label>Show</label>
+    <div class="seg" id="filter">
+      <button data-f="need" aria-pressed="true">Needs ordering</button>
+      <button data-f="all" aria-pressed="false">All SKUs</button>
+    </div>
+  </div>
+  <div class="ctl"><label>&nbsp;</label><button class="btn" id="export">Export order CSV</button></div>
+  <div class="ctl"><label>&nbsp;</label><span class="note" id="msg"></span></div>
+</div>
+
+<section>
+  <div class="scroll"><table id="tbl"></table></div>
+  <p class="note" id="tblnote"></p>
+</section>
+
+<section>
+  <details>
+    <summary>How these numbers are calculated</summary>
+    <ul>
+      <li><b>Average daily sales</b> — from the <b>Maggies Tank_COE</b> sheet, which Coefficient refreshes daily.
+        Each SKU's month-to-date total is differenced between the 20 Aug and 25 Aug syncs (5.00 days) and the
+        13&ndash;20 Aug syncs (6.58 days), then blended 65/35 toward the more recent window. Dividing by the real
+        gap between syncs rather than a flat 7 days keeps a part-day sync from understating velocity.</li>
+      <li><b>Total stock</b> = current inventory + in-production inventory, as you asked. Note that no
+        in-production quantity in the file carries a completion or warehouse arrival date, so this treats goods on
+        a factory floor as equivalent to goods on a shelf.</li>
+      <li><b>Required stock</b> = 14 days of demand (7-day supplier lead time + 7-day order cycle) + safety stock.
+        Safety stock is SKU-specific: <code>1.96 &times; &radic;(2 &times; &sigma;_weekly&sup2; + daily&sup2; &times; 2&sup2;)</code>,
+        driven by each SKU's own volatility, so a steady seller carries far less buffer than an erratic one.</li>
+      <li><b>Recommended order</b> = required stock &minus; total stock, never below zero. It is additional to
+        everything you already hold and everything already in production.</li>
+      <li><b>Priority</b> — Critical under 7 days of stock (runs out before a new order could land), High under
+        14 days, Medium under 21.</li>
+      <li><b>The 7-day lead time is an assumption you gave</b>, not a measured figure. Goods described as
+        "in production" imply a manufacturing lead time well beyond it; at 14 days every required-stock figure
+        rises by roughly half.</li>
+      <li><b>SKUs with no recorded sales are listed but never forecast</b>, and SKUs selling but absent from the
+        inventory workbook cannot be checked here at all &mdash; mostly QL1047 variants, about 18 units a day.</li>
+      <li><b>SKUs beginning 134821 are excluded</b> from every calculation.</li>
+    </ul>
+  </details>
+</section>
+
+<footer><p>Sales from Maggies Tank_COE, synced 2026-08-25 05:07 UTC &middot; inventory from the Inventory Order
+workbook dated 2026-08-13 &middot; generated 2026-08-25.</p></footer>
+</div>
+<script type="application/json" id="payload">[{"sku":"QL1058-beanpaste-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"4XL","col":"beanpaste","daily":0.0,"cur":0,"ip":233,"tot":233,"sold":0,"req":0},{"sku":"QL1058-beanpaste-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"3XL","col":"beanpaste","daily":28.8,"cur":225,"ip":365,"tot":590,"sold":311,"req":632},{"sku":"QL1058-beanpaste-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"2XL","col":"beanpaste","daily":22.0,"cur":388,"ip":50,"tot":438,"sold":272,"req":445},{"sku":"QL1058-beanpaste-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"XL","col":"beanpaste","daily":43.0,"cur":144,"ip":1444,"tot":1588,"sold":529,"req":892},{"sku":"QL1058-beanpaste-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"L","col":"beanpaste","daily":14.1,"cur":593,"ip":0,"tot":593,"sold":166,"req":306},{"sku":"QL1058-beanpaste-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"M","col":"beanpaste","daily":8.9,"cur":405,"ip":0,"tot":405,"sold":106,"req":217},{"sku":"QL1058-beanpaste-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"S","col":"beanpaste","daily":1.8,"cur":133,"ip":113,"tot":246,"sold":21,"req":40},{"sku":"QL1058-grey-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"4XL","col":"grey","daily":0.0,"cur":0,"ip":554,"tot":554,"sold":0,"req":0},{"sku":"QL1058-grey-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"3XL","col":"grey","daily":72.6,"cur":389,"ip":1066,"tot":1455,"sold":804,"req":1532},{"sku":"QL1058-grey-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"2XL","col":"grey","daily":59.2,"cur":600,"ip":1029,"tot":1629,"sold":698,"req":1189},{"sku":"QL1058-grey-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"XL","col":"grey","daily":107.3,"cur":736,"ip":2225,"tot":2961,"sold":1332,"req":2264},{"sku":"QL1058-grey-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"L","col":"grey","daily":34.2,"cur":933,"ip":200,"tot":1133,"sold":404,"req":730},{"sku":"QL1058-grey-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"M","col":"grey","daily":15.7,"cur":1307,"ip":67,"tot":1374,"sold":185,"req":384},{"sku":"QL1058-grey-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"S","col":"grey","daily":4.1,"cur":695,"ip":70,"tot":765,"sold":48,"req":99},{"sku":"QL1058-white-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"4XL","col":"white","daily":0.0,"cur":0,"ip":1693,"tot":1693,"sold":0,"req":0},{"sku":"QL1058-white-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"3XL","col":"white","daily":211.0,"cur":1059,"ip":3006,"tot":4065,"sold":2360,"req":4557},{"sku":"QL1058-white-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"2XL","col":"white","daily":196.4,"cur":1503,"ip":2908,"tot":4411,"sold":2319,"req":4019},{"sku":"QL1058-white-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"XL","col":"white","daily":359.9,"cur":984,"ip":8634,"tot":9618,"sold":4437,"req":7544},{"sku":"QL1058-white-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"L","col":"white","daily":115.1,"cur":1920,"ip":2338,"tot":4258,"sold":1356,"req":2583},{"sku":"QL1058-white-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"M","col":"white","daily":63.9,"cur":3089,"ip":1626,"tot":4715,"sold":774,"req":1517},{"sku":"QL1058-white-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"S","col":"white","daily":14.4,"cur":1617,"ip":790,"tot":2407,"sold":185,"req":352},{"sku":"QL1058-red-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"4XL","col":"red","daily":0.0,"cur":0,"ip":607,"tot":607,"sold":0,"req":0},{"sku":"QL1058-red-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"3XL","col":"red","daily":69.8,"cur":82,"ip":1293,"tot":1375,"sold":773,"req":1558},{"sku":"QL1058-red-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"2XL","col":"red","daily":58.7,"cur":21,"ip":1203,"tot":1224,"sold":703,"req":1187},{"sku":"QL1058-red-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"XL","col":"red","daily":94.1,"cur":36,"ip":3253,"tot":3289,"sold":1172,"req":1933},{"sku":"QL1058-red-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"L","col":"red","daily":31.3,"cur":494,"ip":476,"tot":970,"sold":367,"req":675},{"sku":"QL1058-red-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"M","col":"red","daily":17.5,"cur":715,"ip":478,"tot":1193,"sold":212,"req":400},{"sku":"QL1058-red-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"S","col":"red","daily":3.6,"cur":657,"ip":86,"tot":743,"sold":44,"req":88},{"sku":"QL1058-green-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"4XL","col":"green","daily":0.0,"cur":0,"ip":408,"tot":408,"sold":0,"req":0},{"sku":"QL1058-green-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"3XL","col":"green","daily":48.2,"cur":140,"ip":1124,"tot":1264,"sold":565,"req":1027},{"sku":"QL1058-green-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"2XL","col":"green","daily":49.2,"cur":144,"ip":1073,"tot":1217,"sold":580,"req":949},{"sku":"QL1058-green-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"XL","col":"green","daily":78.5,"cur":176,"ip":2206,"tot":2382,"sold":984,"req":1588},{"sku":"QL1058-green-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"L","col":"green","daily":31.5,"cur":172,"ip":360,"tot":532,"sold":366,"req":691},{"sku":"QL1058-green-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"M","col":"green","daily":18.1,"cur":353,"ip":490,"tot":843,"sold":212,"req":421},{"sku":"QL1058-green-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"S","col":"green","daily":5.0,"cur":486,"ip":190,"tot":676,"sold":57,"req":118},{"sku":"QL1058-coffee-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"4XL","col":"coffee","daily":0.0,"cur":0,"ip":678,"tot":678,"sold":0,"req":0},{"sku":"QL1058-coffee-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"3XL","col":"coffee","daily":66.6,"cur":127,"ip":1431,"tot":1558,"sold":762,"req":1554},{"sku":"QL1058-coffee-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"2XL","col":"coffee","daily":71.4,"cur":107,"ip":1520,"tot":1627,"sold":849,"req":1461},{"sku":"QL1058-coffee-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"XL","col":"coffee","daily":118.8,"cur":2,"ip":3846,"tot":3848,"sold":1478,"req":2467},{"sku":"QL1058-coffee-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"L","col":"coffee","daily":42.1,"cur":636,"ip":980,"tot":1616,"sold":515,"req":925},{"sku":"QL1058-coffee-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"M","col":"coffee","daily":23.7,"cur":330,"ip":80,"tot":410,"sold":281,"req":548},{"sku":"QL1058-coffee-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"S","col":"coffee","daily":4.3,"cur":192,"ip":140,"tot":332,"sold":45,"req":102},{"sku":"QL1058-black-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"4XL","col":"black","daily":7.3,"cur":0,"ip":2222,"tot":2222,"sold":56,"req":160},{"sku":"QL1058-black-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"3XL","col":"black","daily":277.7,"cur":841,"ip":4533,"tot":5374,"sold":3078,"req":6089},{"sku":"QL1058-black-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"2XL","col":"black","daily":244.6,"cur":1349,"ip":3734,"tot":5083,"sold":2845,"req":4962},{"sku":"QL1058-black-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"XL","col":"black","daily":411.5,"cur":1176,"ip":9617,"tot":10793,"sold":5035,"req":8546},{"sku":"QL1058-black-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"L","col":"black","daily":136.2,"cur":2608,"ip":1635,"tot":4243,"sold":1606,"req":2932},{"sku":"QL1058-black-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"M","col":"black","daily":67.1,"cur":2966,"ip":2024,"tot":4990,"sold":822,"req":1589},{"sku":"QL1058-black-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"S","col":"black","daily":14.7,"cur":1590,"ip":700,"tot":2290,"sold":173,"req":348},{"sku":"QL1058-nude-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"4XL","col":"nude","daily":0.3,"cur":0,"ip":4003,"tot":4003,"sold":2,"req":6},{"sku":"QL1058-nude-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"3XL","col":"nude","daily":496.1,"cur":39,"ip":11140,"tot":11179,"sold":5638,"req":10771},{"sku":"QL1058-nude-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"2XL","col":"nude","daily":401.7,"cur":71,"ip":10863,"tot":10934,"sold":4792,"req":7994},{"sku":"QL1058-nude-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"XL","col":"nude","daily":690.3,"cur":1530,"ip":16033,"tot":17563,"sold":8462,"req":14009},{"sku":"QL1058-nude-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"L","col":"nude","daily":223.0,"cur":4148,"ip":3090,"tot":7238,"sold":2600,"req":4820},{"sku":"QL1058-nude-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"M","col":"nude","daily":118.8,"cur":1991,"ip":2950,"tot":4941,"sold":1427,"req":2762},{"sku":"QL1058-nude-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"S","col":"nude","daily":29.1,"cur":1724,"ip":400,"tot":2124,"sold":331,"req":673},{"sku":"QL1058-Yellow-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"4XL","col":"yellow","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Yellow-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"3XL","col":"yellow","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Yellow-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"2XL","col":"yellow","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Yellow-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"XL","col":"yellow","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Yellow-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"L","col":"yellow","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Yellow-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"M","col":"yellow","daily":0.0,"cur":0,"ip":104,"tot":104,"sold":0,"req":0},{"sku":"QL1058-Yellow-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"S","col":"yellow","daily":0.0,"cur":0,"ip":65,"tot":65,"sold":0,"req":0},{"sku":"QL1058-Navyblue-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"4XL","col":"navyblue","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Navyblue-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"3XL","col":"navyblue","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Navyblue-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"2XL","col":"navyblue","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Navyblue-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"XL","col":"navyblue","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Navyblue-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"L","col":"navyblue","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Navyblue-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"M","col":"navyblue","daily":0.0,"cur":0,"ip":104,"tot":104,"sold":0,"req":0},{"sku":"QL1058-Navyblue-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"S","col":"navyblue","daily":0.0,"cur":0,"ip":65,"tot":65,"sold":0,"req":0},{"sku":"QL1058-Purple-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"4XL","col":"purple","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Purple-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"3XL","col":"purple","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Purple-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"2XL","col":"purple","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Purple-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"XL","col":"purple","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Purple-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"L","col":"purple","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Purple-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"M","col":"purple","daily":0.0,"cur":0,"ip":104,"tot":104,"sold":0,"req":0},{"sku":"QL1058-Purple-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"S","col":"purple","daily":0.0,"cur":0,"ip":65,"tot":65,"sold":0,"req":0},{"sku":"QL1058-Pink-4XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"4XL","col":"pink","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Pink-3XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"3XL","col":"pink","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Pink-2XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"2XL","col":"pink","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Pink-XL","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"XL","col":"pink","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Pink-L","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"L","col":"pink","daily":0.0,"cur":0,"ip":130,"tot":130,"sold":0,"req":0},{"sku":"QL1058-Pink-M","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"M","col":"pink","daily":0.0,"cur":0,"ip":104,"tot":104,"sold":0,"req":0},{"sku":"QL1058-Pink-S","fam":"QL1058","prod":"Built-in Bra Comfort Tank","sz":"S","col":"pink","daily":0.0,"cur":0,"ip":65,"tot":65,"sold":0,"req":0},{"sku":"QL1047-red-xxl","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"XXL","col":"red","daily":0.0,"cur":15,"ip":0,"tot":15,"sold":0,"req":0},{"sku":"QL1047-red-x","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"X","col":"red","daily":0.0,"cur":11,"ip":1,"tot":12,"sold":0,"req":0},{"sku":"QL1047-red-l","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"L","col":"red","daily":0.0,"cur":10,"ip":0,"tot":10,"sold":0,"req":0},{"sku":"QL1047-red-m","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"M","col":"red","daily":0.0,"cur":7,"ip":0,"tot":7,"sold":0,"req":0},{"sku":"QL1047-red-s","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"S","col":"red","daily":0.0,"cur":2,"ip":0,"tot":2,"sold":0,"req":0},{"sku":"QL1047-gray-xxl","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"XXL","col":"gray","daily":0.0,"cur":12,"ip":0,"tot":12,"sold":0,"req":0},{"sku":"QL1047-gray-x","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"X","col":"gray","daily":0.0,"cur":18,"ip":1,"tot":19,"sold":0,"req":0},{"sku":"QL1047-gray-l","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"L","col":"gray","daily":0.0,"cur":22,"ip":0,"tot":22,"sold":0,"req":0},{"sku":"QL1047-gray-m","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"M","col":"gray","daily":0.0,"cur":18,"ip":0,"tot":18,"sold":0,"req":0},{"sku":"QL1047-gray-s","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"S","col":"gray","daily":0.0,"cur":9,"ip":0,"tot":9,"sold":0,"req":0},{"sku":"QL1047-green-xxl","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"XXL","col":"green","daily":0.0,"cur":9,"ip":0,"tot":9,"sold":0,"req":0},{"sku":"QL1047-green-x","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"X","col":"green","daily":0.0,"cur":16,"ip":1,"tot":17,"sold":0,"req":0},{"sku":"QL1047-green-l","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"L","col":"green","daily":0.0,"cur":22,"ip":0,"tot":22,"sold":0,"req":0},{"sku":"QL1047-green-m","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"M","col":"green","daily":0.0,"cur":19,"ip":0,"tot":19,"sold":0,"req":0},{"sku":"QL1047-green-s","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"S","col":"green","daily":0.0,"cur":6,"ip":0,"tot":6,"sold":0,"req":0},{"sku":"QL1047-khaki-xxl","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"XXL","col":"khaki","daily":0.0,"cur":6,"ip":0,"tot":6,"sold":0,"req":0},{"sku":"QL1047-khaki-x","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"X","col":"khaki","daily":0.0,"cur":8,"ip":3,"tot":11,"sold":0,"req":0},{"sku":"QL1047-khaki-l","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"L","col":"khaki","daily":0.0,"cur":0,"ip":3,"tot":3,"sold":0,"req":0},{"sku":"QL1047-khaki-m","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"M","col":"khaki","daily":0.0,"cur":3,"ip":0,"tot":3,"sold":0,"req":0},{"sku":"QL1047-khaki-s","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"S","col":"khaki","daily":0.0,"cur":0,"ip":1,"tot":1,"sold":0,"req":0},{"sku":"QL1047-black-xxl","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"XXL","col":"black","daily":0.0,"cur":31,"ip":14,"tot":45,"sold":0,"req":0},{"sku":"QL1047-black-x","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"X","col":"black","daily":0.0,"cur":49,"ip":15,"tot":64,"sold":0,"req":0},{"sku":"QL1047-black-l","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"L","col":"black","daily":0.0,"cur":11,"ip":1,"tot":12,"sold":0,"req":0},{"sku":"QL1047-black-m","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"M","col":"black","daily":0.0,"cur":1,"ip":12,"tot":13,"sold":0,"req":0},{"sku":"QL1047-black-s","fam":"QL1047","prod":"Ribbed Cotton LS Sculpt Top","sz":"S","col":"black","daily":0.0,"cur":12,"ip":0,"tot":12,"sold":0,"req":0},{"sku":"QA1114-lightgreen-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"3XL","col":"lightgreen","daily":0.3,"cur":1,"ip":2,"tot":3,"sold":3,"req":7},{"sku":"QA1114-lightgreen-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"2XL","col":"lightgreen","daily":0.2,"cur":3,"ip":1,"tot":4,"sold":3,"req":5},{"sku":"QA1114-lightgreen-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"XL","col":"lightgreen","daily":0.3,"cur":1,"ip":0,"tot":1,"sold":3,"req":7},{"sku":"QA1114-lightgreen-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"L","col":"lightgreen","daily":0.1,"cur":10,"ip":0,"tot":10,"sold":1,"req":1},{"sku":"QA1114-lightgreen-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"M","col":"lightgreen","daily":0.4,"cur":4,"ip":0,"tot":4,"sold":5,"req":9},{"sku":"QA1114-lightgreen-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"S","col":"lightgreen","daily":0.1,"cur":0,"ip":0,"tot":0,"sold":1,"req":1},{"sku":"QA1114-gray-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"3XL","col":"gray","daily":0.3,"cur":2,"ip":15,"tot":17,"sold":5,"req":8},{"sku":"QA1114-gray-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"2XL","col":"gray","daily":0.5,"cur":3,"ip":3,"tot":6,"sold":7,"req":12},{"sku":"QA1114-gray-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"XL","col":"gray","daily":1.1,"cur":15,"ip":0,"tot":15,"sold":11,"req":25},{"sku":"QA1114-gray-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"L","col":"gray","daily":0.2,"cur":5,"ip":0,"tot":5,"sold":3,"req":5},{"sku":"QA1114-gray-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"M","col":"gray","daily":0.6,"cur":5,"ip":2,"tot":7,"sold":7,"req":17},{"sku":"QA1114-gray-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"S","col":"gray","daily":0.3,"cur":9,"ip":0,"tot":9,"sold":5,"req":8},{"sku":"QA1114-pink-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"3XL","col":"pink","daily":1.4,"cur":5,"ip":9,"tot":14,"sold":19,"req":30},{"sku":"QA1114-pink-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"2XL","col":"pink","daily":1.5,"cur":0,"ip":13,"tot":13,"sold":17,"req":34},{"sku":"QA1114-pink-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"XL","col":"pink","daily":2.7,"cur":9,"ip":9,"tot":18,"sold":31,"req":53},{"sku":"QA1114-pink-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"L","col":"pink","daily":1.4,"cur":26,"ip":5,"tot":31,"sold":13,"req":36},{"sku":"QA1114-pink-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"M","col":"pink","daily":0.6,"cur":10,"ip":3,"tot":13,"sold":7,"req":13},{"sku":"QA1114-pink-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"S","col":"pink","daily":0.2,"cur":0,"ip":3,"tot":3,"sold":3,"req":5},{"sku":"QA1114-yellow-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"3XL","col":"yellow","daily":2.2,"cur":4,"ip":15,"tot":19,"sold":26,"req":47},{"sku":"QA1114-yellow-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"2XL","col":"yellow","daily":2.3,"cur":1,"ip":9,"tot":10,"sold":27,"req":46},{"sku":"QA1114-yellow-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"XL","col":"yellow","daily":1.7,"cur":15,"ip":1,"tot":16,"sold":24,"req":37},{"sku":"QA1114-yellow-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"L","col":"yellow","daily":0.8,"cur":26,"ip":5,"tot":31,"sold":10,"req":23},{"sku":"QA1114-yellow-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"M","col":"yellow","daily":1.0,"cur":5,"ip":2,"tot":7,"sold":11,"req":24},{"sku":"QA1114-yellow-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"S","col":"yellow","daily":3.5,"cur":2,"ip":26,"tot":28,"sold":41,"req":91},{"sku":"QA1114-red-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"3XL","col":"red","daily":0.8,"cur":0,"ip":16,"tot":16,"sold":10,"req":17},{"sku":"QA1114-red-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"2XL","col":"red","daily":0.9,"cur":0,"ip":17,"tot":17,"sold":13,"req":20},{"sku":"QA1114-red-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"XL","col":"red","daily":1.4,"cur":0,"ip":15,"tot":15,"sold":16,"req":30},{"sku":"QA1114-red-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"L","col":"red","daily":0.5,"cur":11,"ip":0,"tot":11,"sold":6,"req":10},{"sku":"QA1114-red-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"M","col":"red","daily":0.3,"cur":9,"ip":1,"tot":10,"sold":5,"req":8},{"sku":"QA1114-red-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"S","col":"red","daily":0.0,"cur":1,"ip":0,"tot":1,"sold":0,"req":0},{"sku":"QA1114-khaki-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"3XL","col":"khaki","daily":1.3,"cur":8,"ip":12,"tot":20,"sold":14,"req":28},{"sku":"QA1114-khaki-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"2XL","col":"khaki","daily":1.4,"cur":0,"ip":11,"tot":11,"sold":17,"req":28},{"sku":"QA1114-khaki-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"XL","col":"khaki","daily":2.1,"cur":13,"ip":7,"tot":20,"sold":30,"req":51},{"sku":"QA1114-khaki-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"L","col":"khaki","daily":1.1,"cur":8,"ip":0,"tot":8,"sold":10,"req":23},{"sku":"QA1114-khaki-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"M","col":"khaki","daily":0.4,"cur":12,"ip":1,"tot":13,"sold":4,"req":8},{"sku":"QA1114-khaki-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"S","col":"khaki","daily":0.1,"cur":2,"ip":0,"tot":2,"sold":1,"req":1},{"sku":"QA1114-brown-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"3XL","col":"brown","daily":0.3,"cur":0,"ip":6,"tot":6,"sold":5,"req":8},{"sku":"QA1114-brown-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"2XL","col":"brown","daily":0.7,"cur":0,"ip":6,"tot":6,"sold":8,"req":16},{"sku":"QA1114-brown-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"XL","col":"brown","daily":0.7,"cur":8,"ip":0,"tot":8,"sold":10,"req":15},{"sku":"QA1114-brown-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"L","col":"brown","daily":0.4,"cur":8,"ip":1,"tot":9,"sold":4,"req":10},{"sku":"QA1114-brown-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"M","col":"brown","daily":0.2,"cur":8,"ip":1,"tot":9,"sold":2,"req":4},{"sku":"QA1114-brown-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"S","col":"brown","daily":0.0,"cur":0,"ip":0,"tot":0,"sold":0,"req":0},{"sku":"QA1114-green-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"3XL","col":"green","daily":0.6,"cur":7,"ip":2,"tot":9,"sold":7,"req":13},{"sku":"QA1114-green-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"2XL","col":"green","daily":0.6,"cur":5,"ip":0,"tot":5,"sold":5,"req":13},{"sku":"QA1114-green-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"XL","col":"green","daily":0.8,"cur":18,"ip":1,"tot":19,"sold":10,"req":18},{"sku":"QA1114-green-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"L","col":"green","daily":0.1,"cur":11,"ip":1,"tot":12,"sold":1,"req":3},{"sku":"QA1114-green-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"M","col":"green","daily":0.4,"cur":10,"ip":0,"tot":10,"sold":3,"req":9},{"sku":"QA1114-green-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"S","col":"green","daily":0.3,"cur":2,"ip":0,"tot":2,"sold":3,"req":7},{"sku":"QA1114-white-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"3XL","col":"white","daily":4.6,"cur":9,"ip":10,"tot":19,"sold":50,"req":91},{"sku":"QA1114-white-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"2XL","col":"white","daily":3.1,"cur":16,"ip":8,"tot":24,"sold":39,"req":65},{"sku":"QA1114-white-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"XL","col":"white","daily":4.4,"cur":3,"ip":38,"tot":41,"sold":57,"req":93},{"sku":"QA1114-white-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"L","col":"white","daily":2.1,"cur":30,"ip":2,"tot":32,"sold":29,"req":43},{"sku":"QA1114-white-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"M","col":"white","daily":1.3,"cur":26,"ip":2,"tot":28,"sold":16,"req":37},{"sku":"QA1114-white-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"S","col":"white","daily":0.4,"cur":7,"ip":0,"tot":7,"sold":5,"req":9},{"sku":"QA1114-black-3xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"3XL","col":"black","daily":6.8,"cur":14,"ip":28,"tot":42,"sold":75,"req":131},{"sku":"QA1114-black-2xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"2XL","col":"black","daily":4.8,"cur":1,"ip":35,"tot":36,"sold":62,"req":99},{"sku":"QA1114-black-xl","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"XL","col":"black","daily":11.0,"cur":13,"ip":49,"tot":62,"sold":125,"req":248},{"sku":"QA1114-black-l","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"L","col":"black","daily":3.1,"cur":28,"ip":13,"tot":41,"sold":35,"req":71},{"sku":"QA1114-black-m","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"M","col":"black","daily":2.0,"cur":48,"ip":3,"tot":51,"sold":23,"req":54},{"sku":"QA1114-black-s","fam":"QA1114","prod":"Ribbed Cotton Built-in Bra Tank","sz":"S","col":"black","daily":0.2,"cur":12,"ip":0,"tot":12,"sold":2,"req":5},{"sku":"QA1071-Lava-6XL","fam":"QA1071","prod":"QA1071 Tank","sz":"6XL","col":"lava","daily":0.0,"cur":0,"ip":0,"tot":0,"sold":0,"req":0},{"sku":"QA1071-Lava-5XL","fam":"QA1071","prod":"QA1071 Tank","sz":"5XL","col":"lava","daily":0.0,"cur":9,"ip":15,"tot":24,"sold":0,"req":0},{"sku":"QA1071-Lava-4XL","fam":"QA1071","prod":"QA1071 Tank","sz":"4XL","col":"lava","daily":0.0,"cur":10,"ip":9,"tot":19,"sold":0,"req":0},{"sku":"QA1071-Lava-3XL","fam":"QA1071","prod":"QA1071 Tank","sz":"3XL","col":"lava","daily":0.0,"cur":21,"ip":21,"tot":42,"sold":0,"req":0},{"sku":"QA1071-Lava-2XL","fam":"QA1071","prod":"QA1071 Tank","sz":"2XL","col":"lava","daily":0.0,"cur":29,"ip":22,"tot":51,"sold":0,"req":0},{"sku":"QA1071-Lava-XL","fam":"QA1071","prod":"QA1071 Tank","sz":"XL","col":"lava","daily":0.0,"cur":44,"ip":32,"tot":76,"sold":0,"req":0},{"sku":"QA1071-Lava-L","fam":"QA1071","prod":"QA1071 Tank","sz":"L","col":"lava","daily":0.0,"cur":13,"ip":6,"tot":19,"sold":0,"req":0},{"sku":"QA1071-Lava-M","fam":"QA1071","prod":"QA1071 Tank","sz":"M","col":"lava","daily":0.0,"cur":60,"ip":45,"tot":105,"sold":0,"req":0},{"sku":"QA1071-Lava-S","fam":"QA1071","prod":"QA1071 Tank","sz":"S","col":"lava","daily":0.0,"cur":5,"ip":8,"tot":13,"sold":0,"req":0},{"sku":"QA1071-Lava-XS","fam":"QA1071","prod":"QA1071 Tank","sz":"XS","col":"lava","daily":0.0,"cur":3,"ip":2,"tot":5,"sold":0,"req":0},{"sku":"QA1071-Purple-6XL","fam":"QA1071","prod":"QA1071 Tank","sz":"6XL","col":"purple","daily":0.0,"cur":0,"ip":0,"tot":0,"sold":0,"req":0},{"sku":"QA1071-Purple-5XL","fam":"QA1071","prod":"QA1071 Tank","sz":"5XL","col":"purple","daily":0.0,"cur":9,"ip":15,"tot":24,"sold":0,"req":0},{"sku":"QA1071-Purple-4XL","fam":"QA1071","prod":"QA1071 Tank","sz":"4XL","col":"purple","daily":0.0,"cur":10,"ip":9,"tot":19,"sold":0,"req":0},{"sku":"QA1071-Purple-3XL","fam":"QA1071","prod":"QA1071 Tank","sz":"3XL","col":"purple","daily":0.0,"cur":20,"ip":20,"tot":40,"sold":0,"req":0},{"sku":"QA1071-Purple-2XL","fam":"QA1071","prod":"QA1071 Tank","sz":"2XL","col":"purple","daily":0.0,"cur":26,"ip":22,"tot":48,"sold":0,"req":0},{"sku":"QA1071-Purple-XL","fam":"QA1071","prod":"QA1071 Tank","sz":"XL","col":"purple","daily":0.0,"cur":43,"ip":33,"tot":76,"sold":0,"req":0},{"sku":"QA1071-Purple-L","fam":"QA1071","prod":"QA1071 Tank","sz":"L","col":"purple","daily":0.0,"cur":9,"ip":6,"tot":15,"sold":0,"req":0},{"sku":"QA1071-Purple-M","fam":"QA1071","prod":"QA1071 Tank","sz":"M","col":"purple","daily":0.0,"cur":58,"ip":44,"tot":102,"sold":0,"req":0},{"sku":"QA1071-Purple-S","fam":"QA1071","prod":"QA1071 Tank","sz":"S","col":"purple","daily":0.0,"cur":5,"ip":8,"tot":13,"sold":0,"req":0},{"sku":"QA1071-Purple-XS","fam":"QA1071","prod":"QA1071 Tank","sz":"XS","col":"purple","daily":0.0,"cur":3,"ip":2,"tot":5,"sold":0,"req":0},{"sku":"QA1071-khaki-6XL","fam":"QA1071","prod":"QA1071 Tank","sz":"6XL","col":"khaki","daily":0.0,"cur":0,"ip":0,"tot":0,"sold":0,"req":0},{"sku":"QA1071-khaki-5XL","fam":"QA1071","prod":"QA1071 Tank","sz":"5XL","col":"khaki","daily":0.0,"cur":14,"ip":21,"tot":35,"sold":0,"req":0},{"sku":"QA1071-khaki-4XL","fam":"QA1071","prod":"QA1071 Tank","sz":"4XL","col":"khaki","daily":0.0,"cur":22,"ip":20,"tot":42,"sold":0,"req":0},{"sku":"QA1071-khaki-3XL","fam":"QA1071","prod":"QA1071 Tank","sz":"3XL","col":"khaki","daily":0.0,"cur":38,"ip":46,"tot":84,"sold":0,"req":0},{"sku":"QA1071-khaki-2XL","fam":"QA1071","prod":"QA1071 Tank","sz":"2XL","col":"khaki","daily":0.0,"cur":53,"ip":66,"tot":119,"sold":0,"req":0},{"sku":"QA1071-khaki-XL","fam":"QA1071","prod":"QA1071 Tank","sz":"XL","col":"khaki","daily":0.1,"cur":80,"ip":62,"tot":142,"sold":1,"req":1},{"sku":"QA1071-khaki-L","fam":"QA1071","prod":"QA1071 Tank","sz":"L","col":"khaki","daily":0.0,"cur":23,"ip":23,"tot":46,"sold":0,"req":0},{"sku":"QA1071-khaki-M","fam":"QA1071","prod":"QA1071 Tank","sz":"M","col":"khaki","daily":0.0,"cur":101,"ip":86,"tot":187,"sold":0,"req":0},{"sku":"QA1071-khaki-S","fam":"QA1071","prod":"QA1071 Tank","sz":"S","col":"khaki","daily":0.0,"cur":11,"ip":17,"tot":28,"sold":0,"req":0},{"sku":"QA1071-khaki-XS","fam":"QA1071","prod":"QA1071 Tank","sz":"XS","col":"khaki","daily":0.0,"cur":29,"ip":25,"tot":54,"sold":0,"req":0},{"sku":"QA1071-Brown-6XL","fam":"QA1071","prod":"QA1071 Tank","sz":"6XL","col":"brown","daily":0.0,"cur":0,"ip":0,"tot":0,"sold":0,"req":0},{"sku":"QA1071-Brown-5XL","fam":"QA1071","prod":"QA1071 Tank","sz":"5XL","col":"brown","daily":0.0,"cur":11,"ip":19,"tot":30,"sold":0,"req":0},{"sku":"QA1071-Brown-4XL","fam":"QA1071","prod":"QA1071 Tank","sz":"4XL","col":"brown","daily":0.0,"cur":13,"ip":14,"tot":27,"sold":0,"req":0},{"sku":"QA1071-Brown-3XL","fam":"QA1071","prod":"QA1071 Tank","sz":"3XL","col":"brown","daily":0.0,"cur":24,"ip":33,"tot":57,"sold":0,"req":0},{"sku":"QA1071-Brown-2XL","fam":"QA1071","prod":"QA1071 Tank","sz":"2XL","col":"brown","daily":0.0,"cur":39,"ip":32,"tot":71,"sold":0,"req":0},{"sku":"QA1071-Brown-XL","fam":"QA1071","prod":"QA1071 Tank","sz":"XL","col":"brown","daily":0.0,"cur":60,"ip":47,"tot":107,"sold":0,"req":0},{"sku":"QA1071-Brown-L","fam":"QA1071","prod":"QA1071 Tank","sz":"L","col":"brown","daily":0.0,"cur":11,"ip":15,"tot":26,"sold":0,"req":0},{"sku":"QA1071-Brown-M","fam":"QA1071","prod":"QA1071 Tank","sz":"M","col":"brown","daily":0.0,"cur":78,"ip":64,"tot":142,"sold":0,"req":0},{"sku":"QA1071-Brown-S","fam":"QA1071","prod":"QA1071 Tank","sz":"S","col":"brown","daily":0.0,"cur":8,"ip":12,"tot":20,"sold":0,"req":0},{"sku":"QA1071-Brown-XS","fam":"QA1071","prod":"QA1071 Tank","sz":"XS","col":"brown","daily":0.0,"cur":4,"ip":4,"tot":8,"sold":0,"req":0},{"sku":"QA1071-Beige-6XL","fam":"QA1071","prod":"QA1071 Tank","sz":"6XL","col":"beige","daily":0.0,"cur":0,"ip":0,"tot":0,"sold":0,"req":0},{"sku":"QA1071-Beige-5XL","fam":"QA1071","prod":"QA1071 Tank","sz":"5XL","col":"beige","daily":0.0,"cur":15,"ip":41,"tot":56,"sold":0,"req":0},{"sku":"QA1071-Beige-4XL","fam":"QA1071","prod":"QA1071 Tank","sz":"4XL","col":"beige","daily":8.0,"cur":30,"ip":40,"tot":70,"sold":79,"req":175},{"sku":"QA1071-Beige-3XL","fam":"QA1071","prod":"QA1071 Tank","sz":"3XL","col":"beige","daily":70.2,"cur":200,"ip":199,"tot":399,"sold":711,"req":1540},{"sku":"QA1071-Beige-2XL","fam":"QA1071","prod":"QA1071 Tank","sz":"2XL","col":"beige","daily":81.4,"cur":195,"ip":242,"tot":437,"sold":826,"req":1785},{"sku":"QA1071-Beige-XL","fam":"QA1071","prod":"QA1071 Tank","sz":"XL","col":"beige","daily":138.1,"cur":409,"ip":463,"tot":872,"sold":1489,"req":3028},{"sku":"QA1071-Beige-L","fam":"QA1071","prod":"QA1071 Tank","sz":"L","col":"beige","daily":98.6,"cur":80,"ip":283,"tot":363,"sold":1021,"req":2161},{"sku":"QA1071-Beige-M","fam":"QA1071","prod":"QA1071 Tank","sz":"M","col":"beige","daily":61.2,"cur":129,"ip":227,"tot":356,"sold":614,"req":1341},{"sku":"QA1071-Beige-S","fam":"QA1071","prod":"QA1071 Tank","sz":"S","col":"beige","daily":15.3,"cur":43,"ip":67,"tot":110,"sold":157,"req":335},{"sku":"QA1071-Beige-XS","fam":"QA1071","prod":"QA1071 Tank","sz":"XS","col":"beige","daily":0.0,"cur":31,"ip":28,"tot":59,"sold":0,"req":0},{"sku":"QA1071-Black-6XL","fam":"QA1071","prod":"QA1071 Tank","sz":"6XL","col":"black","daily":0.0,"cur":0,"ip":0,"tot":0,"sold":0,"req":0},{"sku":"QA1071-Black-5XL","fam":"QA1071","prod":"QA1071 Tank","sz":"5XL","col":"black","daily":0.0,"cur":17,"ip":20,"tot":37,"sold":0,"req":0},{"sku":"QA1071-Black-4XL","fam":"QA1071","prod":"QA1071 Tank","sz":"4XL","col":"black","daily":4.3,"cur":39,"ip":24,"tot":63,"sold":43,"req":94},{"sku":"QA1071-Black-3XL","fam":"QA1071","prod":"QA1071 Tank","sz":"3XL","col":"black","daily":20.2,"cur":61,"ip":93,"tot":154,"sold":197,"req":442},{"sku":"QA1071-Black-2XL","fam":"QA1071","prod":"QA1071 Tank","sz":"2XL","col":"black","daily":24.8,"cur":71,"ip":122,"tot":193,"sold":244,"req":544},{"sku":"QA1071-Black-XL","fam":"QA1071","prod":"QA1071 Tank","sz":"XL","col":"black","daily":43.7,"cur":129,"ip":176,"tot":305,"sold":438,"req":957},{"sku":"QA1071-Black-L","fam":"QA1071","prod":"QA1071 Tank","sz":"L","col":"black","daily":35.2,"cur":53,"ip":112,"tot":165,"sold":344,"req":772},{"sku":"QA1071-Black-M","fam":"QA1071","prod":"QA1071 Tank","sz":"M","col":"black","daily":19.6,"cur":125,"ip":131,"tot":256,"sold":185,"req":430},{"sku":"QA1071-Black-S","fam":"QA1071","prod":"QA1071 Tank","sz":"S","col":"black","daily":3.6,"cur":15,"ip":35,"tot":50,"sold":35,"req":78},{"sku":"QA1071-Black-XS","fam":"QA1071","prod":"QA1071 Tank","sz":"XS","col":"black","daily":0.0,"cur":54,"ip":33,"tot":87,"sold":0,"req":0},{"sku":"QA1071-Pink-6XL","fam":"QA1071","prod":"QA1071 Tank","sz":"6XL","col":"pink","daily":0.0,"cur":0,"ip":0,"tot":0,"sold":0,"req":0},{"sku":"QA1071-Pink-5XL","fam":"QA1071","prod":"QA1071 Tank","sz":"5XL","col":"pink","daily":0.0,"cur":11,"ip":19,"tot":30,"sold":0,"req":0},{"sku":"QA1071-Pink-4XL","fam":"QA1071","prod":"QA1071 Tank","sz":"4XL","col":"pink","daily":0.0,"cur":13,"ip":14,"tot":27,"sold":0,"req":0},{"sku":"QA1071-Pink-3XL","fam":"QA1071","prod":"QA1071 Tank","sz":"3XL","col":"pink","daily":0.0,"cur":24,"ip":33,"tot":57,"sold":0,"req":0},{"sku":"QA1071-Pink-2XL","fam":"QA1071","prod":"QA1071 Tank","sz":"2XL","col":"pink","daily":0.0,"cur":39,"ip":32,"tot":71,"sold":0,"req":0},{"sku":"QA1071-Pink-XL","fam":"QA1071","prod":"QA1071 Tank","sz":"XL","col":"pink","daily":0.0,"cur":55,"ip":48,"tot":103,"sold":0,"req":0},{"sku":"QA1071-Pink-L","fam":"QA1071","prod":"QA1071 Tank","sz":"L","col":"pink","daily":0.0,"cur":11,"ip":15,"tot":26,"sold":0,"req":0},{"sku":"QA1071-Pink-M","fam":"QA1071","prod":"QA1071 Tank","sz":"M","col":"pink","daily":0.0,"cur":78,"ip":64,"tot":142,"sold":0,"req":0},{"sku":"QA1071-Pink-S","fam":"QA1071","prod":"QA1071 Tank","sz":"S","col":"pink","daily":0.0,"cur":8,"ip":12,"tot":20,"sold":0,"req":0},{"sku":"QA1071-Pink-XS","fam":"QA1071","prod":"QA1071 Tank","sz":"XS","col":"pink","daily":0.0,"cur":4,"ip":4,"tot":8,"sold":0,"req":0}]</script>
+<script>
+const R = JSON.parse(document.getElementById('payload').textContent);
+const LT=7, PI=14;
+const st={adj:0, filt:"need"};
+const fmt=n=>(n===null||!isFinite(n))?"—":Math.round(n).toLocaleString();
+const f1=n=>(n===null||!isFinite(n))?"—":n.toFixed(1);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function calc(r){
+  const tot = st.adj ? Math.max(0, r.tot - r.sold) : r.tot;
+  const cur = st.adj ? Math.max(0, r.cur - Math.max(0, r.sold - r.ip)) : r.cur;
+  if(r.daily<=0) return {tot,cur,days:null,order:0,pri:"No sales",cls:"med"};
+  const days=tot/r.daily, order=Math.max(0,r.req-tot);
+  const pri = days<LT?"Critical":days<PI?"High":days<21?"Medium":"OK";
+  const cls = {Critical:"crit",High:"high",Medium:"med",OK:"ok"}[pri];
+  return {tot,cur,days,order,pri,cls};
+}
+function render(){
+  const all=R.map(r=>({r,c:calc(r)}));
+  const live=all.filter(x=>x.r.daily>0);
+  const totOrder=live.reduce((a,x)=>a+x.c.order,0);
+  const nSku=live.filter(x=>x.c.order>0).length;
+  const daily=live.reduce((a,x)=>a+x.r.daily,0);
+  const stock=live.reduce((a,x)=>a+x.c.tot,0);
+  const crit=live.filter(x=>x.c.pri==="Critical").length;
+  document.getElementById('h-order').textContent=fmt(totOrder);
+  document.getElementById('h-skus').textContent=`across ${nSku} SKUs, on top of stock and production`;
+  document.getElementById('h-daily').textContent=fmt(daily);
+  document.getElementById('h-stock').textContent=fmt(stock);
+  document.getElementById('h-days').textContent=`${f1(stock/daily)} days of cover`;
+  document.getElementById('h-crit').textContent=crit;
+  document.getElementById('b-sold').textContent=fmt(R.reduce((a,r)=>a+r.sold,0));
+
+  let list = st.filt==="need" ? all.filter(x=>x.c.order>0) : all;
+  list.sort((a,b)=>{
+    const ad=a.c.days===null?1e9:a.c.days, bd=b.c.days===null?1e9:b.c.days;
+    return ad-bd;});
+  document.getElementById('tbl').innerHTML=
+   `<thead><tr><th>SKU</th><th class="n">Avg daily sales</th><th class="n">Current inventory</th>
+     <th class="n">In production</th><th class="n">Total stock</th><th class="n">Days of stock</th>
+     <th class="n">Required stock</th><th class="n">Recommended order</th><th>Priority</th></tr></thead>
+    <tbody>${list.map(({r,c})=>`<tr class="r-${c.pri}">
+      <td class="sku">${esc(r.sku)}</td>
+      <td class="n">${r.daily>0?f1(r.daily):'<span class="muted">—</span>'}</td>
+      <td class="n">${fmt(c.cur)}</td><td class="n">${fmt(r.ip)}</td><td class="n">${fmt(c.tot)}</td>
+      <td class="n strong">${c.days===null?'<span class="muted">—</span>':f1(c.days)}</td>
+      <td class="n">${r.req?fmt(r.req):'<span class="muted">—</span>'}</td>
+      <td class="n strong">${c.order?fmt(c.order):'<span class="muted">0</span>'}</td>
+      <td><span class="chip ${c.cls}">${c.pri}</span></td></tr>`).join("")}</tbody>
+    <tfoot><tr><td>Total — ${list.length} SKUs</td><td class="n">${f1(list.reduce((a,x)=>a+x.r.daily,0))}</td>
+      <td class="n">${fmt(list.reduce((a,x)=>a+x.c.cur,0))}</td><td class="n">${fmt(list.reduce((a,x)=>a+x.r.ip,0))}</td>
+      <td class="n">${fmt(list.reduce((a,x)=>a+x.c.tot,0))}</td><td></td><td></td>
+      <td class="n">${fmt(list.reduce((a,x)=>a+x.c.order,0))}</td><td></td></tr></tfoot>`;
+  document.getElementById('tblnote').textContent = st.adj
+    ? "Stock shown net of units sold since 13 August — an estimate, not a counted figure. Sorted by days of stock, lowest first."
+    : "Stock exactly as supplied in the 13 August workbook. Sorted by days of stock, lowest first.";
+}
+function seg(id,attr,key,cast){document.getElementById(id).addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  [...e.currentTarget.querySelectorAll('button')].forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  st[key]=cast(b.dataset[attr]); render();});}
+seg('basis','a','adj',Number); seg('filter','f','filt',v=>v);
+
+document.getElementById('export').addEventListener('click', async ()=>{
+  const msg=document.getElementById('msg'), btn=document.getElementById('export');
+  const list=R.map(r=>({r,c:calc(r)})).filter(x=>x.c.order>0).sort((a,b)=>a.c.days-b.c.days);
+  if(!list.length){msg.textContent="Nothing to order at these settings.";return;}
+  const q=v=>{const t=String(v??"");return /[",\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t;};
+  const head=["Date generated","SKU","Product","Color","Size","Avg daily sales","Current inventory",
+    "In production","Total stock","Days of stock","Required stock","Recommended order","Priority","Stock basis"];
+  const basis=st.adj?"13 Aug less units sold since":"as supplied 13 Aug";
+  const csv=[head.join(","),...list.map(({r,c})=>[ "2026-08-25",r.sku,r.prod,r.col,r.sz,r.daily.toFixed(1),
+    Math.round(c.cur),r.ip,Math.round(c.tot),c.days.toFixed(1),r.req,Math.round(c.order),c.pri,basis]
+    .map(q).join(","))].join("\n");
+  const dl = window.claude && claude.use ? await claude.use("downloads") : null;
+  if(!dl){msg.textContent="File saving isn’t available in this view.";return;}
+  btn.disabled=true; msg.textContent="Waiting for you to confirm…";
+  const name="reorder_2026-08-25"+(st.adj?"_adjusted":"");
+  try{ await dl.save({filename:name+".csv",data:csv}); msg.textContent=`Saved — ${list.length} SKUs.`; }
+  catch(e){
+    if(e&&e.code==="extension_not_enabled"){
+      try{ await dl.save({filename:name+".txt",data:csv}); msg.textContent=`Saved as .txt — ${list.length} SKUs.`;}
+      catch(e2){ msg.textContent = e2&&e2.code==="declined"?"Cancelled.":"Couldn’t save the file."; }
+    } else msg.textContent = e&&e.code==="declined"?"Cancelled.":"Couldn’t save the file.";
+  } finally { btn.disabled=false; }
+});
+render();
+</script>
