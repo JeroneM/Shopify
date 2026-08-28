@@ -10,6 +10,8 @@ original order and the requested swap read out of the customer's own messages.
 | `records.jsonl` | The dataset. One JSON object per request. |
 | `build.py` | Renders `records.jsonl` into `exchanges.html`. Run it from this directory. |
 | `exchanges.html` | Filterable table (date range, store, keyword search). Published as an Artifact. |
+| `to_csv.py` | Renders `records.jsonl` into `replacement_requests.csv`. Run it from this directory. |
+| `replacement_requests.csv` | Spreadsheet export. 102 rows x 12 columns, UTF-8 with BOM so Excel opens it correctly. |
 
 ## Scope
 
