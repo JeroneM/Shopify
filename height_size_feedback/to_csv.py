@@ -16,6 +16,7 @@ HEADERS = [
     'Customer Name',
     'Customer Height (cm)',
     'Customer Height (as stated)',
+    'Customer Weight (lbs)',
     'Size Ordered/Worn',
     'Size Basis',
     'Fit Feedback',
@@ -23,8 +24,13 @@ HEADERS = [
     'Conversation / Ticket ID',
 ]
 
-KEYS = ['date', 'store', 'order', 'customer', 'cm', 'h_orig',
+KEYS = ['date', 'store', 'order', 'customer', 'cm', 'h_orig', 'weight_lb',
         'size', 'basis', 'fit', 'concern', 'ticket']
+
+# Weight is only present where the customer stated it; never inferred.
+for r in rows:
+    if r.get('weight_lb') is None:
+        r['weight_lb'] = 'Not Specified'
 
 # utf-8-sig so Excel picks up the encoding on a double-click
 with open('height_size_fit_feedback.csv', 'w', newline='', encoding='utf-8-sig') as f:
