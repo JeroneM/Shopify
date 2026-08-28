@@ -10,6 +10,8 @@ and their own words about what went wrong.
 | `records.jsonl` | The dataset. One JSON object per customer. Height stored as feet/inches. |
 | `build.py` | Renders `records.jsonl` into `fit_by_height.html`. Run from this directory. |
 | `fit_by_height.html` | Filterable table + fit-by-height-band chart. Published as an Artifact. |
+| `to_csv.py` | Renders `records.jsonl` into `height_size_fit_feedback.csv`. Run from this directory. |
+| `height_size_fit_feedback.csv` | Spreadsheet export. 83 rows x 11 columns, UTF-8 with BOM. Gitignored (`*.csv`) — regenerate with `to_csv.py`. |
 
 ## Inclusion rule
 
