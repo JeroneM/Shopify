@@ -487,7 +487,7 @@
 
   <header class="masthead">
     <h1>Tank Top Ops Desk</h1>
-    <div class="sub">Fri <b>21 Aug 2026</b> &nbsp;·&nbsp; 17 Fireflies transcripts &nbsp;·&nbsp; Jerone Medina</div>
+    <div class="sub">Fri <b>21 Aug 2026</b> &nbsp;·&nbsp; 17 transcripts + Slack &nbsp;·&nbsp; Jerone Medina</div>
   </header>
 
   <div class="stats" id="stats"></div>
@@ -518,12 +518,12 @@
 
   <div class="filters">
     <label><span class="flabel">Search</span><input type="search" id="f-q" placeholder="task, owner, keyword"></label>
-    <label><span class="flabel">Meeting</span><select id="f-meeting"></select></label>
+    <label><span class="flabel">Source</span><select id="f-meeting"></select></label>
     <label><span class="flabel">Owner</span><select id="f-owner"></select></label>
     <label><span class="flabel">Status</span><select id="f-status"></select></label>
     <label><span class="flabel">Priority</span><select id="f-priority"></select></label>
-    <label><span class="flabel">Met from</span><input type="date" id="f-from"></label>
-    <label><span class="flabel">Met to</span><input type="date" id="f-to"></label>
+    <label><span class="flabel">Raised from</span><input type="date" id="f-from"></label>
+    <label><span class="flabel">Raised to</span><input type="date" id="f-to"></label>
     <label><span class="flabel">Sort</span><select id="f-sort">
       <option value="urgency">Urgency</option>
       <option value="due">Due date</option>
@@ -540,8 +540,8 @@
           <th class="c-flag"></th>
           <th>Task</th>
           <th>Owner</th>
-          <th>Meeting</th>
-          <th>Met</th>
+          <th>Source</th>
+          <th>Raised</th>
           <th>Due</th>
           <th>Priority</th>
           <th>Status</th>
@@ -570,7 +570,9 @@
       <div>
         <h3>Still unresolved</h3>
         <ul>
-          <li><b>The factory has no name.</b> Jeffrey has refused twice to identify it; it is run by the boss's elder sister and serves the domestic Chinese market only. No QC independence is possible while the fulfilment partner and factory are the same family.<span class="src">Aug 19–20 · Founders</span></li>
+          <li><b>Nobody has ever given you a manufacturing lead time.</b> On 11 Aug ZQ gave "one to two days" for fabric arriving and "one to two days" for finished goods reaching the warehouse — the sewing time between them was never quantified. The 7-day figure in your order template is your own placeholder.<span class="src">Aug 11 · Megafulfill call</span></li>
+          <li><b>Mega Fulfill has now declined a production ETA twice in one day.</b> "We are not able to fill in an accurate ETA on the sheet" and "difficult to provide an exact timeline for when all tanks currently in production will be fully completed." Their model is rolling replenishment sized to the trailing 15 days of sales, which means no batch ever has a completion date.<span class="src">Aug 20 · #supply-chain-inventory</span></li>
+          <li><b>The factory has no name.</b> Three dodges now: "internal supply chain information", declining on the 19 Aug call, and answering your 18 Aug request with "could you advise at which stage the factory name is required?" It is run by the boss's elder sister and serves the domestic Chinese market only. No QC independence is possible while the fulfilment partner and factory are the same family.<span class="src">Aug 18–20 · Founders + Slack</span></li>
           <li><b>The size chart contradicts itself.</b> Small sizes run big, large sizes run small, and the factory claims a 68cm bust fits an 84–89cm garment "because it stretches". Unverified.<span class="src">Aug 19 · Founders</span></li>
           <li><b>Which measurement do customers actually take?</b> The factory measures top bust; every mainstream brand measures full bust. No instruction has been supplied despite three requests.<span class="src">Aug 17, 18, 19</span></li>
           <li><b>Mega Fulfill uploads tracking without dispatching.</b> Orders show as fulfilled within 24h on days there was no stock, so fulfilment data can't be trusted.<span class="src">Aug 18 · Founders</span></li>
@@ -584,7 +586,8 @@
   </details>
 
   <footer class="colophon">
-    Built from 17 Fireflies transcripts, 30 Jul – 20 Aug 2026. Every task traces to something said on a call — open a row to see the line.<br>
+    Built from 17 Fireflies transcripts, 30 Jul – 20 Aug 2026, plus the #supply-chain-inventory and #cs-megafulfill Slack channels to 21 Aug.
+    Every task traces to something said on a call or written in a channel — open a row to see the line.<br>
     Status changes are saved in this browser only. "Owner: Unclear" means the work was agreed but nobody was named.
   </footer>
 
@@ -608,7 +611,9 @@ const M = {
   mf11:  ["Meeting with Megafulfill",    "2026-08-11", "01KZQTHYT3G6CQZX2QNWC1K1DY"],
   ops11: ["Ops & scaling call",          "2026-08-11", "01KZQGGYG46QRH7XTE9Q8YYG8J"],
   cs11:  ["CS accountability call",      "2026-08-11", "01KZQPDR7VSV905R37Q0PX4JSH"],
-  ros10: ["Intro Call with Rose",        "2026-08-10", "01KZKDX83ZMTFAXZN7BWD6G0Z7"]
+  ros10: ["Intro Call with Rose",        "2026-08-10", "01KZKDX83ZMTFAXZN7BWD6G0Z7"],
+  sci:   ["#supply-chain-inventory",     "2026-08-20", null, "https://hahcommerce.slack.com/archives/C0BP5PUS2GZ"],
+  csmf:  ["#cs-megafulfill",             "2026-08-21", null, "https://hahcommerce.slack.com/archives/C0BPXEK26UQ"]
 };
 
 // t=task, o=owner, m=meeting key, d=due (null = not specified), p=priority, s=default status, e=evidence
@@ -621,7 +626,7 @@ const TASKS = [
   {id:"t03", t:"Get the factory's correct body-measurement instructions — they are measuring top bust, not full bust", o:"Me", m:"a817", d:"2026-08-18", p:"Urgent", s:"In Progress",
    e:"Asked 17 Aug, chased 18 Aug (“hopefully they can give us feedback today”), still unanswered on 19 and 20 Aug. Jerone: “They are measuring the top bust, that's the chest. There's nothing to measure there. That is the problem.” Blocks the size chart, the measuring video and any scaling."},
   {id:"t04", t:"Chase the 3XL / 4XL samples ordered last week — no delivery confirmation from Mega Fulfill", o:"Me", m:"f820", d:null, p:"Urgent", s:"Not Started",
-   e:"Jerone: “We are expecting it to be delivered today, but they don't give us any feedback on where are those 4XL that I ordered last week.” Reber can't finish the size chart swap without 4XL: “If I don't have 4XL, no one's gonna buy, the highest one will be 115 centimeter.”"},
+   e:"Jerone: “We are expecting it to be delivered today, but they don't give us any feedback on where are those 4XL that I ordered last week.” Reber can't finish the size chart swap without 4XL: “If I don't have 4XL, no one's gonna buy, the highest one will be 115 centimeter.” Chased again in #supply-chain-inventory on 20 Aug 09:23 — still no confirmation."},
   {id:"t05", t:"Have CS agents order S–XL samples to test the stretch claim (68cm bust → fits 84–89cm?)", o:"Me", m:"f819", d:null, p:"Urgent", s:"Not Started",
    e:"Jerone: “We need to order this ASAP… they're claiming a 68cm bust can fit 84 to 89. We need to confirm this our own.” Reber: “Ask the bust measurement first, then say okay Rose, please order S, or okay Sarah, please order XL.” Do not let the factory send samples — Reber: “they even will send like the good ones.”"},
   {id:"t06", t:"Tell the founders when it is safe to resume scaling", o:"Me", m:"a817", d:"2026-08-18", p:"Urgent", s:"In Progress",
@@ -787,7 +792,29 @@ const TASKS = [
   {id:"t78", t:"Call Facebook directly to flag the groups created against us", o:"Unclear", m:"f818", d:null, p:"Normal", s:"Not Started",
    e:"Jerone: “Someone needs to call Facebook. I don't know how they are going to call it, but back then we used to contact Facebook directly. We need to flag these groups that were created against us.” Reber offered a takedown agency but nobody was named for the direct route."},
   {id:"t79", t:"Hire a China-based QC inspector and factory visitor", o:"Unclear", m:"ops11", d:null, p:"Normal", s:"Not Started",
-   e:"Raised on the 11 Aug ops call as the way to get quality and pricing control at the factory. Ahmed said he would support it. No owner, no budget, no date agreed."}
+   e:"Raised on the 11 Aug ops call as the way to get quality and pricing control at the factory. Ahmed said he would support it. No owner, no budget, no date agreed."},
+
+  // ---- FROM SLACK, 17–21 AUG ----
+  {id:"t80", t:"Get the per-batch manufacturing lead time out of Mega Fulfill", o:"Me", m:"sci", d:"2026-08-21", p:"Urgent", s:"Not Started",
+   e:"Never actually answered. On the 11 Aug call ZQ gave “one to two days” twice — fabric arriving, and finished goods reaching the warehouse — but the production step itself was never quantified, because the question was framed as “after they completed the production today…”, which skipped straight over it. The 7-day lead time in your weekly order template is your own placeholder assumption, not their figure. A message asking specifically for the per-batch lead time is drafted and waiting in #supply-chain-inventory."},
+  {id:"t81", t:"Nude XL is roughly 2 days from stockout with no arrival date", o:"Me", m:"sci", d:"2026-08-21", p:"Urgent", s:"Not Started",
+   e:"Your message, 20 Aug 10:56: 1,715 units available against roughly 810 sold per day, with 15,297 units in production and no ETA in the sheet. Jeffrey replied at 11:18 that he cannot give an accurate ETA because daily output varies. Either the units land in time or the best-selling variant goes dark — and right now there is no way to tell which."},
+  {id:"t82", t:"Escalate the missing production ETA — Jeffrey has now declined twice", o:"Me", m:"sci", d:null, p:"High", s:"Not Started",
+   e:"20 Aug 11:18: “We cannot guarantee how many units of in-production goods the factory can ship each day… we are not able to fill in an accurate ETA on the sheet.” 20 Aug 13:14: “It is currently difficult to provide an exact timeline for when all tanks currently in production will be fully completed.” A partner who cannot state a lead time cannot be forecast against. This belongs in the SLA and the Karim escalation, not another Slack round."},
+  {id:"t83", t:"Answer Jeffrey's deflection on the factory name", o:"Me", m:"sci", d:null, p:"High", s:"Not Started",
+   e:"You asked for the factory name on 18 Aug 13:28. Jeffrey answered at 13:57 with a question of his own: “Could you advise at which stage the factory name is required?” Still unanswered by you. That is the third dodge, after “internal supply chain information… cannot be disclosed” and Jeffrey declining to name it on the 19 Aug founders call."},
+  {id:"t84", t:"Send the weekly SKU order recommendation every Tuesday", o:"Me", m:"csmf", d:"2026-08-25", p:"High", s:"Not Started",
+   e:"Committed 13 Aug to Jeffrey, Gary and Eryu: “Every Tuesday I will update the file with our recommended order quantity for each SKU. Please check the designated order tab and use the quantities provided as the basis for the factory order for that week.” This is the mechanism the whole replenishment plan rests on."},
+  {id:"t85", t:"Confirm whether last week's order has arrived in the warehouse", o:"Jeffrey (Mega Fulfill)", m:"sci", d:"2026-08-20", p:"Urgent", s:"Waiting",
+   e:"Asked 20 Aug 09:23, no confirmation since. Same underlying question as the missing 4XL samples — ordered the week of 10 Aug, against a stated 1–2 day factory-to-warehouse transit."},
+  {id:"t86", t:"Fill the four batch-commitment columns for the priority SKUs", o:"Jeffrey (Mega Fulfill)", m:"csmf", d:"2026-08-21", p:"Urgent", s:"Waiting",
+   e:"Rose, 21 Aug 05:42: Qty Confirmed by Factory, Prod Complete date, Warehouse Arrival date, Evidence link — for QL1058 nude/black/white/coffee XL–3XL and QA1071 Beige, due end of day. “These are commitments, not guesses. A date without proof does not count.”"},
+  {id:"t87", t:"Post the daily inventory numbers before 11 AM", o:"Jeffrey (Mega Fulfill)", m:"csmf", d:null, p:"High", s:"Waiting",
+   e:"In Production, In Warehouse, Available — filled every day before 11 AM. Requested on 13, 17, 18 and 20 Aug and again by Rose on 21 Aug. Still not arriving reliably, which is why the forecast keeps going stale."},
+  {id:"t88", t:"Send the estimated delivery timeline per country after fulfilment", o:"Jeffrey (Mega Fulfill)", m:"sci", d:"2026-08-17", p:"High", s:"Not Started",
+   e:"Asked 17 Aug 12:32 for the USA, Canada, New Zealand and the other destinations, needed the same day for the delivery and fulfilment analysis. No reply in the channel. This is the number that would settle what you can honestly put on the product page."},
+  {id:"t89", t:"Replace “yesterday” with real dates in the inventory file", o:"Jeffrey (Mega Fulfill)", m:"sci", d:null, p:"Normal", s:"Waiting",
+   e:"Asked 20 Aug 09:33, so the numbers can be reviewed against an actual date rather than a moving reference."}
 ];
 
 /* ---------------- state ---------------- */
@@ -864,7 +891,7 @@ function fillSelect(el, values, allLabel) {
 }
 
 const meetingKeys = Object.keys(M).sort((a, b) => M[b][1].localeCompare(M[a][1]));
-fillSelect(els.meeting, meetingKeys.map(k => M[k][0] + " — " + fmtDate(M[k][1])), "All meetings");
+fillSelect(els.meeting, meetingKeys.map(k => M[k][0] + " — " + fmtDate(M[k][1])), "All sources");
 [...els.meeting.options].forEach((o, i) => { if (i > 0) o.value = meetingKeys[i - 1]; });
 
 const owners = [...new Set(TASKS.map(t => t.o))].sort((a, b) => (a === "Me" ? -1 : b === "Me" ? 1 : a.localeCompare(b)));
@@ -991,9 +1018,15 @@ function renderTable() {
         "<td>" + chip(t.p) + "</td>" +
         "<td>" + statusSelect(t) + "</td>" +
       "</tr>";
+    const src = M[t.m];
+    const link = src[2]
+      ? '<a href="https://app.fireflies.ai/view/' + src[2] + '" target="_blank" rel="noopener">Open the transcript ↗</a>'
+      : src[3]
+        ? '<a href="' + src[3] + '" target="_blank" rel="noopener">Open ' + src[0] + " in Slack ↗</a>"
+        : "";
     const detail = isOpen
       ? '<tr class="detail"><td colspan="8"><div class="evidence">' + t.e +
-        '<br><a href="https://app.fireflies.ai/view/' + M[t.m][2] + '" target="_blank" rel="noopener">Open the transcript ↗</a>' +
+        (link ? "<br>" + link : "") +
         "</div></td></tr>"
       : "";
     return main + detail;
