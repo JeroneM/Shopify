@@ -1,0 +1,445 @@
+<title>Tank Complaint Signal</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#F7F4F3; --surface:#FFFFFF; --sunk:#EFEAE9;
+  --ink:#241C21; --ink-2:#5B4E55; --muted:#867680; --line:#E2DAD9; --line-2:#CFC4C4;
+  --accent:#7A2E4E; --accent-2:#A34C71; --accent-wash:#F0E2E8;
+  --c1:#C4356A; --c2:#7E7000; --c3:#8341CC; --c4:#D14A1C; --c5:#0A9E92; --c6:#2D6AD8;
+  --shadow:0 1px 2px rgba(36,28,33,.06),0 8px 24px -12px rgba(36,28,33,.14);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#16121A; --surface:#201A26; --sunk:#2A2230;
+    --ink:#F2EBEE; --ink-2:#C9BCC4; --muted:#9C8D97; --line:#362C3E; --line-2:#4A3D53;
+    --accent:#E08BAB; --accent-2:#C96A8E; --accent-wash:#38263048;
+    --c1:#E7739A; --c2:#B7A200; --c3:#B18BEA; --c4:#EE7B52; --c5:#2FC5B7; --c6:#7BA6F2;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#16121A; --surface:#201A26; --sunk:#2A2230;
+  --ink:#F2EBEE; --ink-2:#C9BCC4; --muted:#9C8D97; --line:#362C3E; --line-2:#4A3D53;
+  --accent:#E08BAB; --accent-2:#C96A8E; --accent-wash:#38263048;
+  --c1:#E7739A; --c2:#B7A200; --c3:#B18BEA; --c4:#EE7B52; --c5:#2FC5B7; --c6:#7BA6F2;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:"Karla","Helvetica Neue",Arial,sans-serif;
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1120px; margin:0 auto; padding:0 24px 72px; display:flex; flex-direction:column; gap:28px}
+
+/* ---------- masthead ---------- */
+header.mast{padding:44px 0 4px; display:flex; flex-direction:column; gap:10px}
+.eyebrow{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--muted);
+}
+h1{
+  font-family:"Fraunces",Georgia,serif; font-weight:600; font-size:clamp(30px,4.4vw,46px);
+  line-height:1.05; margin:0; text-wrap:balance; letter-spacing:-.015em;
+}
+.sub{color:var(--ink-2); max-width:64ch; margin:0}
+
+/* ---------- filters ---------- */
+.filters{
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  padding:18px; box-shadow:var(--shadow);
+  display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(168px,1fr)); align-items:end;
+}
+.field{display:flex; flex-direction:column; gap:6px; min-width:0}
+.field label{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--muted);
+}
+.field input,.field select{
+  font:inherit; font-size:14px; color:var(--ink); background:var(--ground);
+  border:1px solid var(--line-2); border-radius:8px; padding:9px 10px; width:100%;
+  min-width:0; appearance:none;
+}
+.field select{
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;
+  background-size:5px 5px,5px 5px; background-repeat:no-repeat; padding-right:30px;
+}
+.field input:focus-visible,.field select:focus-visible,button:focus-visible{
+  outline:2px solid var(--accent); outline-offset:2px;
+}
+.actions{display:flex; gap:8px; align-items:end}
+button{
+  font:inherit; font-weight:700; font-size:14px; cursor:pointer; border-radius:8px;
+  padding:9px 15px; border:1px solid transparent; white-space:nowrap; transition:filter .12s ease;
+}
+button:hover{filter:brightness(1.08)}
+.btn-primary{background:var(--accent); color:var(--surface); border-color:var(--accent)}
+.btn-ghost{background:transparent; color:var(--ink); border-color:var(--line-2)}
+
+.period{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12.5px; color:var(--ink-2);
+  display:flex; flex-wrap:wrap; gap:6px 14px; align-items:baseline;
+}
+.period b{color:var(--ink); font-weight:500}
+
+/* ---------- summary ---------- */
+.tiles{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.tile{
+  background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px 18px 16px;
+  box-shadow:var(--shadow); display:flex; flex-direction:column; gap:6px; min-width:0;
+}
+.tile .k{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--muted); line-height:1.35;
+}
+.tile .v{
+  font-family:"Fraunces",Georgia,serif; font-weight:600; font-size:40px; line-height:1;
+  font-variant-numeric:tabular-nums; letter-spacing:-.02em;
+}
+.tile.hero{background:var(--accent-wash); border-color:var(--accent-2)}
+.tile.hero .v{font-size:21px; line-height:1.2; color:var(--accent)}
+.tile .note{font-size:12.5px; color:var(--muted)}
+
+/* ---------- sections ---------- */
+section{display:flex; flex-direction:column; gap:14px}
+h2{
+  font-family:"Fraunces",Georgia,serif; font-weight:600; font-size:21px; margin:0;
+  letter-spacing:-.01em; display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;
+}
+h2 .count{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11px; font-weight:400;
+  letter-spacing:.1em; color:var(--muted); text-transform:uppercase;
+}
+
+/* ---------- rank list ---------- */
+.rank{
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  box-shadow:var(--shadow); overflow:hidden;
+}
+.row{
+  display:grid; grid-template-columns:30px minmax(0,1fr) 96px 54px; gap:14px; align-items:center;
+  padding:13px 18px; border-bottom:1px solid var(--line); position:relative;
+}
+.row:last-child{border-bottom:0}
+.row:hover{background:var(--sunk)}
+.rk{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12px; color:var(--muted);
+  font-variant-numeric:tabular-nums; text-align:right;
+}
+.lbl{display:flex; flex-direction:column; gap:5px; min-width:0}
+.lbl .nm{font-weight:500; line-height:1.3}
+.bar-track{height:7px; background:var(--sunk); border-radius:4px; overflow:hidden}
+.bar{height:100%; background:var(--accent); border-radius:0 4px 4px 0; min-width:3px}
+.num{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums;
+  font-size:13.5px; text-align:right;
+}
+.num .of{color:var(--muted); font-size:11.5px}
+.pct{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums;
+  font-size:13.5px; text-align:right; color:var(--ink-2);
+}
+
+/* ---------- chips ---------- */
+.chip{
+  display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink-2);
+  font-weight:500; white-space:nowrap;
+}
+.dot{width:8px; height:8px; border-radius:50%; flex:none}
+.c-fit{background:var(--c1)} .c-fab{background:var(--c2)} .c-bra{background:var(--c3)}
+.c-qua{background:var(--c4)} .c-com{background:var(--c5)} .c-des{background:var(--c6)}
+
+/* ---------- table ---------- */
+.tablewrap{
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  box-shadow:var(--shadow); overflow-x:auto;
+}
+table{border-collapse:collapse; width:100%; min-width:820px}
+th{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--muted); font-weight:400; text-align:left;
+  padding:14px 16px; border-bottom:1px solid var(--line-2); white-space:nowrap; vertical-align:bottom;
+}
+th.r,td.r{text-align:right}
+td{padding:13px 16px; border-bottom:1px solid var(--line); vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--sunk)}
+td.prob{font-weight:500; min-width:190px}
+td.n{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+td.quote{color:var(--ink-2); font-size:13.5px; line-height:1.5; max-width:420px}
+td.quote::before{content:"“"} td.quote::after{content:"”"}
+
+.empty{padding:40px 20px; text-align:center; color:var(--muted)}
+.empty b{display:block; color:var(--ink); font-weight:700; margin-bottom:6px}
+
+/* ---------- export panel ---------- */
+.export[hidden]{display:none!important}
+.export{
+  background:var(--surface); border:1px solid var(--line-2); border-radius:14px;
+  padding:16px; display:flex; flex-direction:column; gap:10px; box-shadow:var(--shadow);
+}
+.export .top{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap}
+.export .top strong{font-family:"Fraunces",Georgia,serif; font-size:16px}
+textarea{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11.5px; line-height:1.6;
+  width:100%; height:190px; resize:vertical; color:var(--ink); background:var(--ground);
+  border:1px solid var(--line-2); border-radius:8px; padding:11px; white-space:pre;
+}
+
+/* ---------- method ---------- */
+.method{
+  border-top:1px solid var(--line); padding-top:22px; display:flex; flex-direction:column; gap:12px;
+}
+.method h3{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:10.5px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--muted); font-weight:400; margin:0;
+}
+.method p{margin:0; color:var(--ink-2); font-size:13.5px; max-width:82ch}
+.method code{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:12.5px;
+  background:var(--sunk); padding:1px 5px; border-radius:4px;
+}
+
+@media (max-width:640px){
+  .row{grid-template-columns:24px minmax(0,1fr) 62px; gap:10px; padding:12px 14px}
+  .row .pct{display:none}
+  .wrap{padding:0 16px 56px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="eyebrow">CommSlayer · Maggie's Tanks · product complaint analysis</div>
+  <h1>What's actually wrong with the tank</h1>
+  <p class="sub">Every product complaint a customer raised in support, resolved down to the specific part of the garment and counted once per customer. Shipping, tracking and payment tickets are excluded.</p>
+</header>
+
+<div class="filters">
+  <div class="field">
+    <label for="f-start">Start date</label>
+    <input type="date" id="f-start">
+  </div>
+  <div class="field">
+    <label for="f-end">End date</label>
+    <input type="date" id="f-end">
+  </div>
+  <div class="field">
+    <label for="f-store">Store</label>
+    <select id="f-store">
+      <option>All</option><option>Maggie</option><option>Mary</option><option>Lyn</option><option>Elsie</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-cat">Product category</label>
+    <select id="f-cat"><option>All</option></select>
+  </div>
+  <div class="field">
+    <label for="f-prob">Specific problem</label>
+    <select id="f-prob"><option>All</option></select>
+  </div>
+  <div class="actions">
+    <button class="btn-primary" id="apply">Apply filters</button>
+    <button class="btn-ghost" id="reset">Reset</button>
+  </div>
+</div>
+
+<div class="period" id="period"></div>
+
+<section>
+  <h2>Summary</h2>
+  <div class="tiles" id="tiles"></div>
+</section>
+
+<section>
+  <h2>Top 10 product problems <span class="count" id="top-note"></span></h2>
+  <div class="rank" id="top10"></div>
+</section>
+
+<section>
+  <h2>All product complaints <span class="count" id="tbl-note"></span></h2>
+  <div class="actions" style="align-items:center">
+    <button class="btn-ghost" id="export">Export CSV</button>
+  </div>
+  <div class="export" id="export-panel" hidden>
+    <div class="top">
+      <strong>CSV — current filters</strong>
+      <div class="actions">
+        <button class="btn-primary" id="copy">Copy to clipboard</button>
+        <button class="btn-ghost" id="close-export">Close</button>
+      </div>
+    </div>
+    <textarea id="csv" readonly spellcheck="false"></textarea>
+  </div>
+  <div class="tablewrap" id="tablewrap"></div>
+</section>
+
+<div class="method">
+  <h3>How these numbers were built</h3>
+  <p><b>Processing order.</b> Date range → CommSlayer product labels (<code>return-exchange</code>, <code>size_issue</code>, <code>size_replacement</code>, <code>refund-request</code>, <code>damaged-item</code>, <code>fulfilment-error</code>, <code>product-suggestions</code>) → conversations read → specific problem. Tickets that were only about shipping, tracking, order status, address changes, payment or fulfilment delays were excluded, as were pre-purchase questions and agent messages.</p>
+  <p><b>Counting.</b> Each customer is counted once per specific problem. A customer reporting several distinct problems is counted under each. Percentages are <code>customers reporting the problem ÷ all customers with a product complaint in the selected date range and store × 100</code>, so the denominator stays fixed when you filter by category or problem and the shares remain comparable.</p>
+  <p><b>Scope and confidence.</b> This build reads 64 conversations sampled across the labels above for 1–31 August 2026. Ranks and shares are reliable; absolute counts are sample counts, not the full month's total — August carried roughly 6,300 size-exchange and 1,900 fit-and-damage tickets in the same window. Problems are only named when the customer said where or how; anything vaguer is held as <i>Unspecified</i> rather than guessed.</p>
+  <p><b>Store coverage.</b> The connected CommSlayer account is Maggie's Tanks. Mary's Tanks, Lyn's Tanks, Simply Elsie and Mary &amp; James are separate CommSlayer accounts, each needing its own connection before they can appear here.</p>
+</div>
+
+</div>
+
+<script>
+const DATA = [{"c":455284421,"d":"2026-08-29","s":"Maggie","cat":"Quality","p":"Padding twists/deforms after washing","q":"I machine washed and air dried them. Unfortunately, the sewn in cups have become twisted and I have not been able to get them back to the correct shape. So, not able to wear them."},{"c":455284421,"d":"2026-08-29","s":"Maggie","cat":"Design","p":"Garment too long for petite frame","q":"I am 5 foot 1 inch so they cover my bottom which makes it difficult when wearing pants"},{"c":473413054,"d":"2026-08-31","s":"Maggie","cat":"Quality","p":"Stains/dirt marks on arrival","q":"It is dirty. Someone should have noticed it. There are 3 dirt spots on it, one right in the middle of one breast."},{"c":435793741,"d":"2026-08-30","s":"Maggie","cat":"Fabric & Comfort","p":"Fabric too thin/flimsy","q":"It arrived and I am not satisfied! very flimsy material!"},{"c":454052886,"d":"2026-08-30","s":"Maggie","cat":"Quality","p":"Raw/unfinished edges (no hem)","q":"My seams are not hemmed. I'm puzzled about this?"},{"c":472507307,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"My tanks don't fit at all. I could barely get them on. They were very uncomfortable."},{"c":470439079,"d":"2026-08-29","s":"Maggie","cat":"Bra & Padding","p":"Padding folds/bunches","q":"it's defective on one side because the cup is all bent inside and doesn't flatten out"},{"c":470439079,"d":"2026-08-29","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"It's also too small."},{"c":469830199,"d":"2026-08-28","s":"Maggie","cat":"Quality","p":"Seam split / unstitched seam","q":"One tank has a 3 in hole where the side was not stitched properly."},{"c":471162232,"d":"2026-08-29","s":"Maggie","cat":"Bra & Padding","p":"Not enough bust support","q":"Though its comfortable i feel it does not provide support at all."},{"c":471115941,"d":"2026-08-29","s":"Maggie","cat":"Quality","p":"Seam split / unstitched seam","q":"The seams and fabric were poor quality. One seam was partially ripped. I never even wore it."},{"c":452075138,"d":"2026-08-28","s":"Maggie","cat":"Quality","p":"Hole in fabric on arrival","q":"love the fit but not happy the tan one has a hole in it"},{"c":454721948,"d":"2026-08-29","s":"Maggie","cat":"Quality","p":"Raw/unfinished edges (no hem)","q":"The edges of the arm holes and the front and back neck lines nor the hemlines have seams just cut with a raw edge. This is the most poorly made garment I have ever purchased."},{"c":469680586,"d":"2026-08-28","s":"Maggie","cat":"Quality","p":"Strap not fully sewn / stitching incomplete","q":"The top of the strap is not fully sewn. This is not what I had hoped for my first Maggie's Tanks."},{"c":473330971,"d":"2026-08-31","s":"Maggie","cat":"Quality","p":"Padding twists/deforms after washing","q":"i put them in to wash them, and I had to straighten out every cup because the turned and some of them folded in half."},{"c":473330971,"d":"2026-08-31","s":"Maggie","cat":"Bra & Padding","p":"Padding not sewn/anchored to garment","q":"Non were sewn to the garment."},{"c":473330971,"d":"2026-08-31","s":"Maggie","cat":"Quality","p":"Raw/unfinished edges (no hem)","q":"no sewn seems, they are all raw edges"},{"c":472818226,"d":"2026-08-30","s":"Maggie","cat":"Quality","p":"Padding twists/deforms after washing","q":"the padding the all of them after being washed is all deformed and bent in half"},{"c":472818226,"d":"2026-08-30","s":"Maggie","cat":"Bra & Padding","p":"Padding not sewn/anchored to garment","q":"I was looking for it to be sewn in so you didn't have to always be fussing with them."},{"c":458096515,"d":"2026-08-30","s":"Maggie","cat":"Bra & Padding","p":"Not enough bust support","q":"They give me no shape at all... the material of the straps are so thin they do not hold my boobs up."},{"c":458096515,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Straps too long","q":"the beige one, the straps are at least two inches too long."},{"c":430839268,"d":"2026-08-30","s":"Maggie","cat":"Bra & Padding","p":"Padding moves/shifts out of place","q":"The padding that you claim stays put, does not and is all wrinkled up"},{"c":430839268,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"The 3XL you replaced fits no better than the 2XL did."},{"c":469524558,"d":"2026-08-28","s":"Maggie","cat":"Quality","p":"Off-centre seam causing skin irritation","q":"the seam running up to the right armpit was off center. The irregularity left a hard little tab sticking out right into my skin."},{"c":454479450,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Unspecified fit/product complaint","q":"First tank didn't work and you guys aren't making it right."},{"c":471031317,"d":"2026-08-29","s":"Maggie","cat":"Quality","p":"Stains/dirt marks on arrival","q":"the white one has a black stain along the neck line. I used various stain removers to try to get it out. Nothing works."},{"c":469922947,"d":"2026-08-28","s":"Maggie","cat":"Quality","p":"Uneven/crooked stitching","q":"the seams in the shoulder straps are uneven which is unsightly - it seems as though cheaply made."},{"c":472518789,"d":"2026-08-30","s":"Maggie","cat":"Quality","p":"Padding twists/deforms after washing","q":"I love the fit of the actual tank part. My challenge comes from the bra insert. The foam insert has shrunk and become mis-shapen over time."},{"c":426871705,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"All were comfortable except the black. It was quite snug and difficult to put on and take off."},{"c":426871705,"d":"2026-08-30","s":"Maggie","cat":"Fabric & Comfort","p":"Inconsistent fabric weight/stretch between colours","q":"The fabric seemed heavier weight than the other 3. It didnt stretch as much."},{"c":471450674,"d":"2026-08-29","s":"Maggie","cat":"Bra & Padding","p":"Padding not sewn/anchored to garment","q":"The padding is not sewn in and bunched up after the first washing. I washed on the delicate cycle and in lingerie bag."},{"c":471450674,"d":"2026-08-29","s":"Maggie","cat":"Quality","p":"Raw/unfinished edges (no hem)","q":"The tank are not hemmed and roll up."},{"c":471450674,"d":"2026-08-29","s":"Maggie","cat":"Fit & Sizing","p":"Hem rolls/rides up","q":"The tank are not hemmed and roll up."},{"c":472708725,"d":"2026-08-30","s":"Maggie","cat":"Fabric & Comfort","p":"Fabric too thin/flimsy","q":"Cheaply made with the absolute cheapest fabric you could possibly use."},{"c":471001068,"d":"2026-08-29","s":"Maggie","cat":"Quality","p":"Padding twists/deforms after washing","q":"I'm disappointed with the second tank I washed because the cups folded up. I washed the tank in a mesh laundry bag on a gentle cycle."},{"c":473229799,"d":"2026-08-31","s":"Maggie","cat":"Bra & Padding","p":"Padding moves/shifts out of place","q":"The pads inside have moved out of place after one machine wash and drying on a rack and there's no way to move them back into place. You promised that wouldn't happen."},{"c":461431419,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"I ordered and received all 2X's, which I thought might be too big, however they are too tight and difficult to get on and off."},{"c":455786957,"d":"2026-08-31","s":"Maggie","cat":"Fit & Sizing","p":"Overall too big / runs large","q":"I absolutely love the tanks but I think they are too big and I need to get a smaller size."},{"c":472962922,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Overall too big / runs large","q":"I tried the tank and love it, but it is too big."},{"c":458992321,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"I would like to try a 3x please. It's just a little too hard to get the 2x on."},{"c":472225447,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"I ordered xlarge in all my tanks and they do not fit, I needed a bigger size."},{"c":471825416,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"I was so excited to receive it. But sadly it was too small."},{"c":472423832,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Waist too tight","q":"did not like the fit, too tight around the middle and loose in the bust area"},{"c":472423832,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Bust too loose","q":"too tight around the middle and loose in the bust area"},{"c":472423832,"d":"2026-08-30","s":"Maggie","cat":"Bra & Padding","p":"Not enough bust support","q":"loose in the bust area and not enough support"},{"c":472419870,"d":"2026-08-30","s":"Maggie","cat":"Design","p":"Garment too long for petite frame","q":"I ordered according to chart; tank is too long (I'm only 5' tall) it goes to bottom of my undies"},{"c":472419870,"d":"2026-08-30","s":"Maggie","cat":"Bra & Padding","p":"Bust sits badly in cups / poor cup positioning","q":"I'm a D cup and I am not positioned well in the tank cups, my breasts don't fit in well and are not elevated & firmly in place."},{"c":472854896,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Garment too short in the body","q":"I ORDERED 3x and in regular tank wear extra large and your 3x is about 3 inches shorter on the sides!"},{"c":472854896,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"Unfortunately I am very disappointed they do not fit!!"},{"c":473427621,"d":"2026-08-31","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"top is too tight... not comfortable and would like to return for a refund."},{"c":473427621,"d":"2026-08-31","s":"Maggie","cat":"Bra & Padding","p":"Cups sit too high","q":"bra cups too high, not comfortable"},{"c":472409418,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Hem rolls/rides up","q":"I'm sorry to say that it didn't fit. It rolled up. I couldn't get it to stay in the right place."},{"c":472076167,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Armhole too tight","q":"It was very difficult to put on, with my arm twisting into the armhole, my shoulder hurt."},{"c":472076167,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Hem rolls/rides up","q":"The bottom edge of fabric rolled up to my waist. I could not wear the tank."},{"c":472076167,"d":"2026-08-30","s":"Maggie","cat":"Fabric & Comfort","p":"Inconsistent fabric weight/stretch between colours","q":"The fabric did not stretch as much as the white tank, even though the 3 tanks were labelled as the same size."},{"c":471149587,"d":"2026-08-29","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"the 3 tanks that I got (size XL) do not fit, at all... the 2XL tank fits great."},{"c":472939593,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"I really like your tank bras but the ones I ordered are a little too tight... the size medium was too tight."},{"c":469895093,"d":"2026-08-28","s":"Maggie","cat":"Compression","p":"Excessive body/torso compression","q":"while the bra seems good, the torso is very tight like a slimming garment and very hard to pull on and off."},{"c":473351093,"d":"2026-08-31","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"The black tank is way too small for a medium. I literally am not even able to put it on."},{"c":470397073,"d":"2026-08-29","s":"Maggie","cat":"Fit & Sizing","p":"Hem rolls/rides up","q":"Your products materials are smooth and comfortable. But they won't stay down, rolls up making it uncomfortable."},{"c":473262785,"d":"2026-08-31","s":"Maggie","cat":"Bra & Padding","p":"Padding too small","q":"Three things could be a game changer: 1) a larger liner in the bra top."},{"c":473262785,"d":"2026-08-31","s":"Maggie","cat":"Bra & Padding","p":"Not enough bust support","q":"2) doubling the fabric of the bra itself for more support."},{"c":473262785,"d":"2026-08-31","s":"Maggie","cat":"Fit & Sizing","p":"Straps too long","q":"3) a shorter strap."},{"c":472984718,"d":"2026-08-30","s":"Maggie","cat":"Quality","p":"Raw/unfinished edges (no hem)","q":"the shoulder straps on the woman in this video have SEWN sides on each strap while the ones I received are just cut and not detailed. This leaves straps that are not as stable or durable."},{"c":455949124,"d":"2026-08-30","s":"Maggie","cat":"Design","p":"Garment too long for petite frame","q":"they are way too long, past the leg openings of my briefs"},{"c":455949124,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Poor fit on larger/plus-size figures","q":"I guess all these things are geared toward the smaller figure, those of us who are larger are just screwed. No way could I wear this without something over it."},{"c":435961323,"d":"2026-08-30","s":"Maggie","cat":"Bra & Padding","p":"Not enough bust support","q":"my breasts look like they are sitting on my stomach and it does not create a nice silhouette, making me look frumpy in my clothes."},{"c":435961323,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Straps too long","q":"Ninety days will not shorten the length of material at the shoulders. I have large breasts and a small shoulder girdle."},{"c":427966280,"d":"2026-08-30","s":"Maggie","cat":"Design","p":"No strap adjustment available","q":"the fact it has no adjustable strap to help 'hoist' up the breast a bit, I feel it made for a saggy breast look. If you make this with adjustable strap, I'd fully endorse and promote."},{"c":427966280,"d":"2026-08-30","s":"Maggie","cat":"Design","p":"Garment too long for petite frame","q":"I am short and the fabric allows for longer torsos."},{"c":469829720,"d":"2026-08-28","s":"Maggie","cat":"Bra & Padding","p":"Padding not sewn/anchored to garment","q":"why are the cups not sewn in as advertised. I feel you need to change your ad. Info very misleading."},{"c":472919457,"d":"2026-08-30","s":"Maggie","cat":"Quality","p":"Raw/unfinished edges (no hem)","q":"The edges will start fraying because they are not reinforced with stitching."},{"c":472919457,"d":"2026-08-30","s":"Maggie","cat":"Design","p":"Garment too long for petite frame","q":"The whole tank is very long (I am 5'2\"), the bottom reaches below my hips, and you do not offer petite sizing."},{"c":472919457,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Straps too long","q":"the straps are too long for a person of my height"},{"c":472919457,"d":"2026-08-30","s":"Maggie","cat":"Bra & Padding","p":"Padding moves/shifts out of place","q":"the padding inside the pockets shifts a lot each time I wash it, which is very annoying."},{"c":447809384,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Straps too long","q":"the shoulder straps on the white one are loose and leaves a gap below the throat. It feels like my breasts are too loose? Low?"},{"c":447809384,"d":"2026-08-30","s":"Maggie","cat":"Design","p":"Garment too long for petite frame","q":"They are all long and go over my hips. Are they supposed to be that long?"},{"c":472426670,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Hem rolls/rides up","q":"the tank incessantly rolls up on me from the moment I put it on."},{"c":472426670,"d":"2026-08-30","s":"Maggie","cat":"Quality","p":"Padding twists/deforms after washing","q":"the pads fold up and flip in the wash creating a strange crease I cannot remove."},{"c":426953030,"d":"2026-08-04","s":"Maggie","cat":"Fit & Sizing","p":"Underbust/ribcage too tight","q":"Got my top a size 2x and too tight around ribs. I guess I need a 3x."},{"c":400750193,"d":"2026-08-05","s":"Maggie","cat":"Quality","p":"Padding twists/deforms after washing","q":"I wore it a lot, but when I washed it the inserts balled up inside. I ended up stitching them in myself... the inserts balled up on every single one when they were washed."},{"c":400750193,"d":"2026-08-05","s":"Maggie","cat":"Bra & Padding","p":"Padding not sewn/anchored to garment","q":"your customer service reported that the construction had been upgraded and that the cups were now securely sewn in. So I ordered 3 more... Do I really have to sew these all myself?"},{"c":447891542,"d":"2026-08-14","s":"Maggie","cat":"Fabric & Comfort","p":"Too hot / not breathable","q":"They are so hot! I wish they were in a cooler fabric. Any chance you have something that doesn't make me 10 degrees hotter than I already am at 57?!"},{"c":447891542,"d":"2026-08-14","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"I'm having a hard time getting it on. So tight! I ordered three 2XL. Do you carry any bigger sizes?"},{"c":448693834,"d":"2026-08-15","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"I ordered and received my tanks today and they are too snug. I would like to return all 3 colors and get the 3xl."},{"c":434068878,"d":"2026-08-19","s":"Maggie","cat":"Bra & Padding","p":"Cups flatten/merge breasts (uniboob effect)","q":"I need a larger size. (I look like I have 1 big boob. LOL)"},{"c":434068878,"d":"2026-08-19","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"The only problem is that I need a larger size."},{"c":460198259,"d":"2026-08-22","s":"Maggie","cat":"Bra & Padding","p":"Cups flatten/merge breasts (uniboob effect)","q":"The cups are huge; it's like I have one huge breast. Very uncomfortable."},{"c":460198259,"d":"2026-08-22","s":"Maggie","cat":"Fit & Sizing","p":"Straps too long","q":"the straps are so long that I would have to sew the straps a good 1 1/2 to 2\" to make it fit and give me some support."},{"c":452011869,"d":"2026-08-26","s":"Maggie","cat":"Fit & Sizing","p":"Unspecified fit/product complaint","q":"I'd like to return. These are not what I hoped for."},{"c":458399187,"d":"2026-08-31","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"I would like to return those tops because they are way too small and can not wear them."},{"c":471781378,"d":"2026-08-29","s":"Maggie","cat":"Fit & Sizing","p":"Overall too big / runs large","q":"the 2XL is too large... I ordered according to your size guide but they must run big."},{"c":471781378,"d":"2026-08-29","s":"Maggie","cat":"Bra & Padding","p":"Not enough bust support","q":"the 2XL is too large and isn't really supporting my breasts"},{"c":455305393,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"My tanks finally made it to me but they are too small. I need a 4X."},{"c":472827840,"d":"2026-08-30","s":"Maggie","cat":"Fit & Sizing","p":"Overall too tight / runs small","q":"My tank is too small, how do I exchange for an XL?"},{"c":471546369,"d":"2026-08-29","s":"Maggie","cat":"Fit & Sizing","p":"Overall too big / runs large","q":"The quality feels very good, but unfortunately I think that XL is too big. Can I return it and buy it in Large instead?"}];
+
+const CATS = ["Fit & Sizing","Bra & Padding","Compression","Fabric & Comfort","Quality","Design"];
+const CAT_CLASS = {"Fit & Sizing":"c-fit","Fabric & Comfort":"c-fab","Bra & Padding":"c-bra",
+                   "Quality":"c-qua","Compression":"c-com","Design":"c-des"};
+const DMIN = DATA.reduce((a,r)=>r.d<a?r.d:a, DATA[0].d);
+const DMAX = DATA.reduce((a,r)=>r.d>a?r.d:a, DATA[0].d);
+
+const $ = id => document.getElementById(id);
+const fmtDate = s => { const [y,m,d] = s.split("-");
+  return d.replace(/^0/,"") + " " + ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m-1] + " " + y; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+let state = {};
+
+function readControls(){
+  return { start:$("f-start").value || DMIN, end:$("f-end").value || DMAX,
+           store:$("f-store").value, cat:$("f-cat").value, prob:$("f-prob").value };
+}
+
+/* Cohort = date + store only. It is the denominator for every percentage. */
+function cohortOf(s){
+  return DATA.filter(r => r.d >= s.start && r.d <= s.end && (s.store === "All" || r.s === s.store));
+}
+function viewOf(cohort, s){
+  return cohort.filter(r => (s.cat === "All" || r.cat === s.cat) && (s.prob === "All" || r.p === s.prob));
+}
+
+function aggregate(rows){
+  const m = new Map();
+  for (const r of rows){
+    const k = r.cat + " " + r.p;
+    if (!m.has(k)) m.set(k, {cat:r.cat, prob:r.p, customers:new Set(), quote:r.q});
+    const e = m.get(k);
+    e.customers.add(r.c);
+    if (r.q.length > e.quote.length && r.q.length < 210) e.quote = r.q;
+  }
+  return [...m.values()]
+    .map(e => ({cat:e.cat, prob:e.prob, n:e.customers.size, quote:e.quote}))
+    .sort((a,b) => b.n - a.n || a.prob.localeCompare(b.prob));
+}
+
+function chip(cat){
+  return '<span class="chip"><span class="dot ' + CAT_CLASS[cat] + '"></span>' + esc(cat) + '</span>';
+}
+
+function render(){
+  const s = state;
+  const cohort = cohortOf(s);
+  const view = viewOf(cohort, s);
+  const denom = new Set(cohort.map(r => r.c)).size;
+  const agg = aggregate(view);
+
+  $("period").innerHTML =
+    'Analysis period: <b>' + fmtDate(s.start) + ' – ' + fmtDate(s.end) + '</b>' +
+    '<span>Store: <b>' + esc(s.store) + '</b></span>' +
+    '<span>Category: <b>' + esc(s.cat) + '</b></span>' +
+    '<span>Problem: <b>' + esc(s.prob) + '</b></span>';
+
+  const top = agg[0];
+  $("tiles").innerHTML =
+    tile("Product complaint customers", denom, "unique customers in range") +
+    tile("Product complaints logged", view.length, "distinct problems reported") +
+    tile("Specific problems identified", agg.length, "named garment issues") +
+    '<div class="tile hero"><div class="k">#1 most common problem</div><div class="v">' +
+      (top ? esc(top.prob) : "—") + '</div><div class="note">' +
+      (top ? top.n + ' customers · ' + pct(top.n, denom) + '% · ' + esc(top.cat) : "No data in range") +
+    '</div></div>';
+
+  const max = top ? top.n : 1;
+  $("top-note").textContent = agg.length ? "ranked by customer count" : "";
+  $("top10").innerHTML = agg.length ? agg.slice(0,10).map((e,i) =>
+    '<div class="row">' +
+      '<div class="rk">' + (i+1) + '</div>' +
+      '<div class="lbl"><span class="nm">' + esc(e.prob) + '</span>' + chip(e.cat) +
+        '<div class="bar-track"><div class="bar" style="width:' + Math.max(2, e.n/max*100) + '%"></div></div></div>' +
+      '<div class="num">' + e.n + ' <span class="of">of ' + denom + '</span></div>' +
+      '<div class="pct">' + pct(e.n, denom) + '%</div>' +
+    '</div>').join("") : emptyState();
+
+  $("tbl-note").textContent = agg.length ? agg.length + " rows · highest first" : "";
+  $("tablewrap").innerHTML = agg.length ?
+    '<table><thead><tr><th>Product category</th><th>Specific problem</th><th class="r">Customers</th>' +
+    '<th class="r">% of complaint customers</th><th>Example customer feedback</th></tr></thead><tbody>' +
+    agg.map(e =>
+      '<tr><td>' + chip(e.cat) + '</td><td class="prob">' + esc(e.prob) + '</td>' +
+      '<td class="n r">' + e.n + '</td><td class="n r">' + pct(e.n, denom) + '%</td>' +
+      '<td class="quote">' + esc(e.quote) + '</td></tr>').join("") +
+    '</tbody></table>' : emptyState();
+
+  buildCsv(agg, denom);
+}
+
+function emptyState(){
+  const s = state;
+  const unconnected = ["Mary","Lyn","Elsie"].includes(s.store);
+  return '<div class="empty"><b>' + (unconnected
+      ? esc(s.store) + "'s store is not connected"
+      : "No product complaints match these filters") + '</b>' +
+    (unconnected
+      ? "It is a separate CommSlayer account. Connect its MCP endpoint to pull its conversations into this view."
+      : "Widen the date range, or set category and problem back to All.") + '</div>';
+}
+
+function tile(k, v, note){
+  return '<div class="tile"><div class="k">' + k + '</div><div class="v">' + v +
+         '</div><div class="note">' + note + '</div></div>';
+}
+function pct(n, d){ return d ? (n/d*100).toFixed(1) : "0.0"; }
+
+function buildCsv(agg, denom){
+  const q = v => '"' + String(v).replace(/"/g,'""') + '"';
+  $("csv").value = ["Product Category,Specific Problem,Customer Count,Percentage of Product Complaints,Example Customer Feedback"]
+    .concat(agg.map(e => [q(e.cat), q(e.prob), e.n, pct(e.n, denom) + "%", q(e.quote)].join(",")))
+    .join("\n");
+}
+
+/* ---- populate controls ---- */
+function fillProblems(){
+  const cat = $("f-cat").value;
+  const probs = [...new Set(DATA.filter(r => cat === "All" || r.cat === cat).map(r => r.p))].sort();
+  const keep = $("f-prob").value;
+  $("f-prob").innerHTML = '<option>All</option>' + probs.map(p => '<option>' + esc(p) + '</option>').join("");
+  if (probs.includes(keep)) $("f-prob").value = keep;
+}
+
+$("f-cat").innerHTML = '<option>All</option>' +
+  CATS.filter(c => DATA.some(r => r.cat === c)).map(c => '<option>' + esc(c) + '</option>').join("");
+$("f-start").value = DMIN; $("f-end").value = DMAX;
+$("f-start").min = DMIN; $("f-start").max = DMAX;
+$("f-end").min = DMIN; $("f-end").max = DMAX;
+fillProblems();
+
+$("f-cat").addEventListener("change", fillProblems);
+$("apply").addEventListener("click", () => { state = readControls(); render(); });
+$("reset").addEventListener("click", () => {
+  $("f-start").value = DMIN; $("f-end").value = DMAX;
+  $("f-store").value = "All"; $("f-cat").value = "All"; fillProblems();
+  state = readControls(); render(); $("export-panel").hidden = true;
+});
+$("export").addEventListener("click", () => {
+  $("export-panel").hidden = !$("export-panel").hidden;
+  if (!$("export-panel").hidden) $("csv").focus();
+});
+$("close-export").addEventListener("click", () => { $("export-panel").hidden = true; });
+$("copy").addEventListener("click", async () => {
+  const b = $("copy");
+  try { await navigator.clipboard.writeText($("csv").value); }
+  catch (e) { $("csv").select(); document.execCommand("copy"); }
+  b.textContent = "Copied"; setTimeout(() => { b.textContent = "Copy to clipboard"; }, 1600);
+});
+
+state = readControls();
+render();
+</script>
