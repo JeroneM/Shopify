@@ -52,7 +52,7 @@ def expand(week):
 DAYS=[]
 import datetime as dt
 d0=dt.date(2026,7,1)
-for k in range(56): DAYS.append((d0+dt.timedelta(days=k)).isoformat())
+for k in range(63): DAYS.append((d0+dt.timedelta(days=k)).isoformat())
 WEEKS=[]
 for s,e in zip(nodes.WEEKS,nodes.WEEK_END):
     a=dt.date.fromisoformat(s); b=dt.date.fromisoformat(e)
@@ -60,21 +60,30 @@ for s,e in zip(nodes.WEEKS,nodes.WEEK_END):
                   "label":f"{a.day}–{b.day} {b.strftime('%b')}" if a.month==b.month
                           else f"{a.day} {a.strftime('%b')}–{b.day} {b.strftime('%b')}"})
 
-out={"generated":"2026-08-25","from":"2026-07-01","to":"2026-08-25",
+out={"generated":"2026-09-01","from":"2026-07-01","to":"2026-09-01",
      "days":DAYS,"weeks":WEEKS,"issues":ISSUES,"stores":[]}
 for name,sid,tz,W,dc,dl,tot in STORES:
-    assert len(dc)==56 and len(dl)==56, name
-    wk=[expand(w) for w in W]
-    dayDelta = tot["created"] - sum(dc)
-    if dayDelta: print(f"NOTE {name}: daily series {sum(dc):,} vs period total {tot['created']:,} (delta {dayDelta}, {dayDelta/tot['created']*100:.2f}% - tz boundary)")
+
+    # Stores are covered to different dates: only Maggie's could be re-fetched past 25 Aug,
+    # because the Commslayer connection is now pinned to a single account. Pad the uncovered
+    # tail with None (never 0 - a zero would read as "no tickets" instead of "not retrieved").
+    NDAY, NWK = len(DAYS), len(WEEKS)
+    covWk = len(W) - 1
+    covTo = WEEKS[covWk]["i1"]
+    wk=[expand(w) for w in W] + [None]*(NWK-len(W))
+    dc = list(dc) + [None]*(NDAY-len(dc))
+    dl = list(dl) + [None]*(NDAY-len(dl))
+    dayDelta = tot["created"] - sum(v for v in dc if v is not None)
+    if dayDelta: print(f"NOTE {name}: daily series {sum(v for v in dc if v is not None):,} vs period total {tot['created']:,} (delta {dayDelta}, {dayDelta/tot['created']*100:.2f}% - tz boundary)")
     out["stores"].append({"name":name,"id":sid,"tz":tz,"created":dc,"closed":dl,
                           "totCreated":tot["created"],"totClosed":tot["closed"],
-                          "dayDelta":dayDelta,"wk":wk})
+                          "dayDelta":dayDelta,"covTo":covTo,"covWk":covWk,"wk":wk})
 
 # reasons per issue, ordered by total volume
 agg=defaultdict(Counter)
 for st in out["stores"]:
     for w in st["wk"]:
+        if w is None: continue
         for iss,rs in w.items():
             for r,v in rs.items(): agg[iss][r]+=v
 out["reasons"]={i:[r for r,_ in agg[i].most_common()] for i in ISSUES if i in agg}
@@ -83,7 +92,7 @@ json.dump(out,open("dashboard_data.json","w"),separators=(",",":"))
 
 print("UNMAPPED paths:",len(unmapped),"tickets:",sum(unmapped.values()))
 for p,v in unmapped.most_common(15): print("   ",p,v)
-tickets=sum(st["totCreated"] for st in out["stores"])
+tickets=sum(v for st in out["stores"] for v in st["created"] if v is not None)
 issues=sum(v for i in agg for v in agg[i].values())
 classified=sum(sum(w.values()) for st in out["stores"] for wk in st["wk"] for w in [Counter()] ) # placeholder
 print("\nTOTAL tickets:",tickets)
