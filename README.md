@@ -63,6 +63,8 @@ Without `read_orders` the dashboard still works; run
 | `python fetch_chargebacks.py --no-orders` | Skip order lookups (much faster) |
 | `python build_dashboard.py` | Render `dist/chargeback-dashboard.html` |
 | `python build_dashboard.py --data <path> --out <path>` | Render a specific payload |
+| `python export_csv.py` | Export every dispute to `dist/chargebacks-<date>.csv` |
+| `python export_csv.py --summaries` | Also write by-store / by-status / by-reason rollups |
 | `python sample_data.py` | Generate a synthetic payload for layout review |
 | `python test_chargeback_model.py` | Check the status/reason taxonomy and the maths |
 | `python disputes_report.py` | The older terminal report + CSV export |
@@ -125,12 +127,17 @@ covered by `test_chargeback_model.py`:
 | `fetch_chargebacks.py` | Multi-store pull → JSON payload |
 | `build_dashboard.py` | JSON payload + template → one self-contained HTML file |
 | `templates/dashboard.html` | The dashboard itself (markup, styles, charts) |
+| `export_csv.py` | CSV export of the same payload the dashboard renders |
 | `sample_data.py` | Synthetic payload for reviewing the layout |
 | `test_chargeback_model.py` | Tests for the taxonomy and derived figures |
 | `disputes_report.py` | Earlier terminal report and CSV export |
 
-`data/` and `dist/` are gitignored: both the fetched payload and the rendered
-dashboard embed customer names, emails and order numbers.
+`data/` and `dist/` are gitignored: the fetched payload, the rendered dashboard
+and the CSV exports all embed customer names, emails and order numbers.
+
+The CSVs are written UTF-8 with a BOM so Excel opens accented names correctly,
+and per-currency totals are written as `USD 1234.56; NZD 78.90` in one cell —
+never added together, matching how the dashboard reports them.
 
 ## Refreshing it regularly
 
