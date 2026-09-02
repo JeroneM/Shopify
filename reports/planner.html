@@ -303,7 +303,7 @@ function renderFlags(){
 function renderKPIs(){
   const R=rows(), live=R.filter(x=>x.c.total>0);
   const T=(f)=>R.reduce((a,x)=>a+f(x),0);
-  const K=R.filter(x=>x.r.hasInv);
+  const K=R.filter(x=>x.r.hasInv&&!x.r.unres);
   const crit=K.filter(x=>x.c.risk==="CRITICAL").length, low=K.filter(x=>x.c.risk==="LOW").length;
   const p=per();
   document.getElementById('exec-sub').textContent =
@@ -315,11 +315,11 @@ function renderKPIs(){
    <div class="kpi"><span class="k">Warehouse inventory</span><span class="v">${fmt(T(x=>x.r.cur))}</span><span class="n">total, not free-to-sell</span></div>
    <div class="kpi"><span class="k">In production</span><span class="v">${fmt(T(x=>x.r.ip))}</span><span class="n">ETA required on all</span></div>
    <div class="kpi"><span class="k">Safety stock required</span><span class="v">${fmt(T(x=>x.c.safetyU))}</span><span class="n">${st.safety}% of forecast</span></div>
-   <div class="kpi hero"><span class="k">Units to order today</span><span class="v">${fmt(R.filter(x=>x.r.hasInv).reduce((a,x)=>a+x.c.order,0))}</span><span class="n">${R.filter(x=>x.c.order>0&&x.r.hasInv).length} SKUs</span></div>
+   <div class="kpi hero"><span class="k">Units to order today</span><span class="v">${fmt(R.filter(x=>x.r.hasInv&&!x.r.unres).reduce((a,x)=>a+x.c.order,0))}</span><span class="n">${R.filter(x=>x.c.order>0&&x.r.hasInv&&!x.r.unres).length} SKUs</span></div>
    <div class="kpi bad"><span class="k">Critical SKUs</span><span class="v">${crit}</span><span class="n">under 7 days cover</span></div>
    <div class="kpi warnk"><span class="k">Low stock SKUs</span><span class="v">${low}</span><span class="n">7–13 days cover</span></div>`;
 }
-const rank=()=>rows().filter(x=>x.c.order>0 && x.r.hasInv).sort((a,b)=>{
+const rank=()=>rows().filter(x=>x.c.order>0 && x.r.hasInv && !x.r.unres).sort((a,b)=>{
   const ac=a.c.cover==null?1e9:a.c.cover, bc=b.c.cover==null?1e9:b.c.cover;
   return ac-bc || b.c.order-a.c.order;});
 function renderPO(){
