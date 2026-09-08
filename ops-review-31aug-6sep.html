@@ -1,0 +1,636 @@
+<title>The 200K Week</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --bg:        #EDEDEA;
+    --surface:   #FCFCFB;
+    --surface-2: #F4F4F1;
+    --ink:       #191B1E;
+    --ink-2:     #43474C;
+    --muted:     #71767D;
+    --rule:      #DBDBD5;
+    --rule-soft: #E6E6E1;
+    --accent:    #8A5A17;
+    --accent-bg: #F0E6D4;
+    --crit:      #9E2A21;
+    --crit-bg:   #F5E1DE;
+    --calm:      #42597E;
+    --good:      #2F6A52;
+
+    --f-display: "Fraunces", Georgia, "Times New Roman", serif;
+    --f-body:    "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --f-mono:    "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #141618;
+      --surface:   #1C1F22;
+      --surface-2: #232629;
+      --ink:       #E9E8E4;
+      --ink-2:     #BFC1C4;
+      --muted:     #909499;
+      --rule:      #2F3438;
+      --rule-soft: #262A2D;
+      --accent:    #D2A055;
+      --accent-bg: #33291A;
+      --crit:      #E2867C;
+      --crit-bg:   #3A211E;
+      --calm:      #9DB4D8;
+      --good:      #7FC0A3;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:        #141618;
+    --surface:   #1C1F22;
+    --surface-2: #232629;
+    --ink:       #E9E8E4;
+    --ink-2:     #BFC1C4;
+    --muted:     #909499;
+    --rule:      #2F3438;
+    --rule-soft: #262A2D;
+    --accent:    #D2A055;
+    --accent-bg: #33291A;
+    --crit:      #E2867C;
+    --crit-bg:   #3A211E;
+    --calm:      #9DB4D8;
+    --good:      #7FC0A3;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 16px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 40px 26px 90px;
+  }
+
+  /* ---------- masthead ---------- */
+
+  header.top { border-bottom: 2px solid var(--ink); padding-bottom: 22px; }
+  .eyebrow {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: clamp(34px, 6.5vw, 54px);
+    line-height: 1.02;
+    letter-spacing: -.022em;
+    margin: 0 0 14px;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-size: 18px;
+    line-height: 1.5;
+    color: var(--ink-2);
+    max-width: 60ch;
+    margin: 0 0 18px;
+  }
+  .byline {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+  }
+
+  /* ---------- coverage note ---------- */
+
+  .note {
+    background: var(--crit-bg);
+    border-left: 3px solid var(--crit);
+    padding: 16px 18px;
+    margin: 26px 0 0;
+    font-size: 14.5px;
+    line-height: 1.55;
+  }
+  .note b { color: var(--crit); }
+  .note p { margin: 0 0 8px; }
+  .note p:last-child { margin-bottom: 0; }
+
+  /* ---------- numbers ---------- */
+
+  .figures {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    margin: 34px 0 0;
+  }
+  .fig {
+    padding: 16px 14px 18px;
+    border-right: 1px solid var(--rule-soft);
+  }
+  .fig:last-child { border-right: 0; }
+  .fig .n {
+    font-family: var(--f-mono);
+    font-size: 25px;
+    font-weight: 500;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+    display: block;
+  }
+  .fig .l {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: block;
+    margin-top: 4px;
+  }
+  .fig.bad .n { color: var(--crit); }
+  .fig.good .n { color: var(--good); }
+  @media (max-width: 640px) {
+    .figures { grid-template-columns: repeat(2, 1fr); }
+    .fig { border-bottom: 1px solid var(--rule-soft); }
+  }
+
+  /* ---------- sections ---------- */
+
+  section { margin-top: 46px; }
+  h2 {
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: 27px;
+    letter-spacing: -.012em;
+    line-height: 1.2;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  .kicker {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  h3 {
+    font-family: var(--f-body);
+    font-weight: 600;
+    font-size: 16.5px;
+    line-height: 1.35;
+    margin: 26px 0 6px;
+  }
+  h3 .num {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: var(--accent);
+    margin-right: 8px;
+    font-weight: 500;
+  }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  a { color: var(--accent); }
+
+  blockquote {
+    margin: 14px 0 16px;
+    padding: 2px 0 2px 16px;
+    border-left: 2px solid var(--accent);
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-style: italic;
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--ink-2);
+    max-width: 62ch;
+  }
+  blockquote cite {
+    display: block;
+    font-family: var(--f-mono);
+    font-style: normal;
+    font-size: 11px;
+    letter-spacing: .04em;
+    color: var(--muted);
+    margin-top: 7px;
+  }
+
+  ul { margin: 0 0 16px; padding: 0 0 0 20px; max-width: 68ch; }
+  li { margin-bottom: 9px; }
+  li::marker { color: var(--accent); }
+
+  /* ---------- tables ---------- */
+
+  .tw { overflow-x: auto; margin: 0 0 18px; }
+  table { border-collapse: collapse; width: 100%; min-width: 480px; font-size: 14.5px; }
+  th {
+    text-align: left;
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 8px 12px 8px 0;
+    border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+  }
+  td { padding: 10px 12px 10px 0; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  td.when { font-family: var(--f-mono); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  td.when.past { color: var(--crit); font-weight: 500; }
+  td.when.now { color: var(--accent); font-weight: 500; }
+
+  /* ---------- owner blocks ---------- */
+
+  .owners { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 700px) { .owners { grid-template-columns: 1fr; } }
+  .owner {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 15px 17px 6px;
+  }
+  .owner h4 {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 10px;
+    font-weight: 500;
+  }
+  .owner ul { padding-left: 17px; }
+  .owner li { font-size: 14px; line-height: 1.5; margin-bottom: 8px; }
+
+  /* ---------- risk cards ---------- */
+
+  .risk {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--crit);
+    border-radius: 3px;
+    padding: 15px 18px;
+    margin-bottom: 14px;
+  }
+  .risk h4 { margin: 0 0 7px; font-size: 15.5px; font-weight: 600; line-height: 1.35; }
+  .risk p { margin: 0; font-size: 14.5px; }
+
+  /* ---------- meeting index ---------- */
+
+  .index { font-size: 14px; }
+  .index table { min-width: 420px; }
+  .index td.d { font-family: var(--f-mono); font-size: 12.5px; white-space: nowrap; color: var(--ink-2); }
+  .index td.m { font-family: var(--f-mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+  footer.colophon {
+    margin-top: 54px;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--f-mono);
+    font-size: 11px;
+    line-height: 1.75;
+    color: var(--muted);
+  }
+
+  @media print {
+    body { background: #fff; }
+    .page { max-width: none; padding: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="page">
+
+  <header class="top">
+    <div class="eyebrow">Operations review · 31 Aug – 6 Sep 2026</div>
+    <h1>The 200K Week</h1>
+    <p class="standfirst">
+      Revenue hit a record and the back end didn't hold. Nine meetings, reviewed line by line —
+      what changed, what's owed, and what is still unresolved.
+    </p>
+    <div class="byline">
+      <span>Prepared 8 Sep 2026</span>
+      <span>Jerone Medina · Operations</span>
+      <span>9 Fireflies transcripts</span>
+    </div>
+  </header>
+
+  <div class="note">
+    <p><b>Two gaps worth stating up front.</b></p>
+    <p>The task dashboard is anchored to <b>21 August</b>. Every "due this week" and overdue count on it is now around two and a half weeks stale.</p>
+    <p>This review covers 31 Aug – 6 Sep. The dashboard covers up to 20 Aug. <b>21–30 August has never been reviewed</b> — roughly a week of meetings sits between the two and is not reflected anywhere.</p>
+  </div>
+
+  <div class="figures">
+    <div class="fig bad"><span class="n">$54K</span><span class="l">Maggie refunds, wk to 1 Sep</span></div>
+    <div class="fig bad"><span class="n">~$10K</span><span class="l">Daily refunds by 3 Sep</span></div>
+    <div class="fig"><span class="n">$204K</span><span class="l">Peak daily revenue</span></div>
+    <div class="fig good"><span class="n">−4%</span><span class="l">Tickets, week on week</span></div>
+  </div>
+
+  <section>
+    <h2>Where things stand</h2>
+    <p class="kicker">The shape of the week</p>
+
+    <p>
+      Revenue reached a record and the operational back end did not keep pace. Refunds for the
+      week to 1 September ran <b>$54k on Maggie, $9k on Mary, $3k on Elsie and $589 on Lyn</b>.
+      By 3 September that was running at roughly <b>$10k a day on Maggie alone</b> against about
+      $195k of daily revenue.
+    </p>
+
+    <blockquote>
+      We just hit 200k days. That was not the goal. But we did.
+      <cite>Reber — Daily Recap, 2 Sep</cite>
+    </blockquote>
+
+    <p>
+      Customer support genuinely improved: tickets fell 4% to 9,885 and resolutions rose 5%, with
+      21 tasks completed against 8 pending and 2 overdue. But the underlying product and supply
+      problems are unchanged, and they are now scaling with the revenue.
+    </p>
+
+    <blockquote>
+      8% to 10% refund is very high, and we cannot continue with the business for a long time
+      in reality if we have this high amount of refund.
+      <cite>Jerone — Founders Meeting, 1 Sep</cite>
+    </blockquote>
+  </section>
+
+  <section>
+    <h2>Five things that actually changed</h2>
+    <p class="kicker">New this week</p>
+
+    <h3><span class="num">01</span>Reber paid Mega Fulfill a $90,000 deposit</h3>
+    <p>
+      Paid over the weekend before 31 August to unblock the backlog. Mega Fulfill admitted they
+      were only committing $180k to the factory and wanted a deposit before going further — they
+      did not trust Heritage &amp; Hearth after the jump from $10k to $100k days in under a week.
+      Ahmed was there in person; Reber was on video and recorded the call.
+    </p>
+    <blockquote>
+      If you put that money on them, they will be able to expand their business. And in the long
+      run, if we leave them, they already have the money and they are bigger.
+      <cite>Jerone — Daily Recap, 31 Aug</cite>
+    </blockquote>
+
+    <h3><span class="num">02</span>Direct factory contact exists — but not for you</h3>
+    <p>
+      By 3 September Reber had direct WeChat contact with both the old and the new factory, and
+      had told them the requirement is 50,000 units a day. The plan is to split orders by real
+      capacity and keep the old factory as backup while it grows. The blocker is yours:
+      <b>you cannot get WeChat because SMS verification is not reaching your phone.</b> Until that
+      is fixed you are still routed through Jeffrey.
+    </p>
+
+    <h3><span class="num">03</span>The capacity number moved for the third time</h3>
+    <p>
+      10,000 a day, then 13–15,000, then "15,000 to 25,000". None of it verified. Meanwhile
+      24,000 units sit in production with no completion date — the same wall as three weeks ago.
+    </p>
+    <blockquote>
+      They're gonna say, yeah, we said 15 to 25. It's at 15 right now. Let's take 15 to be safe.
+      <cite>Ahmed — Daily Recap, 2 Sep</cite>
+    </blockquote>
+
+    <h3><span class="num">04</span>The inventory freeze cost you ground</h3>
+    <p>
+      You stopped placing forecast orders two weeks earlier because 24,000 units were already in
+      production and a new sample was coming. Gary then told the founders you weren't ordering
+      enough. Ahmed pressed on it and you conceded the specific failure — which is worth keeping
+      precise, because the freeze itself was defensible and the tracking gap was not.
+    </p>
+    <blockquote>
+      They did order, but I didn't check when can we receive the things in their production.
+      That's my mistake.
+      <cite>Jerone — Daily Recap, 2 Sep</cite>
+    </blockquote>
+
+    <h3><span class="num">05</span>A two-day AI outage went unescalated</h3>
+    <p>
+      The support AI hit its limit and nobody raised it for two days. Agents answered manually,
+      response times slipped, and customers waiting on replacements and refunds gave up and asked
+      for their money back. Ahmed's read is that the outage is the symptom and the escalation
+      failure is the finding.
+    </p>
+    <blockquote>
+      None of the agents escalated to Sara or Rose or even you. You need to figure out why that
+      happened.
+      <cite>Ahmed — Founders Meeting, 1 Sep</cite>
+    </blockquote>
+  </section>
+
+  <section>
+    <h2>Hard deadlines</h2>
+    <p class="kicker">Committed on the calls</p>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr><th>Commitment</th><th>When</th><th>State</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>SLA signed by Mega Fulfill and the factory</td>
+            <td class="when past">Fri 4 Sep</td>
+            <td>Ahmed says it has to be done in person, not over WhatsApp</td>
+          </tr>
+          <tr>
+            <td>10 new agents start group training together</td>
+            <td class="when past">Mon 7 Sep</td>
+            <td>You had planned 3; agreed to add 7 more</td>
+          </tr>
+          <tr>
+            <td>Monthly review and founder feedback on your first month</td>
+            <td class="when now">Week of 7 Sep</td>
+            <td>This week. You asked for brutal feedback</td>
+          </tr>
+          <tr>
+            <td>Underperforming agents removed after warnings</td>
+            <td class="when">End of Sept</td>
+            <td>Weekly KPI scorecards now running with Sarah</td>
+          </tr>
+          <tr>
+            <td>Sizing finalised and sample approved</td>
+            <td class="when">End of Sept</td>
+            <td>Mass production then takes a further two weeks</td>
+          </tr>
+          <tr>
+            <td>Amazon shipment</td>
+            <td class="when">October</td>
+            <td>Everything above feeds this</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>What landed on you</h2>
+    <p class="kicker">Roughly 30 new items · the gating ones first</p>
+
+    <ul>
+      <li><b>Get WeChat working</b> — fix the phone SMS settings first. This blocks direct factory contact, which blocks everything downstream.</li>
+      <li><b>Split orders across the old and new factory by verified capacity</b>, so you stop depending on Mega Fulfill's forecast.</li>
+      <li><b>Daily per-product inventory reporting</b> — you committed to starting this on 3 Sep.</li>
+      <li><b>Stop the double shipping charge on split shipments</b> — around 1,000 orders, roughly $7k being billed twice.</li>
+      <li><b>Take control of email marketing</b> — the agency sent out-of-stock emails to customers who had not received their orders. Get CC'd on campaigns, get added to the ads-lounging channel; Rose takes Klaviyo blasts in-house.</li>
+      <li><b>Recruit around 21 fit models</b> (three per size) plus the 250-customer testing pool, with an NDA and $25 store credit as the incentive.</li>
+      <li><b>Audit replacement spend</b>, not just refunds, for the monthly meeting.</li>
+      <li><b>Chase the Zobi SMS app</b> — it is sending messages with no customer name or address, which is a fresh chargeback source.</li>
+      <li><b>Run 1-on-1 calls with the CS agents</b> about why the AI outage went unescalated.</li>
+      <li><b>Review the Day One and Mega Fulfill invoices</b> and negotiate on volume.</li>
+      <li><b>Define acceptable versus unacceptable stretch</b>, so support can defend the shapewear fit instead of refunding it.</li>
+      <li><b>Add branding to the garment and packaging</b> at the next mass production — customers are commenting that the product is available on Temu.</li>
+      <li><b>Expand the sizing dataset</b> from 70 responses toward 500+, and send Reber the list of customers reporting waist-fit problems.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Waiting on other people</h2>
+    <p class="kicker">Chase list</p>
+
+    <div class="owners">
+      <div class="owner">
+        <h4>Ahmed</h4>
+        <ul>
+          <li>Get the SLA signed in person while in China</li>
+          <li>Choose the fabric and sizing consultants — he wants two</li>
+          <li>Arrange fit models and factory reps for fittings</li>
+          <li>Visa and equipment logistics for the technical designer's visit</li>
+          <li>Check the Amazon copycat's factory name against Mega Fulfill</li>
+        </ul>
+      </div>
+      <div class="owner">
+        <h4>Reber</h4>
+        <ul>
+          <li>Give you WeChat access to the factories</li>
+          <li>Hong Kong bank appointment, then on to China</li>
+          <li>Push the old factory on a realistic production plan</li>
+          <li>Confirm the logo goes on before mass production</li>
+        </ul>
+      </div>
+      <div class="owner">
+        <h4>Mega Fulfill / Jeffrey</h4>
+        <ul>
+          <li>A real production completion date — still never given</li>
+          <li>Sign the SLA</li>
+          <li>Absorb the second shipping charge on split orders</li>
+          <li>Answer the chemical-smell complaints</li>
+        </ul>
+      </div>
+      <div class="owner">
+        <h4>Rose &amp; Sarah</h4>
+        <ul>
+          <li>Rose: Klaviyo blasts, replacement and refund ticketing, size chart updates, abandoned-cart SMS</li>
+          <li>Sarah: weekly KPI scorecards and agent coaching calls, daily and weekly ticket notes, order request procedures</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Decisions made</h2>
+    <p class="kicker">Settled, no further discussion needed</p>
+    <ul>
+      <li><b>Bean paste production stopped.</b> It is about 2% of sales. Focus on nude, black, white and yellow.</li>
+      <li><b>Split shipments approved</b> for orders containing backordered colours — ship what is available now.</li>
+      <li><b>Reward over punishment</b> for agent performance. Ahmed wants a visible bonus for a strong agent shared in the channel.</li>
+      <li><b>Hire in a block of ten</b>, train them together on one Monday with Sarah reviewing live tickets on a group call, then keep the best.</li>
+      <li><b>Branding goes on the garment</b>, not just the packaging, from the next production run.</li>
+      <li><b>Collagen gummies</b> replace the underwear as the free first-month gift, then convert to a subscription for retention.</li>
+      <li><b>A fabric and sizing consultant will be hired.</b> Candidates seen: Yefim (20+ years, Victoria's Secret, Target, Adore Me), Rosee Aranda, plus Heidi and Victoria. One offers a two-week China project for $7k.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Still unresolved</h2>
+    <p class="kicker">Open risks, most consequential first</p>
+
+    <div class="risk">
+      <h4>The root cause is pattern grading, not the size chart</h4>
+      <p>
+        Rosee Aranda's assessment on 4 September is that plus sizes run small because the grading
+        was applied wrong around L and XL. Fixing it needs three grading tiers and the factory's
+        front and back patterns. That reframes weeks of size-chart argument as a pattern problem —
+        and it cannot be fixed by editing a chart on Shopify.
+      </p>
+    </div>
+
+    <div class="risk">
+      <h4>The fabric change may undercut the product</h4>
+      <p>
+        The proposal is 68% nylon / 32% spandex with a vertical cut. More spandex plus vertical
+        cut means more stretch, and the product is advertised as shapewear that compresses. You
+        raised this on 3 September and it was deferred to the consultant rather than answered.
+      </p>
+    </div>
+
+    <div class="risk">
+      <h4>Nobody has established real factory capacity</h4>
+      <p>
+        Three different figures in three weeks, none verified. The 15,000 working number was
+        chosen defensively, not confirmed. Every forecast rests on it.
+      </p>
+    </div>
+
+    <div class="risk">
+      <h4>A possible copycat on Amazon may trace back to Mega Fulfill</h4>
+      <p>
+        Reber's read is that the Amazon copycat could be produced by a factory belonging to a
+        relative of the Mega Fulfill principals. Agreed worth checking in person. No owner assigned.
+      </p>
+    </div>
+
+    <div class="risk">
+      <h4>Email and SMS are actively creating tickets</h4>
+      <p>
+        Out-of-stock emails went to customers still waiting on orders. The Zobi SMS app is sending
+        without customer details. Both are generating the complaints that support then absorbs.
+      </p>
+    </div>
+  </section>
+
+  <section class="index">
+    <h2>The meetings</h2>
+    <p class="kicker">Sources for everything above</p>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Date</th><th>Meeting</th><th>Length</th></tr></thead>
+        <tbody>
+          <tr><td class="d">4 Sep</td><td><a href="https://app.fireflies.ai/view/01M1G4E12GDHXB6NJRRVG7MYMK" target="_blank" rel="noopener">Ahmed × Rosee Aranda — product consulting</a></td><td class="m">44 min</td></tr>
+          <tr><td class="d">3 Sep</td><td><a href="https://app.fireflies.ai/view/01M1EFVCNM7B7JQ37P900MZA0D" target="_blank" rel="noopener">Daily Recap with Founders</a></td><td class="m">19 min</td></tr>
+          <tr><td class="d">3 Sep</td><td><a href="https://app.fireflies.ai/view/01M1EFVCP7D2AFGCP8CNZH843C" target="_blank" rel="noopener">Daily Meeting with Sarah × Rose</a></td><td class="m">32 min</td></tr>
+          <tr><td class="d">2 Sep</td><td><a href="https://app.fireflies.ai/view/01M1BXEM0GV2YB09ZBJWQX2FDN" target="_blank" rel="noopener">Daily Recap with Founders</a></td><td class="m">73 min</td></tr>
+          <tr><td class="d">2 Sep</td><td><a href="https://app.fireflies.ai/view/01M1BXEKYKH7VXASFC6BM2EAVG" target="_blank" rel="noopener">Daily Meeting with Sarah × Rose</a></td><td class="m">57 min</td></tr>
+          <tr><td class="d">2 Sep</td><td><a href="https://app.fireflies.ai/view/01M1EMJMNX0VD6W27S8Y2T458A" target="_blank" rel="noopener">Ahmed × Yefim — product consulting</a></td><td class="m">54 min</td></tr>
+          <tr><td class="d">1 Sep</td><td><a href="https://app.fireflies.ai/view/01M1BTZRK8B0RF8F4A79TQHD51" target="_blank" rel="noopener">Founders Meeting — weekly</a></td><td class="m">45 min</td></tr>
+          <tr><td class="d">31 Aug</td><td><a href="https://app.fireflies.ai/view/01M0SEAQA0RCT4Q0P7JKZJ1CWW" target="_blank" rel="noopener">Daily Recap with Founders</a></td><td class="m">34 min</td></tr>
+          <tr><td class="d">31 Aug</td><td><a href="https://app.fireflies.ai/view/01M16RN714SDKEFY3BZ0N78A3H" target="_blank" rel="noopener">Daily Meeting with Sarah × Rose</a></td><td class="m">46 min</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    Built from nine Fireflies transcripts covering 31 August to 6 September 2026. The four founders
+    calls were read in full; the three Sarah × Rose dailies and the two product-consulting calls were
+    read from their transcript summaries.<br>
+    Every quotation is verbatim from the recording named beneath it. Nothing here is inferred beyond
+    what was said on the calls.
+  </footer>
+
+</div>
