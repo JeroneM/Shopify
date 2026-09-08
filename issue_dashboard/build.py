@@ -52,7 +52,7 @@ def expand(week):
 DAYS=[]
 import datetime as dt
 d0=dt.date(2026,7,1)
-for k in range(63): DAYS.append((d0+dt.timedelta(days=k)).isoformat())
+for k in range(69): DAYS.append((d0+dt.timedelta(days=k)).isoformat())
 WEEKS=[]
 for s,e in zip(nodes.WEEKS,nodes.WEEK_END):
     a=dt.date.fromisoformat(s); b=dt.date.fromisoformat(e)
@@ -60,7 +60,7 @@ for s,e in zip(nodes.WEEKS,nodes.WEEK_END):
                   "label":f"{a.day}–{b.day} {b.strftime('%b')}" if a.month==b.month
                           else f"{a.day} {a.strftime('%b')}–{b.day} {b.strftime('%b')}"})
 
-out={"generated":"2026-09-01","from":"2026-07-01","to":"2026-09-01",
+out={"generated":"2026-09-08","from":"2026-07-01","to":"2026-09-07",
      "days":DAYS,"weeks":WEEKS,"issues":ISSUES,"stores":[]}
 for name,sid,tz,W,dc,dl,tot in STORES:
 
