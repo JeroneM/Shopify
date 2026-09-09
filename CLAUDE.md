@@ -7,13 +7,20 @@ Never substitute another sales source without saying so.
 
 Pulling it:
 
-- `download_file_content` with `exportMimeType: text/csv` returns the **Monthly
-  Sales_Store** tab complete. This is the only tab that exports in full, and it is
-  the tab to plan from.
-- `read_file_content` truncates every tab after a few hundred rows. The Weekly
-  Sales_Store tab never reaches past the legacy `134821` block, and the per-store
-  order tabs stop after ~275 rows, so neither weekly nor daily SKU detail is
-  readable that way.
+- **As of 2026-09-09 the sheet is no longer readable.** `download_file_content`
+  (csv and tsv) returns "File too large for export" — the workbook passed the
+  export size limit around 5.1 MB in late August and is now ~5.8 MB. The
+  `Monthly Sales_Store` and `Weekly Sales_Store` tabs have also been removed;
+  only the four raw per-store order tabs remain.
+- `read_file_content` still returns something, but truncates every tab after
+  ~275 rows. The order tabs are sorted oldest-first, so the readable rows reach
+  only mid-July. No current SKU detail can be extracted.
+- Until this is fixed, SKU velocity comes from the last usable pull
+  (`data/sku_store_windows_2026-08-25.csv`, the 13–25 Aug window) plus whatever
+  actuals the user supplies in an attached workbook. Say so explicitly in any
+  report built this way.
+- Two fixes would restore it: sort each store's order tab newest-first, or add a
+  SKU-level pivot in a separate, smaller file.
 - Per-SKU velocity is therefore derived by differencing the month-to-date column
   between two syncs, divided by the elapsed time between them (not by 7 — the
   syncs land mid-day). See `data/sku_last7_*.csv`.
