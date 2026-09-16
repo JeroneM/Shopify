@@ -1,0 +1,1556 @@
+<title>Maggie's Tanks Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#e9ecf1; --surface:#fbfcfe; --surface-2:#f1f4f9; --surface-3:#e7ebf3;
+  --line:#d1d8e3; --line-soft:#e2e7ef;
+  --ink:#141a24; --ink-2:#4e5a6b; --ink-3:#7c8797;
+  --accent:#27457e; --accent-2:#3f66b5; --accent-soft:#e1e8f7; --accent-ink:#ffffff;
+  --good:#0ca30c; --warn:#fab219; --serious:#ec835a; --crit:#d03b3b;
+  --good-ink:#0a6b12; --warn-ink:#8a5c05; --crit-ink:#a32222;
+  --good-bg:#e3f4e3; --warn-bg:#fcf0d7; --crit-bg:#fae2e2;
+  --lane-do:#27457e; --lane-del:#0f7f5c; --lane-mon:#2a78d6; --lane-esc:#6b3fa0; --lane-dep:#7c8797;
+  --shadow:0 1px 2px rgba(16,26,44,.06), 0 8px 24px -16px rgba(16,26,44,.28);
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --disp:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --bg:#0b0f15; --surface:#141a22; --surface-2:#1a212b; --surface-3:#212a36;
+  --line:#2b3542; --line-soft:#222b36;
+  --ink:#eef2f7; --ink-2:#a7b3c2; --ink-3:#76818f;
+  --accent:#7ea0e8; --accent-2:#a5bdf3; --accent-soft:#1b2637; --accent-ink:#0b0f15;
+  --good-ink:#54c254; --warn-ink:#f0bf55; --crit-ink:#e87b7b;
+  --good-bg:#122a17; --warn-bg:#2f2610; --crit-bg:#32171a;
+  --lane-do:#7ea0e8; --lane-del:#37b98c; --lane-mon:#5598e7; --lane-esc:#a98ae0; --lane-dep:#76818f;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 26px -18px rgba(0,0,0,.9);
+}}
+:root[data-theme="dark"]{
+  --bg:#0b0f15; --surface:#141a22; --surface-2:#1a212b; --surface-3:#212a36;
+  --line:#2b3542; --line-soft:#222b36;
+  --ink:#eef2f7; --ink-2:#a7b3c2; --ink-3:#76818f;
+  --accent:#7ea0e8; --accent-2:#a5bdf3; --accent-soft:#1b2637; --accent-ink:#0b0f15;
+  --good-ink:#54c254; --warn-ink:#f0bf55; --crit-ink:#e87b7b;
+  --good-bg:#122a17; --warn-bg:#2f2610; --crit-bg:#32171a;
+  --lane-do:#7ea0e8; --lane-del:#37b98c; --lane-mon:#5598e7; --lane-esc:#a98ae0; --lane-dep:#76818f;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 26px -18px rgba(0,0,0,.9);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45;margin:0}
+.wrap{max-width:1240px;margin:0 auto;padding:0 16px 72px}
+h1,h2,h3{font-family:var(--disp);margin:0;text-wrap:balance}
+.eyebrow{font-family:var(--disp);font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit}
+
+/* ---- command bar ---- */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:var(--surface);border-bottom:1px solid var(--line);
+     padding-block:10px;box-shadow:var(--shadow)}
+.bar-in{max-width:1240px;margin:0 auto;padding:0 16px;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand-mark{width:30px;height:30px;border-radius:7px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;
+     font-family:var(--disp);font-weight:700;font-size:13px;letter-spacing:.02em;flex:none}
+.brand h1{font-size:15px;font-weight:700;letter-spacing:-.01em;line-height:1.15}
+.brand .sub{font-size:11px;color:var(--ink-3);font-family:var(--mono)}
+.bar-sp{flex:1 1 20px}
+.chips{display:flex;flex-wrap:wrap;gap:4px;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:8px;padding:3px}
+.chip{border:0;background:transparent;border-radius:6px;padding:4px 9px;font-size:12px;font-weight:500;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.chip:hover{background:var(--surface-3);color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.acts{display:flex;flex-wrap:wrap;gap:6px}
+.btn{border:1px solid var(--line);background:var(--surface-2);border-radius:7px;padding:6px 11px;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{background:var(--accent-2);border-color:var(--accent-2);color:var(--accent-ink)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:3px 8px;font-size:11.5px;border-radius:6px}
+.btn:focus-visible,.chip:focus-visible,[contenteditable]:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--accent-2);outline-offset:1px}
+.savestate{font-family:var(--mono);font-size:11px;color:var(--ink-3);white-space:nowrap}
+.savestate b{color:var(--good-ink);font-weight:500}
+#customRange{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--ink-2)}
+#customRange input{font-family:var(--mono);font-size:11.5px;padding:3px 5px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink)}
+
+/* ---- section nav ---- */
+.nav{display:flex;gap:4px;overflow-x:auto;padding:10px 0 2px;scrollbar-width:thin}
+.nav a{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-decoration:none;border:1px solid var(--line-soft);
+       background:var(--surface);border-radius:20px;padding:3px 10px;white-space:nowrap}
+.nav a:hover{color:var(--accent-2);border-color:var(--accent)}
+
+/* ---- modules ---- */
+.mod{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-top:14px;overflow:hidden}
+.mod>summary{list-style:none;cursor:pointer;padding:13px 16px;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.mod>summary::-webkit-details-marker{display:none}
+.mod>summary::before{content:"▸";font-size:11px;color:var(--ink-3);transform:translateY(-1px)}
+.mod[open]>summary::before{content:"▾"}
+.mod>summary h2{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+.mod>summary .idx{font-family:var(--mono);font-size:11px;color:var(--accent-2);font-weight:500}
+.mod>summary .hint{font-size:12px;color:var(--ink-3);flex:1 1 180px}
+.mod[open]>summary{border-bottom:1px solid var(--line-soft)}
+.body{padding:14px 16px 18px}
+.toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px}
+.note{font-size:12px;color:var(--ink-3)}
+.note b{color:var(--ink-2);font-weight:500}
+
+/* ---- health grid ---- */
+.health{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:10px}
+.hcard{border:1px solid var(--line-soft);border-left:4px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--surface-2);position:relative}
+.hcard.s-green{border-left-color:var(--good)} .hcard.s-amber{border-left-color:var(--warn)} .hcard.s-red{border-left-color:var(--crit)}
+.hcard .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hcard .area{font-family:var(--disp);font-weight:600;font-size:13px}
+.hcard .issue{margin:6px 0 8px;font-size:12.5px;color:var(--ink-2)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;font-size:11.5px}
+.kv dt{color:var(--ink-3);font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;padding-top:1px}
+.kv dd{margin:0;color:var(--ink)}
+.stat{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;font-family:var(--disp);
+      border-radius:20px;padding:1px 8px 1px 6px;letter-spacing:.02em;white-space:nowrap}
+.stat.green{background:var(--good-bg);color:var(--good-ink)}
+.stat.amber{background:var(--warn-bg);color:var(--warn-ink)}
+.stat.red{background:var(--crit-bg);color:var(--crit-ink)}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.dot.green{background:var(--good)} .dot.amber{background:var(--warn)} .dot.red{background:var(--crit)}
+.stat-sel{font-family:var(--disp);font-size:11px;font-weight:600;letter-spacing:.02em;border-radius:20px;padding:2px 6px;
+  border:1px solid transparent;cursor:pointer;-webkit-appearance:none;appearance:none;text-align:center}
+.stat-sel.green{background:var(--good-bg);color:var(--good-ink)}
+.stat-sel.amber{background:var(--warn-bg);color:var(--warn-ink)}
+.stat-sel.red{background:var(--crit-bg);color:var(--crit-ink)}
+.stat-sel:hover{border-color:currentColor}
+.hcard .top{padding-right:16px}
+.due-late{color:var(--crit-ink);font-weight:600}
+
+/* ---- tables ---- */
+.scroll{overflow-x:auto;border:1px solid var(--line-soft);border-radius:9px}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:12.5px}
+th{font-family:var(--disp);font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);
+   text-align:left;padding:8px 10px;background:var(--surface-2);border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0}
+td{padding:7px 10px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--surface-2)}
+tr.flag-late{background:color-mix(in srgb,var(--crit-bg) 60%,transparent)}
+tr.flag-late:hover{background:var(--crit-bg)}
+tr.flag-loop td:first-child{box-shadow:inset 3px 0 0 var(--serious)}
+td.ed,.ed{cursor:text;border-radius:4px}
+td.ed:hover{background:var(--accent-soft)}
+td.ed:empty::before{content:"—";color:var(--ink-3)}
+select,input[type="date"],input[type="number"],textarea{font-family:var(--sans);font-size:12px;color:var(--ink);background:var(--surface);
+  border:1px solid var(--line);border-radius:6px;padding:3px 5px;max-width:100%}
+select.bare{border-color:transparent;background:transparent;padding:2px 2px}
+select.bare:hover{border-color:var(--line);background:var(--surface)}
+input[type="date"],input[type="number"]{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.x{border:0;background:transparent;color:var(--ink-3);cursor:pointer;font-size:14px;line-height:1;padding:2px 4px;border-radius:4px}
+.x:hover{color:var(--crit-ink);background:var(--crit-bg)}
+.warnline{display:flex;gap:8px;align-items:flex-start;background:var(--warn-bg);color:var(--warn-ink);border-radius:8px;
+  padding:8px 11px;font-size:12.5px;margin-bottom:10px}
+.warnline.crit{background:var(--crit-bg);color:var(--crit-ink)}
+.warnline b{font-weight:600}
+
+/* ---- triage ---- */
+.capture{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;margin-bottom:12px}
+.capture textarea{flex:1 1 300px;min-height:44px;resize:vertical;font-size:13px;padding:8px 10px}
+.lanes{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:10px}
+.lane{border:1px solid var(--line-soft);border-radius:9px;background:var(--surface-2);display:flex;flex-direction:column;min-height:86px}
+.lane>h3{font-family:var(--disp);font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  padding:8px 10px;border-bottom:1px solid var(--line-soft);display:flex;justify-content:space-between;gap:6px;align-items:center}
+.lane .cnt{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:0}
+.lane ul{list-style:none;margin:0;padding:6px;display:flex;flex-direction:column;gap:6px}
+.item{background:var(--surface);border:1px solid var(--line-soft);border-radius:7px;padding:7px 8px}
+.item .txt{font-size:12.5px}
+.item .meta{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;margin-top:5px;font-size:11px;color:var(--ink-3)}
+.item .why{font-size:11.5px;color:var(--ink-2);margin-top:4px;padding-left:7px;border-left:2px solid var(--line)}
+.lane-do>h3{color:var(--lane-do)} .lane-delegate>h3{color:var(--lane-del)} .lane-monitor>h3{color:var(--lane-mon)}
+.lane-escalate>h3{color:var(--lane-esc)} .lane-deprioritize>h3{color:var(--lane-dep)}
+.lane-do{border-left:3px solid var(--lane-do)} .lane-delegate{border-left:3px solid var(--lane-del)}
+.lane-monitor{border-left:3px solid var(--lane-mon)} .lane-escalate{border-left:3px solid var(--lane-esc)}
+.lane-deprioritize{border-left:3px solid var(--lane-dep)}
+.top5{counter-reset:p;display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+.top5 li{display:flex;gap:10px;align-items:flex-start;background:var(--accent-soft);border-radius:8px;padding:8px 11px}
+.top5 li .rank{font-family:var(--disp);font-weight:700;font-size:15px;color:var(--accent-2);min-width:16px;font-variant-numeric:tabular-nums}
+.top5 li .t{font-size:13px;font-weight:500}
+.top5 li .m{font-size:11.5px;color:var(--ink-2);margin-top:2px}
+
+/* ---- team ---- */
+.people{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
+.person{border:1px solid var(--line-soft);border-radius:10px;background:var(--surface-2);padding:12px}
+.person header{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:8px}
+.person .nm{font-family:var(--disp);font-weight:600;font-size:13.5px}
+.person .rl{font-size:11px;color:var(--ink-3)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:7px;margin-bottom:9px}
+.metric{background:var(--surface);border:1px solid var(--line-soft);border-radius:7px;padding:6px 7px}
+.metric .lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metric .val{font-family:var(--mono);font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;margin-top:1px}
+.metric.bad .val{color:var(--crit-ink)} .metric.warn .val{color:var(--warn-ink)} .metric.good .val{color:var(--good-ink)}
+.meter{height:3px;border-radius:2px;background:var(--surface-3);margin-top:4px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent)}
+.meter i.bad{background:var(--crit)} .meter i.warn{background:var(--warn)} .meter i.good{background:var(--good)}
+.pattern{font-size:12px;border-radius:7px;padding:7px 9px;margin-bottom:8px}
+.pattern.ok{background:var(--good-bg);color:var(--good-ink)}
+.pattern.mixed{background:var(--warn-bg);color:var(--warn-ink)}
+.pattern.risk{background:var(--crit-bg);color:var(--crit-ink)}
+.prow{display:grid;grid-template-columns:auto 1fr;gap:3px 9px;font-size:11.5px;align-items:baseline}
+.prow .k{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3)}
+
+/* ---- KPI ---- */
+.kpigroup{margin-bottom:16px}
+.kpigroup>h3{font-family:var(--disp);font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2);
+  margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:9px}
+.kpi{border:1px solid var(--line-soft);border-radius:9px;padding:9px 10px;background:var(--surface-2)}
+.kpi .lbl{font-size:11px;color:var(--ink-2);min-height:28px}
+.kpi .row{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-top:2px}
+.kpi .val{font-family:var(--mono);font-size:19px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .val input{font-size:18px;width:74px;border-color:transparent;background:transparent;padding:0;font-weight:500}
+.kpi .val input:hover{border-color:var(--line);background:var(--surface)}
+.trend{font-family:var(--mono);font-size:11px;white-space:nowrap}
+.trend.up-good,.trend.down-good{color:var(--good-ink)}
+.trend.up-bad,.trend.down-bad{color:var(--crit-ink)}
+.trend.flat{color:var(--ink-3)}
+.spark{display:block;width:100%;height:26px;margin-top:6px}
+
+/* ---- risks / ownership / founders ---- */
+.risk{border:1px solid var(--line-soft);border-left:4px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--surface-2);margin-bottom:9px}
+.risk.sev-critical{border-left-color:var(--crit)} .risk.sev-high{border-left-color:var(--serious)}
+.risk.sev-medium{border-left-color:var(--warn)} .risk.sev-low{border-left-color:var(--ink-3)}
+.risk .rt{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.risk .title{font-family:var(--disp);font-weight:600;font-size:13px}
+.sev{font-family:var(--disp);font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;border-radius:4px;padding:2px 6px}
+.sev.critical{background:var(--crit-bg);color:var(--crit-ink)} .sev.high{background:var(--warn-bg);color:var(--warn-ink)}
+.sev.medium{background:var(--surface-3);color:var(--ink-2)} .sev.low{background:var(--surface-3);color:var(--ink-3)}
+.tag{font-family:var(--mono);font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);
+  border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+.tag.auto{color:var(--accent-2);border-color:var(--accent)}
+.raci{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:7px}
+.raci div{background:var(--surface);border:1px solid var(--line-soft);border-radius:7px;padding:6px 8px}
+.raci .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:2px}
+.own{border:1px solid var(--line-soft);border-radius:9px;background:var(--surface-2);padding:11px 12px;margin-bottom:9px}
+.own.overlap{border-color:var(--warn);background:var(--warn-bg)}
+.own.overlap .ov{font-size:12px;color:var(--warn-ink);margin-top:8px;border-top:1px dashed color-mix(in srgb,var(--warn-ink) 40%,transparent);padding-top:7px}
+.own.overlap .raci div{background:var(--surface)}
+.roster{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.rchip{font-size:11.5px;border:1px solid var(--line);background:var(--surface-2);border-radius:20px;padding:3px 10px;color:var(--ink-2)}
+.rchip b{font-weight:600;color:var(--ink);font-family:var(--disp)}
+
+/* ---- outputs ---- */
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;border-bottom:1px solid var(--line)}
+.tab{border:0;border-bottom:2px solid transparent;background:transparent;padding:6px 10px;font-size:12.5px;color:var(--ink-3);cursor:pointer}
+.tab[aria-selected="true"]{color:var(--accent-2);border-bottom-color:var(--accent);font-weight:600}
+.out{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:9px;padding:14px 16px;font-size:13px;white-space:pre-wrap;
+  font-family:var(--sans);line-height:1.55;overflow-wrap:anywhere}
+.out h4{font-family:var(--disp);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:14px 0 5px}
+.out h4:first-child{margin-top:0}
+.out .ln{display:block}
+.out .bullet{padding-left:14px;text-indent:-14px}
+.src{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-top:8px}
+.challenge{border-left:3px solid var(--serious);background:var(--surface);border-radius:0 7px 7px 0;padding:8px 11px;margin:7px 0;font-size:12.5px}
+.challenge b{font-family:var(--disp);color:var(--crit-ink)}
+.empty{font-size:12.5px;color:var(--ink-3);padding:10px 0}
+.footer{margin-top:22px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-3);display:flex;flex-wrap:wrap;gap:10px 18px}
+@media (max-width:560px){
+  .bar-in{gap:8px} .brand h1{font-size:14px} table{min-width:560px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand">
+      <div class="brand-mark">MT</div>
+      <div>
+        <h1>Maggie&rsquo;s Tanks &mdash; Command Center</h1>
+        <div class="sub" id="asof">Operations Manager &middot; Jong</div>
+      </div>
+    </div>
+    <div class="bar-sp"></div>
+    <div class="chips" id="rangeChips" role="group" aria-label="Date range">
+      <button class="chip" data-range="today">Today</button>
+      <button class="chip" data-range="week">This Week</button>
+      <button class="chip" data-range="7">Last 7</button>
+      <button class="chip" data-range="14">Last 14</button>
+      <button class="chip" data-range="30">Last 30</button>
+      <button class="chip" data-range="custom">Custom</button>
+    </div>
+    <div id="customRange" hidden>
+      <input type="date" id="rangeFrom" aria-label="From date">
+      <span>&rarr;</span>
+      <input type="date" id="rangeTo" aria-label="To date">
+    </div>
+    <div class="acts">
+      <button class="btn primary" data-act="founderUpdate">Generate Founder Update</button>
+      <button class="btn" data-act="managerCheck">Run Manager Check</button>
+      <button class="btn" data-act="weeklyReview">Generate Weekly Review</button>
+    </div>
+    <div class="savestate" id="saveState">&middot;</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="nav" aria-label="Sections">
+    <a href="#m-health">01 Health</a><a href="#m-triage">02 Command Center</a><a href="#m-deleg">03 Delegation</a>
+    <a href="#m-team">04 Team</a><a href="#m-kpi">05 KPIs</a><a href="#m-risk">06 Risk Radar</a>
+    <a href="#m-own">07 Ownership</a><a href="#m-founder">08 Founders</a><a href="#m-follow">09 Follow-Ups</a>
+    <a href="#m-out">10-12 Reports</a>
+  </nav>
+
+  <details class="mod" id="m-health" open>
+    <summary><span class="idx">01</span><h2>Operational Health</h2><span class="hint" id="healthHint"></span>
+      <button class="btn sm" data-act="addHealth">+ Add Issue</button></summary>
+    <div class="body"><div class="health" id="healthGrid"></div></div>
+  </details>
+
+  <details class="mod" id="m-triage" open>
+    <summary><span class="idx">02</span><h2>Today&rsquo;s Command Center</h2><span class="hint" id="triageHint"></span></summary>
+    <div class="body">
+      <div class="capture">
+        <textarea id="capIn" placeholder="Paste or type anything that lands on you &mdash; a message, a request, a problem, a task. One per line."></textarea>
+        <button class="btn primary" data-act="capture">Capture &amp; Classify</button>
+        <button class="btn" data-act="reclassify">Re-classify All</button>
+      </div>
+      <div class="eyebrow" style="margin-bottom:6px">Top 5 priorities for today</div>
+      <ol class="top5" id="top5"></ol>
+      <div class="lanes" id="lanes"></div>
+      <p class="note" style="margin-top:10px">Classification runs on the rules engine and, when available, on Claude. <b>Change any lane from the dropdown</b> &mdash; your override sticks and the Manager Check will audit it.</p>
+    </div>
+  </details>
+
+  <details class="mod" id="m-deleg" open>
+    <summary><span class="idx">03</span><h2>Delegation Tracker</h2><span class="hint" id="delegHint"></span>
+      <button class="btn sm" data-act="addTask">+ Delegate a Task</button></summary>
+    <div class="body">
+      <div id="delegFlags"></div>
+      <div class="scroll"><table id="delegTable"><thead><tr>
+        <th>Task</th><th>Assigned To</th><th>Assigned</th><th>Deadline</th><th>Expected Result</th>
+        <th>Status</th><th>Last F/U</th><th>Next F/U</th><th>F/U #</th><th>Blocked?</th><th>Notes</th><th></th>
+      </tr></thead><tbody></tbody></table></div>
+      <p class="note" style="margin-top:9px">A row marked <b>Blocked: By me</b> means the work stopped at your desk &mdash; that is a bottleneck, not a delegation. Three or more follow-ups without a result is an accountability problem to solve with a deadline and a consequence, <b>not</b> a reason to take the task back.</p>
+    </div>
+  </details>
+
+  <details class="mod" id="m-team">
+    <summary><span class="idx">04</span><h2>Team Management</h2><span class="hint" id="teamHint"></span>
+      <button class="btn sm" data-act="addPerson">+ Add Person</button></summary>
+    <div class="body">
+      <p class="note" style="margin-bottom:11px">Every read below combines <b>productivity, quality, attendance and results</b>. A single weak metric is a question, not a verdict.</p>
+      <div class="people" id="people"></div>
+    </div>
+  </details>
+
+  <details class="mod" id="m-kpi">
+    <summary><span class="idx">05</span><h2>Operational KPI Scorecard</h2><span class="hint" id="kpiHint"></span>
+      <button class="btn sm" data-act="addKpi">+ Add KPI</button>
+      <button class="btn sm" data-act="closeWeek">Close Week &amp; Roll Forward</button></summary>
+    <div class="body">
+      <p class="note" style="margin-bottom:11px">Weekly values. Trend compares this week to last week; the sparkline shows the last 8 weeks. <b>Type over any number</b> to update it.</p>
+      <div id="kpiGroups"></div>
+    </div>
+  </details>
+
+  <details class="mod" id="m-risk" open>
+    <summary><span class="idx">06</span><h2>Risk Radar</h2><span class="hint" id="riskHint"></span>
+      <button class="btn sm" data-act="addRisk">+ Add Risk</button></summary>
+    <div class="body">
+      <div class="eyebrow" style="margin-bottom:7px">Detected from your KPIs, delegation and follow-ups</div>
+      <div id="autoRisks"></div>
+      <div class="eyebrow" style="margin:16px 0 7px">Risks you logged manually</div>
+      <div id="manualRisks"></div>
+    </div>
+  </details>
+
+  <details class="mod" id="m-own">
+    <summary><span class="idx">07</span><h2>Ownership Map</h2><span class="hint" id="ownHint"></span>
+      <button class="btn sm" data-act="addOwn">+ Add Area</button></summary>
+    <div class="body">
+      <div class="roster" id="roster"></div>
+      <p class="note" style="margin-bottom:12px">The point is not territory. The point is that two people never manage the same task without knowing it, and that no area is left with a decision owner who is not actually deciding.</p>
+      <div id="ownList"></div>
+    </div>
+  </details>
+
+  <details class="mod" id="m-founder">
+    <summary><span class="idx">08</span><h2>Founder Involvement</h2><span class="hint" id="founderHint"></span>
+      <button class="btn sm" data-act="addFounder">+ Log Involvement</button></summary>
+    <div class="body">
+      <div id="founderRead"></div>
+      <div class="scroll"><table id="founderTable"><thead><tr>
+        <th>Issue</th><th>Type of Involvement</th><th>Previous Owner</th><th>Current Owner</th>
+        <th>Deciding</th><th>Executing</th><th>Recommended Ownership</th><th>Opened</th><th></th>
+      </tr></thead><tbody></tbody></table></div>
+    </div>
+  </details>
+
+  <details class="mod" id="m-follow" open>
+    <summary><span class="idx">09</span><h2>Follow-Up Center</h2><span class="hint" id="followHint"></span>
+      <button class="btn sm" data-act="addFollow">+ Add Follow-Up</button></summary>
+    <div class="body">
+      <div class="scroll"><table id="followTable"><thead><tr>
+        <th>Person</th><th>What I Need</th><th>Requested</th><th>Last F/U</th><th>Deadline</th>
+        <th class="num">Days Waiting</th><th>Escalate?</th><th>Status</th><th></th>
+      </tr></thead><tbody></tbody></table></div>
+    </div>
+  </details>
+
+  <details class="mod" id="m-out" open>
+    <summary><span class="idx">10&ndash;12</span><h2>Reports &amp; Manager Check</h2><span class="hint">Founder update &middot; effectiveness check &middot; weekly review</span></summary>
+    <div class="body">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" data-tab="founderUpdate" aria-selected="true">10 &middot; Founder Update</button>
+        <button class="tab" role="tab" data-tab="managerCheck" aria-selected="false">11 &middot; Manager Check</button>
+        <button class="tab" role="tab" data-tab="weeklyReview" aria-selected="false">12 &middot; Weekly Review</button>
+      </div>
+      <div class="toolbar">
+        <button class="btn primary" data-act="runActive">Generate</button>
+        <button class="btn" data-act="copyOut">Copy to clipboard</button>
+        <span class="note" id="outHint">Written for Ahmed &amp; Reber: results, decisions needed, next steps. No operational noise.</span>
+      </div>
+      <div id="mcInputs" class="toolbar" hidden>
+        <label class="note">Hours worked today
+          <input type="number" id="hoursToday" min="0" max="24" step="0.5" style="width:62px"></label>
+        <label class="note">Of those, hours spent reacting (tickets, chats, firefighting)
+          <input type="number" id="hoursReactive" min="0" max="24" step="0.5" style="width:62px"></label>
+      </div>
+      <div class="out" id="outBox"></div>
+      <div class="src" id="outSrc"></div>
+    </div>
+  </details>
+
+  <div class="footer">
+    <span>Maggie&rsquo;s Tanks &middot; Operations Control</span>
+    <span id="footStore"></span>
+    <span><button class="btn sm ghost" data-act="expandAll">Expand all</button>
+      <button class="btn sm ghost" data-act="collapseAll">Collapse all</button>
+      <button class="btn sm ghost" data-act="reseed">Reset to sample data</button></span>
+  </div>
+</div>
+
+<script>
+/* ============================ helpers ============================ */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = p => p + '-' + Math.random().toString(36).slice(2, 8);
+const MS = 864e5;
+const today = () => { const d = new Date(); d.setHours(0,0,0,0); return d; };
+const iso = d => new Date(d).toISOString().slice(0,10);
+const d = n => iso(new Date(today().getTime() + n*MS));
+const days = (a, b) => a ? Math.round((new Date(b||iso(today())) - new Date(a)) / MS) : null;
+const overdue = due => due ? new Date(due) < today() : false;
+const fmtDate = s => { if(!s) return '—'; const t = new Date(s); if(isNaN(t)) return esc(s);
+  const n = days(s); if(n === 0) return 'today'; if(n === 1) return 'yesterday'; if(n === -1) return 'tomorrow';
+  return t.toLocaleDateString(undefined,{month:'short',day:'numeric'}); };
+const num = (v, dg=0) => (v === '' || v === null || v === undefined || isNaN(v)) ? '—' : Number(v).toFixed(dg);
+const pick = (arr, f) => arr.filter(f);
+const sum = arr => arr.reduce((a,b)=>a+b,0);
+
+/* ============================ sample data ============================ */
+function sampleState(){ return {
+  meta:{ store:"Maggie's Tanks", manager:'Jong', hoursToday:9, hoursReactive:6, seeded:iso(today()), weekOf:d(-2) },
+  health:[
+    {id:'h1',area:'Customer Support',status:'amber',issue:'214 open tickets, 38 past 24h after the Labor Day promo spike',owner:'Marlon (CS Manager)',next:'Split the queue: Rose takes refunds/replacements, CS takes shipping status',due:d(1),updated:d(0)},
+    {id:'h2',area:'Inventory',status:'red',issue:'Ribbed Racer Tank / Black — 11 days of stock, replenishment PO not confirmed',owner:'Jeffrey (Inventory)',next:'Confirm PO #1184 quantity + ship date in writing from the factory',due:d(2),updated:d(0)},
+    {id:'h3',area:'Production / Factory',status:'red',issue:'PO #1184 behind plan — 4,200 of 6,000 units cut, no updated ETA since Friday',owner:'Factory (Ms. Lin)',next:'Require written line plan + daily output photo at 6pm CST',due:d(1),updated:d(-1)},
+    {id:'h4',area:'Warehouse / Fulfillment',status:'amber',issue:'Megafulfill: 612 unfulfilled, avg pick-to-ship 2.4 days against a 1.5 day SLA',owner:'Danilo (Megafulfill)',next:'Daily 9am cut-off report + 2 extra pickers through the promo tail',due:d(3),updated:d(-1)},
+    {id:'h5',area:'Product Quality / QC',status:'amber',issue:'Seam puckering on Ribbed Racer Tank size S, lot 24-08 — 17 complaints in 9 days',owner:'Rose (Asst. Ops)',next:'Pull a 20-unit sample from the lot, photo audit, open a factory claim',due:d(2),updated:d(0)},
+    {id:'h6',area:'Refunds & Replacements',status:'green',issue:'Refund rate 2.4%, replacement rate 1.1% — both inside threshold',owner:'CS Team',due:d(5),next:'Hold weekly SKU-level watch; no action needed',updated:d(-2)},
+    {id:'h7',area:'Chargebacks',status:'amber',issue:'9 disputes in needs_response across MAGIE and LYN; 2 expire Friday',owner:'Jong',next:'Submit evidence packs for the 2 expiring, template the remaining 7',due:d(2),updated:d(0)},
+    {id:'h8',area:'Team Performance',status:'amber',issue:'Two agents under 70% activity for a second consecutive week',owner:'Jong',next:'1-on-1 plus a written 2-week action plan for Kris and Dianne',due:d(1),updated:d(-1)}
+  ],
+  inbox:[
+    {id:'i1',text:'Ahmed asks whether we approve a full refund for the 17 puckered-seam tanks or send replacements from the next lot',lane:'ESCALATE',why:'Money-out policy for a whole defect lot — a founder decision, not an ops call.',impact:'high',owner:'Ahmed',created:d(0),done:false,pin:true},
+    {id:'i2',text:'Factory has still not sent the updated ETA for PO #1184',lane:'DO MYSELF',why:'Supplier accountability on a stockout-critical PO. Your relationship, your escalation.',impact:'high',owner:'Jong',created:d(0),done:false,pin:true},
+    {id:'i3',text:'Customer on order #MT-48120 wants their tracking re-sent',lane:'DELEGATE',why:'Routine ticket work. CS owns execution — do not touch it.',impact:'low',owner:'CS Team',created:d(0),done:false,pin:false},
+    {id:'i4',text:'Rose needs sign-off on the QC photo-audit checklist before she runs the lot 24-08 sample',lane:'DO MYSELF',why:'A standard you own; approving it once prevents ten arguments later.',impact:'high',owner:'Jong',created:d(0),done:false,pin:true},
+    {id:'i5',text:'Daily ticket backlog number for the 6pm report',lane:'MONITOR',why:'A KPI, not a task. Read the number, act only if the trend breaks.',impact:'medium',owner:'Marlon',created:d(0),done:false,pin:false},
+    {id:'i6',text:'Megafulfill sent 41 delivery exceptions to review line by line',lane:'DELEGATE',why:'Volume work with a clear rule set. Rose triages, you see the summary.',impact:'medium',owner:'Rose',created:d(0),done:false,pin:false},
+    {id:'i7',text:'Someone suggested redesigning the packing insert card',lane:'DEPRIORITIZE',why:'No revenue or risk attached this week. Park it until stock and QC are stable.',impact:'low',owner:'—',created:d(0),done:false,pin:false},
+    {id:'i8',text:'2 chargeback evidence packs expire Friday',lane:'DO MYSELF',why:'Hard deadline, direct money loss, and the evidence pack needs your order context.',impact:'high',owner:'Jong',created:d(0),done:false,pin:true},
+    {id:'i9',text:'Marketing wants to know how much Black Ribbed stock they can scale on in October',lane:'ESCALATE',why:'Spend commitment against stock we do not yet have confirmed. Founders decide the risk.',impact:'high',owner:'Reber',created:d(-1),done:false,pin:false},
+    {id:'i10',text:'Update the SKU master sheet with the three new colorways',lane:'DELEGATE',why:'Data entry with a template. Jeffrey owns the sheet.',impact:'low',owner:'Jeffrey',created:d(-1),done:false,pin:false}
+  ],
+  deleg:[
+    {id:'t1',task:'Photo audit of 20 units from lot 24-08 (seam + sizing)',who:'Rose',assigned:d(-3),due:d(-1),expect:'Audit sheet with defect % per size and 10 photos',status:'In progress',lastFU:d(0),nextFU:d(1),fu:3,blocked:'No',notes:'Slipped a day waiting on warehouse to locate the lot.'},
+    {id:'t2',task:'Split the CS queue and publish the new routing rule to the team',who:'Marlon',assigned:d(-2),due:d(0),expect:'Routing rule posted, backlog under 150 by Friday',status:'In progress',lastFU:d(0),nextFU:d(2),fu:1,blocked:'No',notes:''},
+    {id:'t3',task:'Confirm PO #1184 quantity and ship date in writing',who:'Jeffrey',assigned:d(-5),due:d(-2),expect:'Written factory confirmation attached to the PO',status:'Not started',lastFU:d(0),nextFU:d(1),fu:4,blocked:'By vendor',notes:'Fourth follow-up. Factory replies in chat but will not put a date in writing.'},
+    {id:'t4',task:'Build the chargeback evidence template from the last 3 won disputes',who:'Rose',assigned:d(-4),due:d(1),expect:'Reusable template CS can fill without me',status:'In progress',lastFU:d(-1),nextFU:d(1),fu:1,blocked:'By me',notes:'Waiting on me to send the two won dispute examples.'},
+    {id:'t5',task:'Daily 9am unfulfilled-orders report from Megafulfill',who:'Danilo',assigned:d(-6),due:d(-4),expect:'Report lands daily at 9am without being asked',status:'Blocked',lastFU:d(-1),nextFU:d(0),fu:5,blocked:'By vendor',notes:'Five follow-ups, two arrived on time. This is a contract conversation now.'},
+    {id:'t6',task:'Refund-rate breakdown by SKU for last 30 days',who:'Kris',assigned:d(-1),due:d(2),expect:'Sheet with refund + replacement rate per SKU',status:'In progress',lastFU:null,nextFU:d(1),fu:0,blocked:'No',notes:''}
+  ],
+  team:[
+    {id:'p1',name:'Rose Villanueva',role:'Assistant Operations Manager',hours:44,activity:91,tickets:62,tph:1.4,frt:38,quality:94,attendance:100,mistakes:0,sop:96,coaching:'Stretch: own the QC claim end-to-end',last1:d(-6),plan:'Take over factory QC claims by month end; shadow one chargeback pack.'},
+    {id:'p2',name:'Marlon Reyes',role:'Customer Support Manager',hours:42,activity:84,tickets:0,tph:0,frt:0,quality:88,attendance:95,mistakes:1,sop:82,coaching:'Needs to publish rules instead of answering tickets himself',last1:d(-11),plan:'Stop working the queue personally; publish routing + escalation rules this week.'},
+    {id:'p3',name:'Kris Tan',role:'CS Agent',hours:40,activity:63,tickets:118,tph:2.9,frt:96,quality:71,attendance:90,mistakes:4,sop:68,coaching:'Required — 2nd week below bar',last1:d(-14),plan:'2-week plan: FRT under 60 min, quality 80+, zero policy misses. Review Friday.'},
+    {id:'p4',name:'Dianne Obar',role:'CS Agent',hours:38,activity:68,tickets:96,tph:2.5,frt:74,quality:86,attendance:78,mistakes:1,sop:88,coaching:'Attendance, not capability',last1:d(-9),plan:'Quality is fine; fix schedule adherence. Ask what is blocking start time.'},
+    {id:'p5',name:'Jeffrey Sy',role:'Inventory Coordinator',hours:40,activity:79,tickets:0,tph:0,frt:0,quality:83,attendance:100,mistakes:2,sop:74,coaching:'Chasing suppliers verbally instead of in writing',last1:d(-8),plan:'Every supplier commitment in writing on the PO within 24h. Weekly stock-cover review.'}
+  ],
+  kpis:[
+    {id:'k1',g:'Customer Support',n:'Open tickets',v:214,dir:'down',h:[168,175,182,190,186,197,203,214]},
+    {id:'k2',g:'Customer Support',n:'Tickets over 24h',v:38,dir:'down',h:[12,14,19,22,20,27,31,38]},
+    {id:'k3',g:'Customer Support',n:'First response time (min)',v:71,dir:'down',h:[44,46,52,49,55,61,66,71]},
+    {id:'k4',g:'Customer Support',n:'Resolution time (h)',v:19.4,dir:'down',dg:1,h:[14.1,14.8,15.2,16,15.6,17.2,18.1,19.4]},
+    {id:'k5',g:'Customer Support',n:'Tickets per agent / day',v:54,dir:'up',h:[41,43,45,47,46,50,52,54]},
+    {id:'k6',g:'Customer Support',n:'Refund requests',v:96,dir:'down',h:[71,74,80,77,82,88,91,96]},
+    {id:'k7',g:'Customer Support',n:'Replacement requests',v:44,dir:'down',h:[24,26,28,27,31,36,40,44]},
+    {id:'k8',g:'Inventory',n:'Units on hand',v:18400,dir:'up',h:[31200,29800,27400,25600,23900,22100,20300,18400]},
+    {id:'k9',g:'Inventory',n:'Days of stock remaining',v:11,dir:'up',h:[34,31,28,25,22,18,14,11]},
+    {id:'k10',g:'Inventory',n:'Out-of-stock SKUs',v:3,dir:'down',h:[0,0,1,1,2,2,2,3]},
+    {id:'k11',g:'Inventory',n:'Incoming units (confirmed)',v:0,dir:'up',h:[6000,6000,4000,4000,2000,2000,0,0]},
+    {id:'k12',g:'Inventory',n:'Units in production',v:6000,dir:'up',h:[4000,4000,6000,6000,6000,6000,6000,6000]},
+    {id:'k13',g:'Production',n:'Units produced this week',v:1400,dir:'up',h:[2100,2050,1950,2000,1800,1700,1550,1400]},
+    {id:'k14',g:'Production',n:'Planned vs actual (%)',v:70,dir:'up',h:[98,96,94,95,90,86,78,70]},
+    {id:'k15',g:'Production',n:'Factory delay (days)',v:9,dir:'down',h:[0,0,1,2,3,5,7,9]},
+    {id:'k16',g:'Production',n:'SKUs at risk',v:4,dir:'down',h:[0,1,1,2,2,3,3,4]},
+    {id:'k17',g:'Fulfillment',n:'Unfulfilled orders',v:612,dir:'down',h:[280,295,310,340,388,447,529,612]},
+    {id:'k18',g:'Fulfillment',n:'"Info Received" orders',v:188,dir:'down',h:[60,66,71,88,104,131,159,188]},
+    {id:'k19',g:'Fulfillment',n:'Avg fulfillment time (days)',v:2.4,dir:'down',dg:1,h:[1.4,1.4,1.5,1.6,1.8,2,2.2,2.4]},
+    {id:'k20',g:'Fulfillment',n:'Avg delivery time (days)',v:7.1,dir:'down',dg:1,h:[6.2,6.1,6.4,6.5,6.6,6.8,7,7.1]},
+    {id:'k21',g:'Fulfillment',n:'On-time delivery (%)',v:88,dir:'up',h:[96,96,95,94,93,91,90,88]},
+    {id:'k22',g:'Fulfillment',n:'Delivery exceptions',v:41,dir:'down',h:[14,16,18,22,27,31,36,41]},
+    {id:'k23',g:'Quality',n:'Defect complaints',v:17,dir:'down',h:[3,4,4,6,7,9,12,17]},
+    {id:'k24',g:'Quality',n:'Sizing complaints',v:23,dir:'down',h:[19,21,20,22,21,24,22,23]},
+    {id:'k25',g:'Quality',n:'Refund rate (%)',v:2.4,dir:'down',dg:1,h:[1.9,2,2.1,2,2.2,2.3,2.3,2.4]},
+    {id:'k26',g:'Quality',n:'Replacement rate (%)',v:1.1,dir:'down',dg:1,h:[0.6,0.7,0.7,0.8,0.9,0.9,1,1.1]},
+    {id:'k27',g:'Quality',n:'Chargebacks needing response',v:9,dir:'down',h:[3,2,4,4,6,6,8,9]}
+  ],
+  risks:[
+    {id:'r1',title:'Megafulfill SLA is drifting with no contractual consequence',sev:'High',impact:'Delivery % keeps sliding into the Q4 peak; CS absorbs the complaints.',owner:'Jong',action:'Put the 1.5-day SLA and the daily report into a written addendum; review with Ahmed before peak.',due:d(4),notified:false,created:d(-2)}
+  ],
+  own:[
+    {id:'o1',area:'Customer Support (daily queue)',dec:'Marlon (CS Manager)',exe:'CS Team',cons:'Jong',inf:'Ahmed'},
+    {id:'o2',area:'Refund & replacement policy',dec:'Ahmed',exe:'CS Team',cons:'Jong, Reber',inf:'Rose'},
+    {id:'o3',area:'Refund & replacement execution (within policy)',dec:'Jong',exe:'CS Team',cons:'Marlon',inf:'Ahmed'},
+    {id:'o4',area:'Inventory levels & replenishment triggers',dec:'Jong',exe:'Jeffrey',cons:'Reber',inf:'Ahmed'},
+    {id:'o5',area:'Factory production schedule',dec:'Jong, Ahmed',exe:'Factory',cons:'Jeffrey',inf:'Reber'},
+    {id:'o6',area:'Factory pricing & contracts',dec:'Ahmed, Reber',exe:'Ahmed',cons:'Jong',inf:'Jeffrey'},
+    {id:'o7',area:'Warehouse / Megafulfill operations',dec:'Jong',exe:'Megafulfill',cons:'Rose',inf:'Ahmed'},
+    {id:'o8',area:'Product quality & QC standard',dec:'Jong',exe:'Rose',cons:'Factory',inf:'Ahmed, Reber'},
+    {id:'o9',area:'Chargeback response',dec:'Jong',exe:'Jong',cons:'—',inf:'Reber'},
+    {id:'o10',area:'Team performance & coaching',dec:'Jong',exe:'Jong, Marlon',cons:'Rose',inf:'Ahmed'},
+    {id:'o11',area:'Hiring & headcount',dec:'Ahmed, Reber',exe:'Jong',cons:'Marlon',inf:'Rose'},
+    {id:'o12',area:'Marketing scaling vs stock cover',dec:'Reber',exe:'Marketing',cons:'Jong, Jeffrey',inf:'Ahmed'}
+  ],
+  founder:[
+    {id:'f1',issue:'Factory delay on PO #1184',type:'Temporary intervention',prev:'Jong',cur:'Ahmed',dec:'Ahmed',exe:'Jong',rec:'Return execution and the daily chase to Jong; Ahmed keeps visibility on the ship date only.',created:d(-3)},
+    {id:'f2',issue:'Refund vs replacement for the puckered-seam lot',type:'Founder approval required',prev:'Jong',cur:'Ahmed',dec:'Ahmed',exe:'CS Team',rec:'Correct as is — money-out policy is a founder call. Jong executes once the rule is set.',created:d(0)},
+    {id:'f3',issue:'Daily ticket backlog numbers',type:'Normal founder visibility',prev:'Jong',cur:'Jong',dec:'Jong',exe:'Marlon',rec:'No change. Reber is reading a number, not taking the area.',created:d(-5)},
+    {id:'f4',issue:'Megafulfill rate increase for Q4',type:'Founder approval required',prev:'Jong',cur:'Reber',dec:'Reber',exe:'Jong',rec:'Correct as is — contract and spend. Jong supplies the SLA evidence.',created:d(-4)},
+    {id:'f5',issue:'CS queue routing during the promo spike',type:'Operational escalation',prev:'Jong',cur:'Ahmed',dec:'Ahmed',exe:'Marlon',rec:'Take this back. Ahmed is deciding day-to-day routing because the backlog scared him — fix the backlog and the involvement ends.',created:d(-1)}
+  ],
+  follow:[
+    {id:'w1',person:'Jeffrey',need:'Written PO #1184 confirmation (qty + ship date)',req:d(-5),last:d(0),due:d(-2),status:'Waiting'},
+    {id:'w2',person:'Factory (Ms. Lin)',need:'Updated production ETA and daily output photo',req:d(-4),last:d(-1),due:d(0),status:'Waiting'},
+    {id:'w3',person:'Marlon',need:'Backlog recovery plan with a date under 150',req:d(-2),last:d(0),due:d(0),status:'Waiting'},
+    {id:'w4',person:'Rose',need:'Lot 24-08 photo audit results',req:d(-3),last:d(0),due:d(1),status:'Waiting'},
+    {id:'w5',person:'Marketing (via Reber)',need:'October scaling forecast by SKU',req:d(-6),last:d(-3),due:d(-1),status:'Waiting'},
+    {id:'w6',person:'Danilo (Megafulfill)',need:'Exception list root causes for the 41 open cases',req:d(-1),last:null,due:d(2),status:'Waiting'}
+  ],
+  out:{founderUpdate:null,managerCheck:null,weeklyReview:null}
+};}
+</script>
+
+<script>
+/* ============================ state & persistence ============================ */
+let state = sampleState();
+let dbHandle = null, dbDoc = null, saveTimer = null, saving = false;
+const LS = 'mt-ops-command-center-v1';
+const DOC = 'ops/state';
+
+function setSave(msg, ok){ const el = $('#saveState'); if(el) el.innerHTML = ok ? '<b>' + esc(msg) + '</b>' : esc(msg); }
+
+function loadLocal(){ try { const raw = localStorage.getItem(LS); return raw ? JSON.parse(raw) : null; } catch(e){ return null; } }
+function saveLocal(){ try { localStorage.setItem(LS, JSON.stringify(state)); } catch(e){} }
+
+function save(){
+  saveLocal();
+  clearTimeout(saveTimer);
+  setSave('saving…');
+  saveTimer = setTimeout(async () => {
+    if(!dbDoc){ setSave('Saved on this device', true); return; }
+    if(saving) return;
+    saving = true;
+    try { await dbDoc.set({ state, updated: new Date().toISOString() }); setSave('Saved & synced', true); }
+    catch(e){ setSave('Saved on this device', true); }
+    finally { saving = false; }
+  }, 700);
+}
+
+async function connectDb(){
+  try {
+    const db = await window.claude?.use?.('db');
+    if(!db) return;
+    dbHandle = db; dbDoc = db.doc(DOC);
+    const snap = await dbDoc.get();
+    if(snap && snap.state && snap.state.health){ state = migrate(snap.state); renderAll(); setSave('Saved & synced', true); }
+    else { await dbDoc.set({ state, updated: new Date().toISOString() }); setSave('Saved & synced', true); }
+  } catch(e){ /* stay on local storage */ }
+}
+function migrate(s){ const base = sampleState(); for(const k of Object.keys(base)) if(s[k] === undefined) s[k] = base[k]; return s; }
+
+/* ============================ date range ============================ */
+let range = { key: '7', from: null, to: null };
+function rangeBounds(){
+  const t = today(), to = new Date(t);
+  let from = new Date(t);
+  if(range.key === 'today') from = new Date(t);
+  else if(range.key === 'week'){ const dow = (t.getDay() + 6) % 7; from = new Date(t.getTime() - dow*MS); }
+  else if(range.key === 'custom'){
+    from = range.from ? new Date(range.from) : new Date(t.getTime() - 7*MS);
+    return { from, to: range.to ? new Date(range.to) : to };
+  }
+  else from = new Date(t.getTime() - (Number(range.key) - 1) * MS);
+  return { from, to };
+}
+function inRange(dateStr){
+  if(!dateStr) return true;
+  const { from, to } = rangeBounds();
+  const x = new Date(dateStr);
+  return x >= from && x <= new Date(to.getTime() + MS - 1);
+}
+function rangeLabel(){
+  const map = { today:'today', week:'this week', '7':'the last 7 days', '14':'the last 14 days', '30':'the last 30 days' };
+  if(range.key === 'custom'){ const b = rangeBounds(); return fmtDate(iso(b.from)) + ' → ' + fmtDate(iso(b.to)); }
+  return map[range.key] || 'the last 7 days';
+}
+
+/* ============================ generic editing ============================ */
+const MODULE_OF = { health:'m-health', inbox:'m-triage', deleg:'m-deleg', team:'m-team', kpis:'m-kpi',
+                    risks:'m-risk', own:'m-own', founder:'m-founder', follow:'m-follow' };
+const NUMERIC = new Set(['hours','activity','tickets','tph','frt','quality','attendance','mistakes','sop','v','fu']);
+
+function row(coll, id){ return (state[coll] || []).find(r => r.id === id); }
+function setField(coll, id, field, value){
+  const r = row(coll, id); if(!r) return;
+  let v = value;
+  if(NUMERIC.has(field)) v = value === '' ? '' : Number(String(value).replace(/[^0-9.\-]/g,''));
+  if(field === 'v' && r.h){ r.h = r.h.slice(0,-1).concat([v]); }
+  if(String(r[field] ?? '') === String(v ?? '')) return;
+  r[field] = v;
+  save(); renderDerived(); scheduleRender(MODULE_OF[coll]);
+}
+function scheduleRender(modId){
+  setTimeout(() => {
+    const m = document.getElementById(modId);
+    if(!m || m.contains(document.activeElement)) return;
+    RENDER[modId] && RENDER[modId]();
+  }, 0);
+}
+const ed = (c,i,f,v,cls) => '<td class="ed ' + (cls||'') + '" contenteditable="plaintext-only" data-c="' + c + '" data-i="' + i + '" data-f="' + f + '">' + esc(v ?? '') + '</td>';
+const edSpan = (c,i,f,v,cls) => '<span class="ed ' + (cls||'') + '" contenteditable="plaintext-only" data-c="' + c + '" data-i="' + i + '" data-f="' + f + '">' + esc(v ?? '') + '</span>';
+const sel = (c,i,f,v,opts,cls) => '<select class="' + (cls||'bare') + '" data-c="' + c + '" data-i="' + i + '" data-f="' + f + '">' +
+  opts.map(o => '<option' + (String(o) === String(v) ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + '</select>';
+const dateIn = (c,i,f,v) => '<input type="date" data-c="' + c + '" data-i="' + i + '" data-f="' + f + '" value="' + esc(v || '') + '">';
+const delBtn = (c,i) => '<td><button class="x" data-del="' + c + '" data-i="' + i + '" title="Delete row" aria-label="Delete row">&times;</button></td>';
+
+document.addEventListener('focusout', e => {
+  const el = e.target.closest && e.target.closest('[contenteditable][data-c]');
+  if(!el) return;
+  setField(el.dataset.c, el.dataset.i, el.dataset.f, el.textContent.trim());
+});
+document.addEventListener('keydown', e => {
+  const el = e.target.closest && e.target.closest('[contenteditable][data-c]');
+  if(el && e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); el.blur(); }
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if(el.dataset && el.dataset.c && el.dataset.f !== undefined && !el.isContentEditable){
+    setField(el.dataset.c, el.dataset.i, el.dataset.f, el.value);
+  }
+});
+document.addEventListener('click', e => {
+  const del = e.target.closest('[data-del]');
+  if(del){
+    const c = del.dataset.del;
+    state[c] = state[c].filter(r => r.id !== del.dataset.i);
+    save(); renderAll(); return;
+  }
+  const act = e.target.closest('[data-act]');
+  if(act && ACTIONS[act.dataset.act]) { ACTIONS[act.dataset.act](act); }
+});
+
+/* ============================ 01 · health ============================ */
+const STATUS_LABEL = { green:'🟢 Good', amber:'🟡 Attention', red:'🔴 Critical' };
+function statusSel(h){
+  return '<select class="stat-sel ' + h.status + '" data-c="health" data-i="' + h.id + '" data-f="status" aria-label="Status for ' + esc(h.area) + '">' +
+    ['green','amber','red'].map(v => '<option value="' + v + '"' + (v === h.status ? ' selected' : '') + '>' + STATUS_LABEL[v] + '</option>').join('') +
+    '</select>';
+}
+function renderHealth(){
+  const g = $('#healthGrid'); if(!g) return;
+  g.innerHTML = state.health.map(h => {
+    const late = overdue(h.due);
+    return '<article class="hcard s-' + h.status + '">' +
+      '<div class="top"><span class="area">' + esc(h.area) + '</span>' + statusSel(h) + '</div>' +
+      '<p class="issue">' + edSpan('health', h.id, 'issue', h.issue) + '</p>' +
+      '<dl class="kv">' +
+      '<dt>Owner</dt><dd>' + edSpan('health', h.id, 'owner', h.owner) + '</dd>' +
+      '<dt>Next</dt><dd>' + edSpan('health', h.id, 'next', h.next) + '</dd>' +
+      '<dt>Due</dt><dd class="' + (late ? 'due-late' : '') + '">' + dateIn('health', h.id, 'due', h.due) +
+        (late ? ' <b>overdue</b>' : '') + '</dd>' +
+      '<dt>Updated</dt><dd class="mono">' + fmtDate(h.updated) + '</dd>' +
+      '</dl>' +
+      '<button class="x" data-del="health" data-i="' + h.id + '" style="position:absolute;top:6px;right:4px" aria-label="Delete area">&times;</button>' +
+      '</article>';
+  }).join('');
+  const reds = pick(state.health, h => h.status === 'red').length;
+  const ambers = pick(state.health, h => h.status === 'amber').length;
+  $('#healthHint').innerHTML = '<span class="stat red"><span class="dot red"></span>' + reds + ' critical</span> ' +
+    '<span class="stat amber"><span class="dot amber"></span>' + ambers + ' attention</span> ' +
+    '<span class="stat green"><span class="dot green"></span>' + (state.health.length - reds - ambers) + ' good</span>';
+}
+</script>
+
+<script>
+/* ============================ 02 · triage & classification ============================ */
+const LANES = ['DO MYSELF','DELEGATE','MONITOR','ESCALATE','DEPRIORITIZE'];
+const LANE_CLASS = { 'DO MYSELF':'do','DELEGATE':'delegate','MONITOR':'monitor','ESCALATE':'escalate','DEPRIORITIZE':'deprioritize' };
+const LANE_BLURB = {
+  'DO MYSELF':'Your decision or your authority',
+  'DELEGATE':'Someone else owns execution',
+  'MONITOR':'Watch the number, not the task',
+  'ESCALATE':'Needs Ahmed or Reber',
+  'DEPRIORITIZE':'Not worth your attention now'
+};
+const RULES = [
+  { lane:'ESCALATE', why:'Money, contract, policy or headcount commitment — founders decide, you prepare the evidence.',
+    re:/\b(budget|price|pricing|contract|rate increase|discount|spend|invest|capital|hire|hiring|headcount|fire|terminate|new supplier|new factory|legal|policy change|refund policy|equity|brand direction|approve .*(spend|budget|refund))\b/i },
+  { lane:'DELEGATE', why:'Routine execution with a known rule set. Hand it over with a deadline and an expected result.',
+    re:/\b(reply|respond to (the )?customer|resend|re-?send|tracking|update the (sheet|list|doc)|upload|tag orders|data entry|copy|collect|compile|line by line|export|spreadsheet|routine|ticket #|order #)\b/i },
+  { lane:'MONITOR', why:'This is a KPI reading. Act only if the trend breaks, not because the number arrived.',
+    re:/\b(daily (number|report|backlog)|kpi|metric|dashboard|report for|stock level check|how many|status update|weekly number)\b/i },
+  { lane:'DEPRIORITIZE', why:'No revenue, risk or deadline attached this week. Park it and revisit.',
+    re:/\b(idea|suggest(ion|ed)?|nice to have|someday|redesign|cosmetic|later|when we have time|minor|font|logo tweak)\b/i },
+  { lane:'DO MYSELF', why:'A decision, a standard or a supplier escalation that carries your authority.',
+    re:/\b(decide|decision|approve|sign-?off|sop|standard|escalat|root cause|supplier|factory|chargeback|dispute|deadline|conflict|plan for|negotiat|evidence)\b/i }
+];
+function classify(text){
+  for(const r of RULES) if(r.re.test(text)) return { lane:r.lane, why:r.why };
+  return { lane:'DO MYSELF', why:'No rule matched — review it yourself once, then decide who should own it next time.' };
+}
+function impactOf(text){
+  if(/\b(stockout|out of stock|expire|expires|refund|chargeback|delay|deadline|critical|money|urgent|today|friday)\b/i.test(text)) return 'high';
+  if(/\b(nice to have|idea|someday|minor|cosmetic)\b/i.test(text)) return 'low';
+  return 'medium';
+}
+const LANE_W = { 'DO MYSELF':3, 'ESCALATE':3, 'MONITOR':1, 'DELEGATE':1, 'DEPRIORITIZE':0 };
+const IMP_W = { high:3, medium:2, low:1 };
+function score(it){ return (it.pin ? 10 : 0) + (LANE_W[it.lane] || 1) * (IMP_W[it.impact] || 2); }
+
+function visibleInbox(){ return state.inbox.filter(i => inRange(i.created)); }
+
+function renderTriage(){
+  const items = visibleInbox();
+  const lanes = $('#lanes');
+  lanes.innerHTML = LANES.map(L => {
+    const mine = items.filter(i => i.lane === L && !i.done);
+    return '<section class="lane lane-' + LANE_CLASS[L] + '">' +
+      '<h3>' + L + '<span class="cnt">' + mine.length + '</span></h3>' +
+      '<ul>' + (mine.length ? mine.map(i =>
+        '<li class="item"><div class="txt">' + edSpan('inbox', i.id, 'text', i.text) + '</div>' +
+        (i.why ? '<div class="why">' + esc(i.why) + '</div>' : '') +
+        '<div class="meta">' + sel('inbox', i.id, 'lane', i.lane, LANES) +
+        sel('inbox', i.id, 'impact', i.impact || 'medium', ['high','medium','low']) +
+        '<span class="tag">' + edSpan('inbox', i.id, 'owner', i.owner || '—') + '</span>' +
+        '<button class="btn sm ghost" data-act="pin" data-i="' + i.id + '">' + (i.pin ? '★ pinned' : '☆ pin') + '</button>' +
+        '<button class="btn sm ghost" data-act="doneItem" data-i="' + i.id + '">done</button>' +
+        '<button class="x" data-del="inbox" data-i="' + i.id + '" aria-label="Delete item">&times;</button>' +
+        '</div></li>').join('') : '<li class="empty" style="padding:6px 4px">Nothing here.</li>') +
+      '</ul></section>';
+  }).join('');
+
+  const top = items.filter(i => !i.done && i.lane !== 'DEPRIORITIZE')
+                   .sort((a,b) => score(b) - score(a)).slice(0,5);
+  $('#top5').innerHTML = top.length ? top.map((i,n) =>
+    '<li><span class="rank">' + (n+1) + '</span><div><div class="t">' + esc(i.text) + '</div>' +
+    '<div class="m">' + esc(i.lane) + ' · ' + esc(i.impact || 'medium') + ' impact · owner ' + esc(i.owner || '—') +
+    (i.lane === 'DELEGATE' ? ' · <b>hand this off before 10am</b>' : '') + '</div></div></li>').join('')
+    : '<li class="empty">Capture what landed on you today and the top five will build themselves.</li>';
+
+  const mineCount = items.filter(i => i.lane === 'DO MYSELF' && !i.done).length;
+  const openCount = items.filter(i => !i.done).length;
+  $('#triageHint').innerHTML = openCount + ' open in ' + rangeLabel() + ' · ' +
+    '<b>' + mineCount + '</b> on your desk · ' + items.filter(i => i.lane === 'DELEGATE' && !i.done).length + ' to hand off · ' +
+    items.filter(i => i.lane === 'ESCALATE' && !i.done).length + ' for founders';
+}
+
+/* ============================ 03 · delegation ============================ */
+const DELEG_STATUS = ['Not started','In progress','Blocked','Done','Cancelled'];
+const BLOCKED_BY = ['No','By me','By vendor','By founder','By another team'];
+function renderDeleg(){
+  const rows = state.deleg.filter(t => inRange(t.assigned));
+  const tb = $('#delegTable tbody');
+  tb.innerHTML = rows.length ? rows.map(t => {
+    const late = overdue(t.due) && t.status !== 'Done' && t.status !== 'Cancelled';
+    const loop = (t.fu || 0) >= 3 && t.status !== 'Done';
+    return '<tr class="' + (late ? 'flag-late ' : '') + (loop ? 'flag-loop' : '') + '">' +
+      ed('deleg', t.id, 'task', t.task) +
+      ed('deleg', t.id, 'who', t.who) +
+      '<td>' + dateIn('deleg', t.id, 'assigned', t.assigned) + '</td>' +
+      '<td>' + dateIn('deleg', t.id, 'due', t.due) + (late ? '<div class="due-late mono" style="font-size:11px">' + Math.abs(days(t.due)) + 'd overdue</div>' : '') + '</td>' +
+      ed('deleg', t.id, 'expect', t.expect) +
+      '<td>' + sel('deleg', t.id, 'status', t.status, DELEG_STATUS) + '</td>' +
+      '<td>' + dateIn('deleg', t.id, 'lastFU', t.lastFU) + '</td>' +
+      '<td>' + dateIn('deleg', t.id, 'nextFU', t.nextFU) + '</td>' +
+      '<td class="num">' + edSpan('deleg', t.id, 'fu', t.fu ?? 0) + '</td>' +
+      '<td>' + sel('deleg', t.id, 'blocked', t.blocked || 'No', BLOCKED_BY) + '</td>' +
+      ed('deleg', t.id, 'notes', t.notes) +
+      delBtn('deleg', t.id) + '</tr>';
+  }).join('') : '<tr><td colspan="12" class="empty">Nothing assigned in ' + rangeLabel() + '.</td></tr>';
+
+  const late = rows.filter(t => overdue(t.due) && t.status !== 'Done' && t.status !== 'Cancelled');
+  const loops = rows.filter(t => (t.fu || 0) >= 3 && t.status !== 'Done');
+  const mine = rows.filter(t => t.blocked === 'By me');
+  let flags = '';
+  if(late.length) flags += '<div class="warnline crit"><b>' + late.length + ' overdue</b><span>' +
+    esc(late.map(t => t.task + ' (' + t.who + ')').join(' · ')) + ' — set a new deadline with the owner today rather than absorbing the work.</span></div>';
+  if(loops.length) flags += '<div class="warnline"><b>Follow-up loop</b><span>' +
+    loops.map(t => esc(t.who) + ' on “' + esc(t.task) + '” (' + (t.fu||0) + ' follow-ups)').join(' · ') +
+    ' — more chasing will not change this. Give one firm deadline and name the consequence, or reassign. <b>Do not do it yourself.</b></span></div>';
+  if(mine.length) flags += '<div class="warnline"><b>Blocked by you</b><span>' +
+    mine.map(t => esc(t.who) + ' cannot move on “' + esc(t.task) + '”').join(' · ') + ' — you are the bottleneck on these. Clear them first.</span></div>';
+  $('#delegFlags').innerHTML = flags;
+  $('#delegHint').innerHTML = rows.length + ' assigned in ' + rangeLabel() + ' · <b>' + late.length + '</b> overdue · ' +
+    loops.length + ' in a follow-up loop · ' + mine.length + ' blocked by you';
+}
+
+/* ============================ 04 · team ============================ */
+function band(v, good, warn, invert){
+  if(v === '' || v === null || v === undefined || isNaN(v)) return '';
+  v = Number(v);
+  const ok = invert ? v <= good : v >= good;
+  const mid = invert ? v <= warn : v >= warn;
+  return ok ? 'good' : mid ? 'warn' : 'bad';
+}
+function metric(label, value, cls, meterPct){
+  return '<div class="metric ' + cls + '"><div class="lbl">' + esc(label) + '</div><div class="val">' + value + '</div>' +
+    (meterPct !== undefined ? '<div class="meter"><i class="' + cls + '" style="width:' + Math.max(0, Math.min(100, meterPct)) + '%"></i></div>' : '') + '</div>';
+}
+function readPerson(p){
+  const prod = band(p.activity, 80, 70), qual = band(p.quality, 88, 80), att = band(p.attendance, 95, 85), sop = band(p.sop, 90, 78);
+  const weak = [prod, qual, att, sop].filter(x => x === 'bad').length;
+  const mid = [prod, qual, att, sop].filter(x => x === 'warn').length;
+  const notes = [];
+  if(prod === 'bad' && qual !== 'bad') notes.push('output is low but the work that lands is sound — this is a workload, tooling or focus problem, not a capability problem');
+  if(qual === 'bad' && prod !== 'bad') notes.push('fast but inaccurate — volume is hiding rework; coach on accuracy before pushing throughput');
+  if(att === 'bad' && qual !== 'bad') notes.push('capability is fine, schedule adherence is not — ask what is blocking start time before you manage the numbers');
+  if((p.mistakes || 0) >= 3) notes.push((p.mistakes) + ' repeated mistakes — that is an SOP gap or a training gap, fix the system not the person');
+  if(sop === 'bad') notes.push('SOP compliance is the root metric here — the other numbers will not move until this does');
+  if(days(p.last1) > 10) notes.push('last 1-on-1 was ' + days(p.last1) + ' days ago — you are managing this person through metrics alone');
+  const level = weak >= 2 ? 'risk' : (weak === 1 || mid >= 2) ? 'mixed' : 'ok';
+  const headline = level === 'ok' ? 'Performing across productivity, quality, attendance and compliance.'
+    : level === 'mixed' ? 'Mixed pattern — one or two signals off, the rest holding.'
+    : 'Pattern across multiple signals, not a single bad metric.';
+  return { level, text: headline + (notes.length ? ' ' + notes.join('; ') + '.' : '') };
+}
+function renderTeam(){
+  const el = $('#people');
+  el.innerHTML = state.team.map(p => {
+    const r = readPerson(p);
+    return '<article class="person">' +
+      '<header><div><div class="nm">' + edSpan('team', p.id, 'name', p.name) + '</div>' +
+      '<div class="rl">' + edSpan('team', p.id, 'role', p.role) + '</div></div>' +
+      '<button class="x" data-del="team" data-i="' + p.id + '" aria-label="Remove person">&times;</button></header>' +
+      '<div class="metrics">' +
+        metric('Hours', edSpan('team', p.id, 'hours', p.hours), '') +
+        metric('Activity %', edSpan('team', p.id, 'activity', p.activity), band(p.activity,80,70), p.activity) +
+        metric('Tickets', edSpan('team', p.id, 'tickets', p.tickets), '') +
+        metric('Tickets/hr', edSpan('team', p.id, 'tph', p.tph), '') +
+        metric('First resp (min)', edSpan('team', p.id, 'frt', p.frt), band(p.frt,45,75,true)) +
+        metric('Quality', edSpan('team', p.id, 'quality', p.quality), band(p.quality,88,80), p.quality) +
+        metric('Attendance %', edSpan('team', p.id, 'attendance', p.attendance), band(p.attendance,95,85), p.attendance) +
+        metric('Repeat errors', edSpan('team', p.id, 'mistakes', p.mistakes), band(p.mistakes,0,2,true)) +
+        metric('SOP %', edSpan('team', p.id, 'sop', p.sop), band(p.sop,90,78), p.sop) +
+      '</div>' +
+      '<div class="pattern ' + r.level + '">' + esc(r.text) + '</div>' +
+      '<div class="prow"><span class="k">Coaching</span><span>' + edSpan('team', p.id, 'coaching', p.coaching) + '</span>' +
+      '<span class="k">Last 1:1</span><span>' + dateIn('team', p.id, 'last1', p.last1) +
+        (days(p.last1) > 10 ? ' <b class="due-late">' + days(p.last1) + 'd ago</b>' : '') + '</span>' +
+      '<span class="k">Action plan</span><span>' + edSpan('team', p.id, 'plan', p.plan) + '</span></div>' +
+      '</article>';
+  }).join('');
+  const risky = state.team.filter(p => readPerson(p).level === 'risk').length;
+  const stale = state.team.filter(p => days(p.last1) > 10).length;
+  $('#teamHint').innerHTML = state.team.length + ' people · <b>' + risky + '</b> with a multi-signal pattern · ' + stale + ' overdue a 1-on-1';
+}
+</script>
+
+<script>
+/* ============================ 05 · KPI scorecard ============================ */
+const KPI_GROUPS = ['Customer Support','Inventory','Production','Fulfillment','Quality'];
+function kpiPrev(k){ return (k.h && k.h.length > 1) ? k.h[k.h.length - 2] : null; }
+function kpiDelta(k){
+  const p = kpiPrev(k); if(p === null || p === undefined || p === '' || k.v === '' ) return null;
+  const diff = Number(k.v) - Number(p);
+  const pct = Number(p) === 0 ? null : (diff / Math.abs(Number(p))) * 100;
+  const good = diff === 0 ? 'flat' : (k.dir === 'up' ? (diff > 0 ? 'up-good' : 'down-bad') : (diff > 0 ? 'up-bad' : 'down-good'));
+  return { diff, pct, cls: good };
+}
+function sparkline(k){
+  const h = (k.h || []).map(Number).filter(n => !isNaN(n));
+  if(h.length < 2) return '';
+  const w = 120, hgt = 26, min = Math.min(...h), max = Math.max(...h), span = (max - min) || 1;
+  const pts = h.map((v,i) => [ (i / (h.length - 1)) * w, hgt - 3 - ((v - min) / span) * (hgt - 7) ]);
+  const line = pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  const area = 'M0,' + hgt + ' L' + pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L') + ' L' + w + ',' + hgt + ' Z';
+  const last = pts[pts.length - 1];
+  const d = kpiDelta(k), stroke = d && d.cls.endsWith('bad') ? 'var(--crit)' : d && d.cls.endsWith('good') ? 'var(--good)' : 'var(--ink-3)';
+  return '<svg class="spark" viewBox="0 0 ' + w + ' ' + hgt + '" preserveAspectRatio="none" role="img" aria-label="8-week trend">' +
+    '<path d="' + area + '" fill="' + stroke + '" fill-opacity="0.10"></path>' +
+    '<polyline points="' + line + '" fill="none" stroke="' + stroke + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline>' +
+    '<circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="2.6" fill="' + stroke + '" vector-effect="non-scaling-stroke"></circle></svg>';
+}
+function renderKpis(){
+  const wrap = $('#kpiGroups');
+  const groups = KPI_GROUPS.concat(Array.from(new Set(state.kpis.map(k => k.g))).filter(g => !KPI_GROUPS.includes(g)));
+  wrap.innerHTML = groups.map(g => {
+    const ks = state.kpis.filter(k => k.g === g);
+    if(!ks.length) return '';
+    return '<section class="kpigroup"><h3>' + esc(g) + '</h3><div class="kpis">' + ks.map(k => {
+      const d = kpiDelta(k), dg = k.dg || 0;
+      const trend = d ? '<span class="trend ' + d.cls + '">' + (d.diff > 0 ? '▲' : d.diff < 0 ? '▼' : '■') + ' ' +
+        (d.diff > 0 ? '+' : '') + num(d.diff, dg) + (d.pct !== null ? ' (' + (d.pct > 0 ? '+' : '') + d.pct.toFixed(0) + '%)' : '') + '</span>'
+        : '<span class="trend flat">no history</span>';
+      return '<div class="kpi"><div class="lbl">' + edSpan('kpis', k.id, 'n', k.n) + '</div>' +
+        '<div class="row"><span class="val"><input type="number" step="any" data-c="kpis" data-i="' + k.id + '" data-f="v" value="' + esc(k.v) + '" aria-label="' + esc(k.n) + '"></span>' + trend + '</div>' +
+        sparkline(k) +
+        '<div class="src" style="margin-top:4px;display:flex;justify-content:space-between;gap:6px;align-items:center;white-space:nowrap">' +
+          '<span>last wk ' + num(kpiPrev(k), dg) + ' &middot; ' + (k.dir === 'up' ? '&uarr;' : '&darr;') + ' better</span>' +
+          '<button class="x" data-del="kpis" data-i="' + k.id + '" aria-label="Delete KPI">&times;</button></div></div>';
+    }).join('') + '</div></section>';
+  }).join('');
+  const worse = state.kpis.filter(k => { const d = kpiDelta(k); return d && d.cls.endsWith('bad'); }).length;
+  const better = state.kpis.filter(k => { const d = kpiDelta(k); return d && d.cls.endsWith('good'); }).length;
+  $('#kpiHint').innerHTML = 'week of ' + fmtDate(state.meta.weekOf) + ' · <b>' + worse + '</b> deteriorating · ' + better + ' improving';
+}
+
+/* ============================ 06 · risk radar ============================ */
+function kpiVal(name){ const k = state.kpis.find(x => x.n === name); return k ? Number(k.v) : null; }
+function kpiObj(name){ return state.kpis.find(x => x.n === name); }
+function ownerFor(areaFragment){
+  const o = state.own.find(x => x.area.toLowerCase().includes(areaFragment.toLowerCase()));
+  return o ? o.exe : 'Jong';
+}
+function autoRisks(){
+  const R = [];
+  const add = (t, sev, impact, owner, action, due) => R.push({ title:t, sev, impact, owner, action, due });
+  const dos = kpiVal('Days of stock remaining');
+  if(dos !== null && dos <= 21) add('Inventory runs out in ' + dos + ' days on the lead SKU',
+    dos <= 14 ? 'Critical' : 'High', 'Stockout on the best seller kills revenue and pushes paid spend into a product we cannot ship.',
+    ownerFor('Inventory'), 'Confirm the replenishment PO in writing today; if the factory will not commit, cap ad spend on that SKU.', d(1));
+  const oos = kpiVal('Out-of-stock SKUs');
+  if(oos > 0) add(oos + ' SKUs already out of stock', oos >= 3 ? 'High' : 'Medium',
+    'Customers land on dead PDPs; CS absorbs the “when is it back” volume.', ownerFor('Inventory'),
+    'Publish restock dates on the PDPs and switch the ad spend to in-stock colorways.', d(2));
+  const pva = kpiVal('Planned vs actual (%)');
+  if(pva !== null && pva < 90) add('Factory is at ' + pva + '% of plan', pva < 80 ? 'Critical' : 'High',
+    'Every week under plan moves the stockout date closer and compounds into Q4.', ownerFor('Factory'),
+    'Written line plan plus daily output photo; escalate to Ahmed only if the factory misses two more days.', d(1));
+  const over = kpiObj('Tickets over 24h');
+  if(over){ const p = kpiPrev(over); if(p !== null && Number(over.v) > Number(p)) add('Ticket backlog is growing week over week (' + p + ' → ' + over.v + ' over 24h)',
+    Number(over.v) > 30 ? 'High' : 'Medium', 'Response time slides, refund requests rise, and founders start reading the queue themselves.',
+    ownerFor('Customer Support'), 'Hold the split-queue routing for 5 days and publish a daily recovery number against a target.', d(3)); }
+  const frt = kpiObj('First response time (min)');
+  if(frt){ const p = kpiPrev(frt); if(p !== null && Number(frt.v) > Number(p) * 1.1) add('First response time deteriorating (' + p + ' → ' + frt.v + ' min)',
+    'Medium', 'The first reply is what customers judge; slow first touch drives refund requests that were avoidable.',
+    ownerFor('Customer Support'), 'Set a 30-minute first-touch macro rota for the first two hours of each shift.', d(4)); }
+  const ff = kpiObj('Avg fulfillment time (days)');
+  if(ff){ const p = kpiPrev(ff); if(p !== null && Number(ff.v) > Number(p)) add('Fulfillment time rising (' + p + ' → ' + ff.v + ' days)',
+    Number(ff.v) > 2 ? 'High' : 'Medium', 'Delivery promise breaks, exceptions climb, chargeback exposure grows.',
+    ownerFor('Warehouse'), 'Daily 9am cut-off report from the warehouse and a written SLA addendum before peak.', d(3)); }
+  const rr = kpiVal('Refund rate (%)'), rp = kpiVal('Replacement rate (%)');
+  if(rr !== null && rr >= 3) add('Refund rate at ' + rr + '%', 'High', 'Margin loss plus a payment-processor risk signal.', ownerFor('Refund'),
+    'Break refunds down by SKU and reason; fix the top reason at the source.', d(5));
+  if(rp !== null && rp >= 1) add('Replacement rate at ' + rp + '% — quality is leaking into cost', rp >= 1.5 ? 'High' : 'Medium',
+    'Replacements are a product problem paid for twice: the unit and the shipping.', ownerFor('quality'),
+    'Tie replacements to lot numbers; open a factory claim on the failing lot.', d(4));
+  const dc = kpiObj('Defect complaints');
+  if(dc){ const p = kpiPrev(dc); if(p !== null && Number(dc.v) > Number(p) && Number(dc.v) >= 10) add('Repeated QC problem — defect complaints ' + p + ' → ' + dc.v,
+    'High', 'A single bad lot becomes a brand problem if it ships through the whole run.', ownerFor('quality'),
+    'Quarantine the lot, photo-audit a sample, and add the failure mode to the pre-ship checklist.', d(2)); }
+  const cb = kpiVal('Chargebacks needing response');
+  if(cb !== null && cb >= 5) add(cb + ' chargebacks awaiting a response', 'High',
+    'Unanswered disputes are lost by default and count against the dispute ratio.', 'Jong',
+    'Submit the expiring evidence packs first, then template the rest so CS can file them.', d(2));
+  state.deleg.filter(t => overdue(t.due) && !['Done','Cancelled'].includes(t.status)).forEach(t =>
+    add('Task repeatedly overdue: ' + t.task, (t.fu || 0) >= 3 ? 'High' : 'Medium',
+      'Delegated work that never lands teaches the team that deadlines are optional.', t.who,
+      'One firm deadline with a named consequence, or reassign it. Do not take it back.', d(1)));
+  state.follow.filter(f => f.status === 'Waiting' && days(f.req) >= 4).forEach(f =>
+    add(f.person + ' not responding — ' + f.need, days(f.req) >= 6 ? 'High' : 'Medium',
+      'Your plan depends on an input that is ' + days(f.req) + ' days late.', f.person,
+      'Send a written deadline with the impact attached, and escalate if it passes.', d(1)));
+  state.team.forEach(p => { const r = readPerson(p); if(r.level === 'risk')
+    add('Performance pattern: ' + p.name, 'Medium', 'Unmanaged, this becomes either a quality problem for customers or an attrition problem for you.',
+      'Jong', 'Written 2-week action plan with weekly checkpoints — not another verbal reminder.', d(2)); });
+  return R;
+}
+const SEVS = ['Critical','High','Medium','Low'];
+function riskCard(r, isAuto){
+  return '<article class="risk sev-' + (r.sev || 'Medium').toLowerCase() + '">' +
+    '<div class="rt"><span class="title">' + (isAuto ? esc(r.title) : edSpan('risks', r.id, 'title', r.title)) + '</span>' +
+    '<span style="display:flex;gap:6px;align-items:center">' +
+      (isAuto ? '<span class="sev ' + r.sev.toLowerCase() + '">' + esc(r.sev) + '</span><span class="tag auto">auto-detected</span>'
+              : sel('risks', r.id, 'sev', r.sev, SEVS) + '<span class="tag">manual</span>' +
+                '<button class="x" data-del="risks" data-i="' + r.id + '" aria-label="Delete risk">&times;</button>') +
+    '</span></div>' +
+    '<div class="raci">' +
+      '<div><span class="k">Potential impact</span>' + (isAuto ? esc(r.impact) : edSpan('risks', r.id, 'impact', r.impact)) + '</div>' +
+      '<div><span class="k">Owner</span>' + (isAuto ? esc(r.owner) : edSpan('risks', r.id, 'owner', r.owner)) + '</div>' +
+      '<div><span class="k">Recommended action</span>' + (isAuto ? esc(r.action) : edSpan('risks', r.id, 'action', r.action)) + '</div>' +
+      '<div><span class="k">Deadline</span>' + (isAuto ? '<span class="mono">' + fmtDate(r.due) + '</span>' : dateIn('risks', r.id, 'due', r.due)) + '</div>' +
+    '</div>' +
+    (isAuto ? '<div style="margin-top:8px"><button class="btn sm" data-act="adoptRisk" data-t="' + encodeURIComponent(JSON.stringify(r)) + '">Take ownership of this risk</button></div>'
+            : '<div style="margin-top:8px" class="note">' +
+              '<label><input type="checkbox" data-act="notified" data-i="' + r.id + '"' + (r.notified ? ' checked' : '') + '> Founders informed</label></div>') +
+    '</article>';
+}
+function renderRisks(){
+  const auto = autoRisks();
+  $('#autoRisks').innerHTML = auto.length ? auto.map(r => riskCard(r, true)).join('')
+    : '<p class="empty">No risks detected from the current numbers. That is a real result — say so in the founder update.</p>';
+  const man = state.risks.filter(r => inRange(r.created));
+  $('#manualRisks').innerHTML = man.length ? man.map(r => riskCard(r, false)).join('')
+    : '<p class="empty">Nothing logged manually in ' + rangeLabel() + '.</p>';
+  const crit = auto.filter(r => r.sev === 'Critical').length + man.filter(r => r.sev === 'Critical').length;
+  $('#riskHint').innerHTML = (auto.length + man.length) + ' live risks · <b>' + crit + '</b> critical · ' +
+    man.filter(r => !r.notified).length + ' not yet shared with founders';
+}
+</script>
+
+<script>
+/* ============================ 07 · ownership map ============================ */
+const FOUNDERS = ['Ahmed','Reber'];
+const ROSTER = [
+  ['Jong','Operations Manager'],['Rose','Assistant Operations Manager'],['Marlon','CS Manager / CS Team'],
+  ['Factory','Production (Ms. Lin)'],['Megafulfill','Warehouse (Danilo)'],['Jeffrey','Inventory'],
+  ['Ahmed','Founder'],['Reber','Founder']
+];
+const names = s => String(s || '').split(/[,/]| and /).map(x => x.trim()).filter(Boolean);
+function overlapCheck(o){
+  const dec = names(o.dec), exe = names(o.exe);
+  const issues = [];
+  if(dec.length > 1) issues.push('Two decision owners (' + dec.join(' and ') + '). When both are in the chat, neither is accountable for the call — agree who decides and who is consulted.');
+  if(exe.length > 1 && exe.some(n => FOUNDERS.includes(n)))
+    issues.push('A founder is listed as an executor alongside the team. Founders deciding is normal; founders executing means the ops line is being bypassed.');
+  else if(exe.length > 1) issues.push('Execution is split between ' + exe.join(' and ') + ' — two people can work the same task without knowing it. Name one executor and one backup.');
+  if(dec.some(n => exe.includes(n)) && dec.some(n => FOUNDERS.includes(n)) && exe.includes('Jong'))
+    issues.push('A founder decides and you execute — fine short term, but confirm it is a decision, not a takeover of the area.');
+  const f = state.founder.find(x => x.issue && o.area.toLowerCase().split(/[ &(]/)[0] &&
+    x.issue.toLowerCase().includes(o.area.toLowerCase().split(' ')[0]));
+  if(f && f.dec && !names(o.dec).includes(f.dec))
+    issues.push('The founder tracker shows ' + f.dec + ' currently deciding on “' + f.issue + '”, but this map says ' + o.dec + ' owns the decision. One of the two is out of date.');
+  return issues;
+}
+function renderOwn(){
+  $('#roster').innerHTML = ROSTER.map(r => '<span class="rchip"><b>' + esc(r[0]) + '</b> · ' + esc(r[1]) + '</span>').join('');
+  $('#ownList').innerHTML = state.own.map(o => {
+    const iss = overlapCheck(o);
+    return '<article class="own' + (iss.length ? ' overlap' : '') + '">' +
+      '<div class="rt" style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">' +
+      '<span class="title" style="font-family:var(--disp);font-weight:600;font-size:13px">' + edSpan('own', o.id, 'area', o.area) + '</span>' +
+      '<span>' + (iss.length ? '<span class="sev high">⚠️ Ownership overlap</span> ' : '') +
+      '<button class="x" data-del="own" data-i="' + o.id + '" aria-label="Delete area">&times;</button></span></div>' +
+      '<div class="raci">' +
+        '<div><span class="k">Decision owner</span>' + edSpan('own', o.id, 'dec', o.dec) + '</div>' +
+        '<div><span class="k">Execution owner</span>' + edSpan('own', o.id, 'exe', o.exe) + '</div>' +
+        '<div><span class="k">Consulted</span>' + edSpan('own', o.id, 'cons', o.cons) + '</div>' +
+        '<div><span class="k">Informed only</span>' + edSpan('own', o.id, 'inf', o.inf) + '</div>' +
+      '</div>' +
+      (iss.length ? '<div class="ov"><b>Needs clarification:</b> ' + iss.map(esc).join(' ') + '</div>' : '') +
+      '</article>';
+  }).join('');
+  const n = state.own.filter(o => overlapCheck(o).length).length;
+  $('#ownHint').innerHTML = state.own.length + ' areas mapped · <b>' + n + '</b> with an ownership overlap to clarify';
+}
+
+/* ============================ 08 · founder involvement ============================ */
+const INV_TYPES = ['Normal founder visibility','Founder approval required','Temporary intervention','Operational escalation','Potential ownership shift'];
+function founderRead(){
+  const rows = state.founder.filter(f => inRange(f.created));
+  const shift = rows.filter(f => f.type === 'Potential ownership shift');
+  const temp = rows.filter(f => f.type === 'Temporary intervention');
+  const approval = rows.filter(f => f.type === 'Founder approval required');
+  const decidingForYou = rows.filter(f => FOUNDERS.includes(f.dec) && f.exe === 'Jong' && f.type !== 'Founder approval required');
+  const out = [];
+  out.push('Founders appear on <b>' + rows.length + '</b> issues in ' + rangeLabel() + '. ' +
+    approval.length + ' of those are approval decisions that were always theirs — that is not your responsibility moving.');
+  if(decidingForYou.length) out.push('On <b>' + decidingForYou.length + '</b> issue' + (decidingForYou.length > 1 ? 's' : '') +
+    ' a founder is deciding while you execute: ' + decidingForYou.map(f => '“' + esc(f.issue) + '”').join(', ') +
+    '. Read this as participation in a hot problem, not a transfer — it ends when the problem cools.');
+  if(temp.length) out.push('<b>' + temp.length + '</b> temporary intervention' + (temp.length > 1 ? 's' : '') +
+    '. Ask for the exit condition explicitly: “once the ETA is in writing, I take the daily chase back.”');
+  if(shift.length) out.push('⚠️ <b>' + shift.length + '</b> flagged as a potential ownership shift. This is the only category worth a direct conversation — and the conversation is about scope, not about status.');
+  if(!shift.length && !decidingForYou.length) out.push('No pattern of responsibility moving away from you. Founders are deciding founder-level questions.');
+  return '<div class="warnline' + (shift.length ? ' crit' : '') + '" style="display:block"><b style="display:block;margin-bottom:4px">What the pattern actually says</b>' +
+    out.map(s => '<span class="ln" style="display:block;margin-top:3px">' + s + '</span>').join('') + '</div>';
+}
+function renderFounder(){
+  const rows = state.founder.filter(f => inRange(f.created));
+  $('#founderRead').innerHTML = founderRead();
+  $('#founderTable tbody').innerHTML = rows.length ? rows.map(f =>
+    '<tr>' + ed('founder', f.id, 'issue', f.issue) +
+    '<td>' + sel('founder', f.id, 'type', f.type, INV_TYPES) + '</td>' +
+    ed('founder', f.id, 'prev', f.prev) + ed('founder', f.id, 'cur', f.cur) +
+    ed('founder', f.id, 'dec', f.dec) + ed('founder', f.id, 'exe', f.exe) +
+    ed('founder', f.id, 'rec', f.rec) +
+    '<td>' + dateIn('founder', f.id, 'created', f.created) + '</td>' + delBtn('founder', f.id) + '</tr>').join('')
+    : '<tr><td colspan="9" class="empty">No founder involvement logged in ' + rangeLabel() + '.</td></tr>';
+  $('#founderHint').innerHTML = rows.length + ' issues · ' +
+    rows.filter(f => f.type === 'Founder approval required').length + ' approvals · ' +
+    rows.filter(f => f.type === 'Temporary intervention').length + ' interventions · <b>' +
+    rows.filter(f => f.type === 'Potential ownership shift').length + '</b> possible ownership shift';
+}
+
+/* ============================ 09 · follow-up center ============================ */
+const FU_STATUS = ['Waiting','Answered','Escalated','Dropped'];
+function escalateNeeded(f){
+  if(f.status !== 'Waiting') return false;
+  return overdue(f.due) || days(f.req) >= 5;
+}
+function renderFollow(){
+  const rows = state.follow.filter(f => inRange(f.req));
+  $('#followTable tbody').innerHTML = rows.length ? rows.map(f => {
+    const w = days(f.req), esc_ = escalateNeeded(f);
+    return '<tr class="' + (esc_ ? 'flag-late' : '') + '">' +
+      ed('follow', f.id, 'person', f.person) + ed('follow', f.id, 'need', f.need) +
+      '<td>' + dateIn('follow', f.id, 'req', f.req) + '</td>' +
+      '<td>' + dateIn('follow', f.id, 'last', f.last) + '</td>' +
+      '<td>' + dateIn('follow', f.id, 'due', f.due) + '</td>' +
+      '<td class="num">' + (w === null ? '—' : w) + '</td>' +
+      '<td>' + (esc_ ? '<span class="stat red"><span class="dot red"></span>Escalate</span>' : '<span class="note">no</span>') + '</td>' +
+      '<td>' + sel('follow', f.id, 'status', f.status, FU_STATUS) + '</td>' +
+      delBtn('follow', f.id) + '</tr>';
+  }).join('') : '<tr><td colspan="9" class="empty">Nobody outstanding in ' + rangeLabel() + '.</td></tr>';
+  const waiting = rows.filter(f => f.status === 'Waiting');
+  $('#followHint').innerHTML = waiting.length + ' people owe you something · <b>' +
+    waiting.filter(escalateNeeded).length + '</b> past the point where another reminder helps';
+}
+
+/* ============================ render orchestration ============================ */
+const RENDER = { 'm-health':renderHealth, 'm-triage':renderTriage, 'm-deleg':renderDeleg, 'm-team':renderTeam,
+                 'm-kpi':renderKpis, 'm-risk':renderRisks, 'm-own':renderOwn, 'm-founder':renderFounder, 'm-follow':renderFollow };
+function renderAll(){ Object.values(RENDER).forEach(f => f()); renderMeta(); }
+function renderDerived(){ renderRisks(); renderTriage(); renderOwn(); renderFounder(); }
+function renderMeta(){
+  $('#asof').textContent = 'Operations Manager · ' + state.meta.manager + ' · ' + new Date().toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric'});
+  $('#footStore').textContent = state.meta.store + ' · stores MAGIE / LYN / MARY';
+  $('#hoursToday').value = state.meta.hoursToday ?? '';
+  $('#hoursReactive').value = state.meta.hoursReactive ?? '';
+}
+</script>
+
+<script>
+/* ============================ shared fact base ============================ */
+function facts(){
+  const auto = autoRisks();
+  const worse = state.kpis.map(k => ({k, d:kpiDelta(k)})).filter(x => x.d && x.d.cls.endsWith('bad'))
+    .sort((a,b) => Math.abs(b.d.pct||0) - Math.abs(a.d.pct||0));
+  const better = state.kpis.map(k => ({k, d:kpiDelta(k)})).filter(x => x.d && x.d.cls.endsWith('good'))
+    .sort((a,b) => Math.abs(b.d.pct||0) - Math.abs(a.d.pct||0));
+  const items = visibleInbox().filter(i => !i.done);
+  return {
+    date: new Date().toLocaleDateString(undefined,{month:'long', day:'numeric', year:'numeric'}),
+    range: rangeLabel(),
+    reds: state.health.filter(h => h.status === 'red'),
+    ambers: state.health.filter(h => h.status === 'amber'),
+    greens: state.health.filter(h => h.status === 'green'),
+    worse, better,
+    autoRisks: auto, manualRisks: state.risks,
+    critical: auto.filter(r => r.sev === 'Critical'),
+    decisions: items.filter(i => i.lane === 'ESCALATE').concat(
+      state.founder.filter(f => f.type === 'Founder approval required').map(f => ({text:f.issue, owner:f.dec, lane:'ESCALATE'}))),
+    mine: items.filter(i => i.lane === 'DO MYSELF'),
+    delegated: items.filter(i => i.lane === 'DELEGATE'),
+    monitor: items.filter(i => i.lane === 'MONITOR'),
+    depri: items.filter(i => i.lane === 'DEPRIORITIZE'),
+    lateTasks: state.deleg.filter(t => overdue(t.due) && !['Done','Cancelled'].includes(t.status)),
+    doneTasks: state.deleg.filter(t => t.status === 'Done'),
+    loops: state.deleg.filter(t => (t.fu||0) >= 3 && t.status !== 'Done'),
+    blockedByMe: state.deleg.filter(t => t.blocked === 'By me'),
+    waiting: state.follow.filter(f => f.status === 'Waiting'),
+    stuckWaiting: state.follow.filter(f => f.status === 'Waiting' && escalateNeeded(f)),
+    teamRisk: state.team.filter(p => readPerson(p).level === 'risk'),
+    stale1on1: state.team.filter(p => days(p.last1) > 10),
+    overlaps: state.own.filter(o => overlapCheck(o).length),
+    shifts: state.founder.filter(f => f.type === 'Potential ownership shift'),
+    interventions: state.founder.filter(f => f.type === 'Temporary intervention'),
+    hours: Number(state.meta.hoursToday) || 0,
+    reactive: Number(state.meta.hoursReactive) || 0
+  };
+}
+const H = t => '<h4>' + esc(t) + '</h4>';
+const L = t => '<span class="ln">' + t + '</span>';
+const B = t => '<span class="ln bullet">• ' + t + '</span>';
+const kpiLine = x => esc(x.k.g + ' · ' + x.k.n) + ': ' + num(x.k.v, x.k.dg||0) + ' (from ' + num(kpiPrev(x.k), x.k.dg||0) + ', ' +
+  (x.d.diff > 0 ? '+' : '') + num(x.d.diff, x.k.dg||0) + ')';
+
+/* ============================ 10 · founder update ============================ */
+function buildFounderUpdate(){
+  const f = facts();
+  let h = '';
+  h += H('Ops update — ' + f.date + ' · Jong');
+  h += H('Major results');
+  const wins = f.better.slice(0,4).map(kpiLine).concat(f.doneTasks.slice(0,3).map(t => esc(t.task) + ' — delivered by ' + esc(t.who)));
+  h += (wins.length ? wins.map(B).join('') : B('No clean wins to report this period — the honest read is that we held the line while inventory and production were the constraint.'));
+  h += H('Key numbers');
+  const keyNames = ['Days of stock remaining','Open tickets','Tickets over 24h','Unfulfilled orders','On-time delivery (%)','Refund rate (%)','Planned vs actual (%)'];
+  h += keyNames.map(n => { const k = kpiObj(n); if(!k) return ''; const d = kpiDelta(k);
+    return B(esc(n) + ': <b>' + num(k.v, k.dg||0) + '</b>' + (d ? ' (' + (d.diff>0?'+':'') + num(d.diff,k.dg||0) + ' vs last week)' : '')); }).join('');
+  h += H('Critical problems — issue → action taken → current result → next step');
+  const probs = f.reds.concat(f.ambers.slice(0, Math.max(0, 4 - f.reds.length)));
+  h += probs.map(p => {
+    const rel = state.deleg.find(t => t.task.toLowerCase().split(' ')[0] && p.issue.toLowerCase().includes(t.task.toLowerCase().split(' ')[0]));
+    const action = rel ? rel.task + ' assigned to ' + rel.who : p.next;
+    const result = rel ? (rel.status === 'Done' ? 'closed' : rel.status.toLowerCase() + ', ' + (overdue(rel.due) ? Math.abs(days(rel.due)) + ' days past deadline' : 'on track'))
+                       : (p.status === 'red' ? 'still critical' : 'contained, not closed');
+    return B('<b>' + esc(p.area) + ':</b> ' + esc(p.issue) + ' → <i>action:</i> ' + esc(action) + ' → <i>result:</i> ' + esc(result) +
+      ' → <i>next:</i> ' + esc(p.next) + ' by ' + fmtDate(p.due));
+  }).join('');
+  h += H('Decisions we need from you');
+  h += (f.decisions.length ? f.decisions.slice(0,5).map(x => B(esc(x.text) + (x.owner ? ' — <b>' + esc(x.owner) + '</b>' : ''))).join('')
+    : B('None this period. Everything open is inside operational authority.'));
+  h += H('Next steps (mine, no decision needed)');
+  const next = f.reds.concat(f.ambers).slice(0,5).map(p => esc(p.next) + ' — by ' + fmtDate(p.due));
+  h += next.map(B).join('');
+  if(f.critical.length){ h += H('Risk we are carrying');
+    h += f.critical.slice(0,3).map(r => B('<b>' + esc(r.title) + '</b> — ' + esc(r.impact))).join(''); }
+  return h;
+}
+
+/* ============================ 11 · manager effectiveness check ============================ */
+function buildManagerCheck(){
+  const f = facts();
+  let h = '';
+  h += H('Manager check — ' + f.date);
+  h += H('What you accomplished');
+  const acc = f.doneTasks.map(t => esc(t.task) + ' (' + esc(t.who) + ')')
+    .concat(visibleInbox().filter(i => i.done).map(i => esc(i.text)));
+  h += acc.length ? acc.map(B).join('') : B('Nothing is marked done. If that is wrong, the tracker is not reflecting reality — and an untrue tracker is worse than no tracker.');
+  h += H('What you delegated');
+  h += (f.delegated.length || state.deleg.length)
+    ? f.delegated.map(i => B(esc(i.text) + ' → ' + esc(i.owner || 'unassigned'))).concat(
+        state.deleg.filter(t => inRange(t.assigned)).map(t => B(esc(t.task) + ' → ' + esc(t.who) + ' (due ' + fmtDate(t.due) + ')'))).join('')
+    : B('Nothing delegated in ' + f.range + '.');
+
+  h += H('What you handled that you should not have');
+  const shouldNot = f.mine.filter(i => { const c = classify(i.text); return c.lane === 'DELEGATE' || c.lane === 'MONITOR'; });
+  h += shouldNot.length ? shouldNot.map(i => B('“' + esc(i.text) + '” — the rules read this as <b>' + esc(classify(i.text).lane) +
+      '</b>. ' + esc(classify(i.text).why))).join('')
+    : B('Nothing obvious. Your own-desk list is decisions and authority, which is where it should be.');
+
+  h += H('Where you became the bottleneck');
+  const bott = f.blockedByMe.map(t => B('<b>' + esc(t.who) + '</b> is stopped on “' + esc(t.task) + '” waiting for you — ' + esc(t.notes || 'no note')))
+    .concat(f.mine.length > 6 ? [B('You are personally holding ' + f.mine.length + ' open items. Past about five, you are the queue.')] : []);
+  h += bott.length ? bott.join('') : B('Nothing is waiting on you right now. Protect that.');
+
+  h += H('What to stop doing');
+  const stop = [];
+  f.loops.forEach(t => stop.push('Following up with ' + esc(t.who) + ' on “' + esc(t.task) + '” — ' + (t.fu||0) +
+    ' follow-ups have not produced a result. Stop chasing. One deadline, one named consequence, or reassign.'));
+  if(f.depri.length) stop.push('Re-reading the ' + f.depri.length + ' deprioritized item' + (f.depri.length>1?'s':'') + '. You already decided. Leave them.');
+  if(f.monitor.length > 3) stop.push('Collecting ' + f.monitor.length + ' status numbers by hand. These are KPIs — have them pushed to you on a schedule.');
+  h += stop.length ? stop.map(B).join('') : B('Nothing flagged — unusual, and worth verifying against your actual day.');
+
+  h += H('Follow up tomorrow');
+  const tom = f.waiting.filter(x => escalateNeeded(x)).map(x => esc(x.person) + ' — ' + esc(x.need) + ' (' + days(x.req) + ' days waiting, escalate)')
+    .concat(state.deleg.filter(t => t.nextFU === d(1) || t.nextFU === d(0)).map(t => esc(t.who) + ' — ' + esc(t.task)));
+  h += tom.length ? tom.map(B).join('') : B('Nothing scheduled. Set the next follow-up date on your open delegations so tomorrow is not improvised.');
+
+  h += H('Did your time go to high-impact work?');
+  const ratio = f.hours ? Math.round((f.reactive / f.hours) * 100) : null;
+  if(ratio === null) h += B('Enter your hours above and this becomes a real answer instead of a feeling.');
+  else h += B('You logged <b>' + f.hours + 'h</b>, <b>' + f.reactive + 'h</b> of it reactive — <b>' + ratio + '%</b>. ' +
+    (ratio >= 60 ? 'That is a firefighter&rsquo;s day, not a manager&rsquo;s. Under half should be reactive; the rest belongs to systems, coaching and supplier accountability.'
+     : ratio >= 40 ? 'Borderline. Acceptable in a stockout week; not acceptable as a normal week.'
+     : 'Good ratio. Most of your day went to work only you could do.'));
+
+  h += H('Challenges — read these before you disagree with them');
+  const ch = [];
+  if(f.loops.length) ch.push(['Micromanaging', 'You have followed up ' + sum(f.loops.map(t => t.fu||0)) + ' times across ' + f.loops.length +
+    ' task' + (f.loops.length>1?'s':'') + ' without a result. Follow-up number four is not accountability, it is supervision. Change the terms, not the frequency.']);
+  if(shouldNot.length) ch.push(['Doing employee-level work', shouldNot.length + ' item' + (shouldNot.length>1?'s':'') +
+    ' on your own desk are execution tasks. Every one you keep teaches the team that you will catch it.']);
+  const earlyFU = state.deleg.filter(t => t.lastFU === iso(today()) && !overdue(t.due) && t.status !== 'Blocked');
+  if(earlyFU.length) ch.push(['Following up too early', 'You chased ' + earlyFU.length + ' task' + (earlyFU.length>1?'s':'') +
+    ' today that are not due yet (' + earlyFU.map(t => esc(t.who)).join(', ') + '). Chasing before the deadline tells people the deadline is not the deadline.']);
+  const delegatable = f.mine.length / Math.max(1, f.mine.length + f.delegated.length);
+  if(delegatable > 0.55) ch.push(['Failing to delegate', Math.round(delegatable*100) + '% of the items you triaged today you kept. ' +
+    'With ' + state.team.length + ' people on the org chart, that ratio is a choice you are making every morning.']);
+  const lowImpact = f.mine.filter(i => i.impact === 'low');
+  if(lowImpact.length) ch.push(['Low-impact time', lowImpact.length + ' of your own items are low impact: ' +
+    lowImpact.map(i => '“' + esc(i.text) + '”').join(', ') + '. These do not move a KPI or a risk.']);
+  const overEsc = visibleInbox().filter(i => i.lane === 'ESCALATE' && classify(i.text).lane !== 'ESCALATE');
+  if(overEsc.length) ch.push(['Escalating what founders do not need', overEsc.length + ' escalation' + (overEsc.length>1?'s':'') +
+    ' carries no money, contract or policy decision: ' + overEsc.map(i => '“' + esc(i.text) + '”').join(', ') +
+    '. Founders reading operational detail is how founders end up running operations.']);
+  const unshared = state.risks.filter(r => !r.notified).concat(f.critical.map(r => ({title:r.title, notified:false})));
+  if(unshared.length) ch.push(['Not communicating risk', unshared.length + ' live risk' + (unshared.length>1?'s':'') +
+    ' have not been put in front of Ahmed or Reber — including: ' + unshared.slice(0,2).map(r => '“' + esc(r.title) + '”').join(', ') +
+    '. A risk they hear about late reads as a risk you missed.']);
+  const repeat = f.autoRisks.filter(r => /repeated|again|week over week|deteriorat/i.test(r.title));
+  if(repeat.length) ch.push(['Reacting instead of building systems', repeat.length + ' of your live risks are repeats of last week: ' +
+    repeat.slice(0,2).map(r => '“' + esc(r.title) + '”').join(', ') +
+    '. Repeats are not bad luck — they are a missing SOP, a missing checkpoint or a missing owner.']);
+  if(f.stale1on1.length) ch.push(['Managing people through dashboards', f.stale1on1.map(p => esc(p.name)).join(', ') +
+    ' ' + (f.stale1on1.length>1?'have':'has') + ' not had a 1-on-1 in over ten days. You are reading their numbers and calling it management.']);
+  if(f.overlaps.length) ch.push(['Unclear accountability', f.overlaps.length + ' area' + (f.overlaps.length>1?'s':'') +
+    ' in the ownership map have two owners. Somebody is doing work twice and nobody is answerable for the result.']);
+  h += ch.length ? ch.map(c => '<div class="challenge"><b>' + esc(c[0]) + '.</b> ' + c[1] + '</div>').join('')
+    : '<div class="challenge"><b>No challenge triggered.</b> That is rare enough to be suspicious — check that the tracker reflects your real day before you believe it.</div>';
+  return h;
+}
+
+/* ============================ 12 · weekly review ============================ */
+function buildWeeklyReview(){
+  const f = facts();
+  let h = '';
+  h += H('Weekly operations review — week of ' + fmtDate(state.meta.weekOf));
+  h += H('Wins');
+  h += (f.better.length ? f.better.slice(0,5).map(x => B(kpiLine(x))).join('') : '') +
+       (f.doneTasks.length ? f.doneTasks.map(t => B('Delivered: ' + esc(t.task) + ' (' + esc(t.who) + ')')).join('') : '') +
+       (!f.better.length && !f.doneTasks.length ? B('No measurable win this week. Name that plainly rather than dressing up activity as results.') : '');
+  h += H('Problems');
+  h += f.reds.concat(f.ambers).map(p => B('<b>' + esc(p.area) + ':</b> ' + esc(p.issue))).join('');
+  h += H('KPIs that improved');
+  h += f.better.length ? f.better.map(x => B(kpiLine(x))).join('') : B('None.');
+  h += H('KPIs that deteriorated');
+  h += f.worse.length ? f.worse.slice(0,8).map(x => B(kpiLine(x))).join('') : B('None.');
+  h += H('Team performance concerns');
+  h += (f.teamRisk.length ? f.teamRisk.map(p => B('<b>' + esc(p.name) + '</b> — ' + esc(readPerson(p).text))).join('') : B('No multi-signal concerns.')) +
+       (f.stale1on1.length ? B('1-on-1s overdue: ' + f.stale1on1.map(p => esc(p.name)).join(', ')) : '');
+  h += H('Factory & warehouse performance');
+  ['Planned vs actual (%)','Factory delay (days)','Units produced this week','Avg fulfillment time (days)','On-time delivery (%)','Delivery exceptions']
+    .forEach(n => { const k = kpiObj(n); if(k){ const dd = kpiDelta(k); h += B(esc(n) + ': ' + num(k.v,k.dg||0) + (dd ? ' (' + (dd.diff>0?'+':'') + num(dd.diff,k.dg||0) + ')' : '')); } });
+  h += H('Inventory risks');
+  const inv = f.autoRisks.filter(r => /inventory|stock|production|factory/i.test(r.title));
+  h += inv.length ? inv.map(r => B('<b>' + esc(r.sev) + ':</b> ' + esc(r.title) + ' — ' + esc(r.action))).join('') : B('Stock cover is inside tolerance.');
+  h += H('Customer experience issues');
+  ['Defect complaints','Sizing complaints','Refund rate (%)','Replacement rate (%)','First response time (min)'].forEach(n => {
+    const k = kpiObj(n); if(k){ const dd = kpiDelta(k); h += B(esc(n) + ': ' + num(k.v,k.dg||0) + (dd && dd.cls.endsWith('bad') ? ' — worse than last week' : dd && dd.cls.endsWith('good') ? ' — improving' : '')); } });
+  h += H('Unresolved from this week');
+  const unres = f.lateTasks.map(t => esc(t.task) + ' (' + esc(t.who) + ', ' + Math.abs(days(t.due)) + 'd late)')
+    .concat(f.stuckWaiting.map(w => esc(w.person) + ' — ' + esc(w.need)));
+  h += unres.length ? unres.map(B).join('') : B('Nothing carried over.');
+  h += H('Priorities for next week');
+  h += f.reds.concat(f.ambers).slice(0,5).map(p => B('<b>' + esc(p.area) + ':</b> ' + esc(p.next))).join('');
+  h += H('What improved because of actions taken this week');
+  const caused = f.better.map(x => {
+    const rel = state.deleg.find(t => t.status === 'Done' && x.k.g && t.task.toLowerCase().includes(x.k.g.toLowerCase().split(' ')[0]));
+    return B('<b>' + esc(x.k.n) + '</b> moved ' + (x.d.diff>0?'+':'') + num(x.d.diff, x.k.dg||0) +
+      (rel ? ' — traceable to: ' + esc(rel.task) + ' (' + esc(rel.who) + ')' : ' — no completed action is traceable to this. Treat it as drift, not as a result you produced.'));
+  });
+  h += caused.length ? caused.join('') : B('Nothing improved this week that can be traced to an action you took. That is the most important line in this review — the week was spent absorbing problems rather than changing the system that produces them.');
+  return h;
+}
+</script>
+
+<script>
+/* ============================ Claude assist (optional) ============================ */
+let sampleFn = undefined; // undefined = not resolved yet, null = unavailable
+async function getSample(){
+  if(sampleFn !== undefined) return sampleFn;
+  try { sampleFn = (await window.claude?.use?.('sample')) || null; } catch(e){ sampleFn = null; }
+  return sampleFn;
+}
+function md2html(t){
+  return String(t).split('\n').map(line => {
+    const s = line.trim();
+    if(!s) return '';
+    const bold = x => esc(x).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+    if(/^#{1,4}\s/.test(s)) return '<h4>' + esc(s.replace(/^#{1,4}\s*/,'')) + '</h4>';
+    if(/^[-*•]\s/.test(s)) return '<span class="ln bullet">• ' + bold(s.replace(/^[-*•]\s*/,'')) + '</span>';
+    if(/^\d+[.)]\s/.test(s)) return '<span class="ln bullet">' + bold(s) + '</span>';
+    return '<span class="ln">' + bold(s) + '</span>';
+  }).join('');
+}
+function briefFacts(){
+  const f = facts();
+  const short = a => a.slice(0,8);
+  return JSON.stringify({
+    date: f.date, range: f.range,
+    health: state.health.map(h => ({area:h.area, status:h.status, issue:h.issue, owner:h.owner, next:h.next, due:h.due})),
+    kpis_worse: short(f.worse).map(x => ({kpi:x.k.n, group:x.k.g, now:x.k.v, prev:kpiPrev(x.k)})),
+    kpis_better: short(f.better).map(x => ({kpi:x.k.n, group:x.k.g, now:x.k.v, prev:kpiPrev(x.k)})),
+    risks: f.autoRisks.concat(f.manualRisks).map(r => ({risk:r.title, severity:r.sev, owner:r.owner, action:r.action})),
+    my_items: f.mine.map(i => i.text), delegated_items: f.delegated.map(i => i.text),
+    escalations: f.decisions.map(i => i.text), deprioritized: f.depri.map(i => i.text),
+    delegation: state.deleg.map(t => ({task:t.task, who:t.who, due:t.due, status:t.status, followups:t.fu, blocked:t.blocked})),
+    follow_ups: state.follow.map(w => ({person:w.person, need:w.need, days_waiting:days(w.req), status:w.status})),
+    team: state.team.map(p => ({name:p.name, role:p.role, activity:p.activity, quality:p.quality, attendance:p.attendance,
+      sop:p.sop, repeat_mistakes:p.mistakes, days_since_1on1:days(p.last1)})),
+    ownership_overlaps: f.overlaps.map(o => ({area:o.area, decision:o.dec, execution:o.exe})),
+    founder_involvement: state.founder.map(x => ({issue:x.issue, type:x.type, deciding:x.dec, executing:x.exe})),
+    hours_today: f.hours, reactive_hours: f.reactive
+  });
+}
+const PROMPTS = {
+  founderUpdate: 'You are writing on behalf of Jong, Operations Manager at Maggie\'s Tanks (a DTC tank-top brand), to the two founders Ahmed and Reber. ' +
+    'Write a SHORT update they can read in 60 seconds. Sections, in this order: Major results; Key numbers; Critical problems; Decisions needed from you; Next steps. ' +
+    'Every problem MUST follow: Issue -> Action taken -> Current result -> Next step. Demonstrate ownership: never present a problem without the action already taken. ' +
+    'Cut operational detail founders do not need. No greeting, no sign-off, no flattery. Use "##" for section headings and "-" for bullets. Under 350 words.',
+  managerCheck: 'You are an experienced operations director reviewing Jong, the Operations Manager at Maggie\'s Tanks. ' +
+    'Be direct and unflattering. Do NOT agree by default; your value here is disagreement backed by the data. ' +
+    'Using only the data below, call out specifically: micromanaging, doing employee-level work, excessive follow-up, failure to delegate, ' +
+    'time spent on low-impact problems, escalating things founders should not handle, failing to communicate risk, and reacting instead of building systems. ' +
+    'Quote the specific task, person, number or item that proves each point. If the data does not support a criticism, do not invent one. ' +
+    'End with the single highest-leverage change for tomorrow. Use "##" headings and "-" bullets. Under 300 words.',
+  weeklyReview: 'You are writing Jong\'s weekly operations review for Maggie\'s Tanks. Sections: Wins; Problems; KPIs improved; KPIs deteriorated; ' +
+    'Team concerns; Factory and warehouse; Inventory risks; Customer experience; Unresolved; Priorities for next week; and finally "What improved because of actions taken". ' +
+    'That last section is the important one: only list an improvement if a completed action in the data plausibly caused it, and say plainly when nothing can be traced. ' +
+    'Be concrete, use the numbers. Use "##" headings and "-" bullets. Under 400 words.'
+};
+const BUILDERS = { founderUpdate: buildFounderUpdate, managerCheck: buildManagerCheck, weeklyReview: buildWeeklyReview };
+let activeTab = 'founderUpdate';
+
+async function generate(kind){
+  activeTab = kind;
+  $$('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === kind)));
+  $('#mcInputs').hidden = kind !== 'managerCheck';
+  $('#outHint').textContent = kind === 'founderUpdate' ? 'Written for Ahmed & Reber: results, decisions needed, next steps. No operational noise.'
+    : kind === 'managerCheck' ? 'This is meant to disagree with you. Read the challenges before you dismiss them.'
+    : 'The last section is the one that matters: what improved because of what you did.';
+  const base = BUILDERS[kind]();
+  $('#outBox').innerHTML = base;
+  $('#outSrc').textContent = 'Built from your live data by the rules engine · ' + new Date().toLocaleTimeString();
+  state.out[kind] = base; save();
+
+  const s = await getSample();
+  if(!s) return;
+  $('#outSrc').textContent = 'Rules engine · asking Claude for a second read…';
+  try {
+    const r = await s(PROMPTS[kind] + '\n\nDATA (JSON):\n' + briefFacts(), { modelTier: 'default' });
+    const html = md2html(r.text || '');
+    if(!html.trim()) return;
+    if(kind === 'managerCheck'){
+      $('#outBox').innerHTML = base + '<h4 style="margin-top:20px;border-top:1px solid var(--line);padding-top:14px">Claude&rsquo;s read on the same data</h4>' + html;
+      $('#outSrc').textContent = 'Rules engine + Claude, both from your live data · ' + new Date().toLocaleTimeString();
+    } else {
+      $('#outBox').innerHTML = html;
+      $('#outSrc').textContent = 'Drafted by Claude from your live data · ' + new Date().toLocaleTimeString();
+    }
+    state.out[kind] = $('#outBox').innerHTML; save();
+  } catch(e){ $('#outSrc').textContent = 'Built from your live data by the rules engine (Claude unavailable) · ' + new Date().toLocaleTimeString(); }
+}
+
+async function classifyAll(ids){
+  const items = state.inbox.filter(i => ids.includes(i.id));
+  items.forEach(i => { const c = classify(i.text); i.lane = c.lane; i.why = c.why; i.impact = impactOf(i.text); });
+  renderTriage(); save();
+  const s = await getSample();
+  if(!s) return;
+  try {
+    const res = await s.json('You are triaging the inbox of Jong, Operations Manager at Maggie\'s Tanks (DTC tank-top brand). ' +
+      'Team: Rose (assistant ops), Marlon (CS manager) + CS agents, Jeffrey (inventory), the factory, Megafulfill (warehouse). Founders: Ahmed, Reber.\n' +
+      'For each item return exactly: {"id": string, "lane": one of "DO MYSELF"|"DELEGATE"|"MONITOR"|"ESCALATE"|"DEPRIORITIZE", ' +
+      '"why": one sentence of at most 22 words explaining the call, "owner": who should own it, "impact": "high"|"medium"|"low"}.\n' +
+      'Rules: DO MYSELF only for decisions, standards and supplier escalations carrying the ops manager\'s authority. ' +
+      'DELEGATE anything with a known rule set someone else can execute. MONITOR for KPI readings. ' +
+      'ESCALATE only for money, contract, policy or headcount decisions. DEPRIORITIZE what carries no revenue, risk or deadline this week. ' +
+      'Bias against DO MYSELF — a manager who keeps execution is the failure mode here.\n' +
+      'Return JSON: {"items":[...]}\n\nITEMS:\n' + JSON.stringify(items.map(i => ({id:i.id, text:i.text}))), { modelTier:'default' });
+    (res.items || res || []).forEach(r => {
+      const it = state.inbox.find(x => x.id === r.id);
+      if(it && LANES.includes(r.lane)){ it.lane = r.lane; it.why = r.why || it.why; it.owner = r.owner || it.owner; it.impact = r.impact || it.impact; }
+    });
+    renderTriage(); renderDerived(); save();
+  } catch(e){ /* rules engine result stands */ }
+}
+
+/* ============================ actions ============================ */
+const ACTIONS = {
+  addHealth(){ state.health.push({id:uid('h'), area:'New area', status:'amber', issue:'Describe the issue', owner:'', next:'', due:d(2), updated:iso(today())});
+    save(); renderHealth(); renderDerived(); },
+  addTask(){ state.deleg.unshift({id:uid('t'), task:'New task', who:'', assigned:iso(today()), due:d(3), expect:'What good looks like',
+    status:'Not started', lastFU:null, nextFU:d(1), fu:0, blocked:'No', notes:''}); save(); renderDeleg(); renderDerived();
+    const c = $('#m-deleg'); if(c) c.open = true; },
+  addPerson(){ state.team.push({id:uid('p'), name:'New team member', role:'Role', hours:40, activity:80, tickets:0, tph:0, frt:60,
+    quality:85, attendance:100, mistakes:0, sop:85, coaching:'', last1:iso(today()), plan:''}); save(); renderTeam();
+    const c = $('#m-team'); if(c) c.open = true; },
+  addKpi(){ state.kpis.push({id:uid('k'), g:'Customer Support', n:'New KPI', v:0, dir:'down', h:[0]}); save(); renderKpis();
+    const c = $('#m-kpi'); if(c) c.open = true; },
+  closeWeek(){ state.kpis.forEach(k => { k.h = (k.h || []).concat([Number(k.v)]).slice(-12); });
+    state.meta.weekOf = iso(today()); save(); renderKpis(); renderDerived();
+    setSave('Week closed — this week&rsquo;s values are now history', true); },
+  addRisk(){ state.risks.unshift({id:uid('r'), title:'New risk', sev:'Medium', impact:'What it costs if it lands', owner:'Jong',
+    action:'Recommended action', due:d(5), notified:false, created:iso(today())}); save(); renderRisks();
+    const c = $('#m-risk'); if(c) c.open = true; },
+  addOwn(){ state.own.push({id:uid('o'), area:'New area', dec:'Jong', exe:'', cons:'', inf:''}); save(); renderOwn();
+    const c = $('#m-own'); if(c) c.open = true; },
+  addFounder(){ state.founder.unshift({id:uid('f'), issue:'New issue', type:'Normal founder visibility', prev:'Jong', cur:'Jong',
+    dec:'Jong', exe:'Jong', rec:'', created:iso(today())}); save(); renderFounder();
+    const c = $('#m-founder'); if(c) c.open = true; },
+  addFollow(){ state.follow.unshift({id:uid('w'), person:'Who', need:'What I need', req:iso(today()), last:null, due:d(2), status:'Waiting'});
+    save(); renderFollow(); renderDerived(); const c = $('#m-follow'); if(c) c.open = true; },
+  capture(){
+    const box = $('#capIn'); const lines = box.value.split('\n').map(s => s.trim()).filter(Boolean);
+    if(!lines.length){ box.focus(); return; }
+    const ids = [];
+    lines.forEach(text => { const c = classify(text); const id = uid('i'); ids.push(id);
+      state.inbox.unshift({id, text, lane:c.lane, why:c.why, impact:impactOf(text), owner:'', created:iso(today()), done:false, pin:false}); });
+    box.value = ''; save(); renderTriage(); renderDerived(); classifyAll(ids);
+  },
+  reclassify(){ const open = visibleInbox().filter(i => !i.done).map(i => i.id); if(open.length) classifyAll(open); },
+  pin(btn){ const it = row('inbox', btn.dataset.i); if(!it) return; it.pin = !it.pin; save(); renderTriage(); },
+  doneItem(btn){ const it = row('inbox', btn.dataset.i); if(!it) return; it.done = true; save(); renderTriage(); renderDerived(); },
+  adoptRisk(btn){ const r = JSON.parse(decodeURIComponent(btn.dataset.t));
+    state.risks.unshift({id:uid('r'), title:r.title, sev:r.sev, impact:r.impact, owner:r.owner, action:r.action, due:r.due, notified:false, created:iso(today())});
+    save(); renderRisks(); },
+  notified(el){ const r = row('risks', el.dataset.i); if(!r) return; r.notified = !r.notified; save(); renderRisks(); },
+  founderUpdate(){ $('#m-out').open = true; generate('founderUpdate'); $('#m-out').scrollIntoView({behavior:'smooth', block:'start'}); },
+  managerCheck(){ $('#m-out').open = true; generate('managerCheck'); $('#m-out').scrollIntoView({behavior:'smooth', block:'start'}); },
+  weeklyReview(){ $('#m-out').open = true; generate('weeklyReview'); $('#m-out').scrollIntoView({behavior:'smooth', block:'start'}); },
+  runActive(){ generate(activeTab); },
+  copyOut(btn){ const t = $('#outBox').innerText;
+    navigator.clipboard?.writeText(t).then(() => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy to clipboard', 1600); })
+      .catch(() => { btn.textContent = 'Select the text to copy'; setTimeout(() => btn.textContent = 'Copy to clipboard', 2200); }); },
+  expandAll(){ $$('.mod').forEach(m => m.open = true); saveOpen(); },
+  collapseAll(){ $$('.mod').forEach(m => m.open = false); saveOpen(); },
+  reseed(){ if(!confirm('Replace everything with the original sample data? Your current entries will be lost.')) return;
+    state = sampleState(); save(); renderAll(); }
+};
+
+/* ============================ tabs, range, open-state ============================ */
+$$('.tab').forEach(t => t.addEventListener('click', () => {
+  activeTab = t.dataset.tab;
+  $$('.tab').forEach(x => x.setAttribute('aria-selected', String(x === t)));
+  $('#mcInputs').hidden = activeTab !== 'managerCheck';
+  const saved = state.out[activeTab];
+  $('#outBox').innerHTML = saved || '<p class="empty">Press Generate to build this from your current data.</p>';
+  $('#outSrc').textContent = saved ? 'Last generated version' : '';
+}));
+$('#rangeChips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if(!b) return;
+  range.key = b.dataset.range;
+  $$('#rangeChips .chip').forEach(c => c.setAttribute('aria-pressed', String(c === b)));
+  $('#customRange').hidden = range.key !== 'custom';
+  if(range.key === 'custom' && !range.from){ range.from = d(-14); range.to = iso(today()); $('#rangeFrom').value = range.from; $('#rangeTo').value = range.to; }
+  try { localStorage.setItem(LS + ':range', JSON.stringify(range)); } catch(err){}
+  renderAll();
+});
+['rangeFrom','rangeTo'].forEach(id => $('#' + id).addEventListener('change', () => {
+  range.from = $('#rangeFrom').value; range.to = $('#rangeTo').value;
+  try { localStorage.setItem(LS + ':range', JSON.stringify(range)); } catch(err){}
+  renderAll();
+}));
+['hoursToday','hoursReactive'].forEach(id => $('#' + id).addEventListener('change', e => {
+  state.meta[id] = Number(e.target.value) || 0; save();
+}));
+function saveOpen(){ try { localStorage.setItem(LS + ':open', JSON.stringify($$('.mod').filter(m => m.open).map(m => m.id))); } catch(e){} }
+$$('.mod').forEach(m => m.addEventListener('toggle', saveOpen));
+
+/* ============================ boot ============================ */
+(function boot(){
+  const local = loadLocal();
+  if(local && local.health) state = migrate(local);
+  try { const r = JSON.parse(localStorage.getItem(LS + ':range') || 'null'); if(r && r.key) range = r; } catch(e){}
+  try { const o = JSON.parse(localStorage.getItem(LS + ':open') || 'null');
+    if(Array.isArray(o)) $$('.mod').forEach(m => m.open = o.includes(m.id)); } catch(e){}
+  $$('#rangeChips .chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.range === range.key)));
+  $('#customRange').hidden = range.key !== 'custom';
+  if(range.from) $('#rangeFrom').value = range.from;
+  if(range.to) $('#rangeTo').value = range.to;
+  renderAll();
+  $('#outBox').innerHTML = state.out.founderUpdate || buildFounderUpdate();
+  $('#outSrc').textContent = 'Built from your live data by the rules engine';
+  setSave(local ? 'Saved on this device' : 'Sample data loaded', true);
+  connectDb();
+  getSample().then(s => { if(s) $('#outHint').textContent += ' Claude is available for a second read.'; });
+})();
+</script>
