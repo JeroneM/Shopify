@@ -29,3 +29,25 @@ Excluded from every calculation: SKUs beginning `134821`.
 
 Inventory (free-to-sell, in-production) is **not** in this sheet and must be
 supplied separately.
+
+## SKU renames — apply before joining sales to inventory
+
+The sales sheet and the inventory exports drift apart: ranges get renumbered in
+one and not the other. Always canonicalise before matching, or demand lands on a
+SKU with no stock while stock sits on a SKU with no demand. Each of these has
+already produced a wrong order at least once.
+
+| Old code (sales) | Current code (inventory) | Notes |
+|---|---|---|
+| `QL1058-*` | `QL1076-*` | Renamed 2026-09-17. Built-in Bra Comfort Tank — the largest range. Straight prefix swap; colour and size suffixes are unchanged. |
+| `QA1071-*` | `QL1074-*` | Renamed ~2026-09-02. Brief / Leakproof Underwear. Straight prefix swap. |
+| `QL1047-BLK/GRY/ARMY/KHK/RED-{S,M,L,XL,2XL}` | `QL1047-{black,gray,green,khaki,red}-{s,m,l,x,xxl}` | Two code schemes for the same garment, both live in the sales sheet. `ARMY`=Army green→`green`, `XL`→`x`, `2XL`→`xxl`. Confirmed from the sheet's own product names. |
+
+Still unresolved — do not guess, ask:
+
+- `QL1074` colours. Sales record **CaramelOrange, LavaRed, Nude, Wheat**;
+  inventory records **Brown, Lava, Pink, Purple**. LavaRed↔Lava is near-certain,
+  the rest are not. ~1,668 units of inventory sit under codes with no sales.
+- Within `QL1074`, the SKU colour code and the product-name colour disagree
+  (`QA1071-Beige-*` is titled "Nude"; `QA1071-khaki-*` is titled "Wheat"), which
+  is probably how the drift started.
