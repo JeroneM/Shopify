@@ -5,25 +5,10 @@ sys.path.insert(0,'.')
 import nodes, mapping, mary, elsie, maggies, lyns
 from mapping import M, ISSUES, NR
 
-def mary_paths():
-    """Convert Mary's id->own_amount weeks into path->own_amount."""
-    def path(i):
-        parts=[]; cur=i
-        while cur is not None:
-            nm,par = nodes.NODES[cur]; parts.append(nm); cur=par
-        return ">".join(reversed(parts))
-    out=[]
-    for w in mary.W:
-        d={}
-        for i,v in w.items():
-            if v: d[path(i)] = d.get(path(i),0)+v
-        out.append(d)
-    return out
-
 STORES=[
  ("Simply Elsie",7356,"UTC",elsie.W,elsie.DAILY_CREATED,elsie.DAILY_CLOSED,elsie.TOTALS),
  ("Maggie's Tanks",6576,"UTC",maggies.W,maggies.DAILY_CREATED,maggies.DAILY_CLOSED,maggies.TOTALS),
- ("Mary's Tanks",6377,"UTC+10",mary_paths(),mary.DAILY_CREATED,mary.DAILY_CLOSED,mary.TOTALS),
+ ("Mary's Tanks",6377,"UTC+10",mary.W,mary.DAILY_CREATED,mary.DAILY_CLOSED,mary.TOTALS),
  ("Lyn's Tanks",6527,"UTC",lyns.W,lyns.DAILY_CREATED,lyns.DAILY_CLOSED,lyns.TOTALS),
 ]
 
@@ -52,7 +37,7 @@ def expand(week):
 DAYS=[]
 import datetime as dt
 d0=dt.date(2026,7,1)
-for k in range(69): DAYS.append((d0+dt.timedelta(days=k)).isoformat())
+for k in range(90): DAYS.append((d0+dt.timedelta(days=k)).isoformat())
 WEEKS=[]
 for s,e in zip(nodes.WEEKS,nodes.WEEK_END):
     a=dt.date.fromisoformat(s); b=dt.date.fromisoformat(e)
@@ -60,13 +45,14 @@ for s,e in zip(nodes.WEEKS,nodes.WEEK_END):
                   "label":f"{a.day}–{b.day} {b.strftime('%b')}" if a.month==b.month
                           else f"{a.day} {a.strftime('%b')}–{b.day} {b.strftime('%b')}"})
 
-out={"generated":"2026-09-08","from":"2026-07-01","to":"2026-09-07",
+out={"generated":"2026-09-29","from":"2026-07-01","to":"2026-09-28",
      "days":DAYS,"weeks":WEEKS,"issues":ISSUES,"stores":[]}
 for name,sid,tz,W,dc,dl,tot in STORES:
 
-    # Stores are covered to different dates: only Maggie's could be re-fetched past 25 Aug,
-    # because the Commslayer connection is now pinned to a single account. Pad the uncovered
-    # tail with None (never 0 - a zero would read as "no tickets" instead of "not retrieved").
+    # All four accounts now have their own Commslayer connection, so every store is fetched
+    # over the same 13 weekly windows. The padding below is a no-op while that holds; it stays
+    # so a store that ever falls behind pads with None (never 0 - a zero would read as
+    # "no tickets" instead of "not retrieved").
     NDAY, NWK = len(DAYS), len(WEEKS)
     covWk = len(W) - 1
     covTo = WEEKS[covWk]["i1"]

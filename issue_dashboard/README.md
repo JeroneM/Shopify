@@ -1,15 +1,14 @@
 # Customer Issue Dashboard
 
 Builds a complete-population customer-issue dashboard for four Commslayer accounts
-covering **1 July – 25 August 2026** for all four accounts, and on to **7 September** for
-Maggie's Tanks (see *Coverage* below).
+covering **1 July – 28 September 2026** for all four accounts.
 
 Published artifact: <https://claude.ai/code/artifact/ec8f9d75-a5b9-4537-a6f8-944ed0f0d1fd>
 
 ## Why aggregates instead of ticket rows
 
 `conversations_list` caps at **500 records per account** (10 pages × 50) and accepts
-`days` of at most **30**, so it can neither reach 1 July nor enumerate the 87k+ tickets
+`days` of at most **30**, so it can neither reach 1 July nor enumerate the 144k+ tickets
 in the window. Every figure therefore comes from the **reporting endpoints**, which
 aggregate the whole population server-side:
 
@@ -22,10 +21,15 @@ aggregate the whole population server-side:
 
 | Account | ID | Timezone | Tickets | Classified |
 |---|---|---|---|---|
-| Simply Elsie | 7356 | UTC | 1,561 | 1,292 |
-| Maggie's Tanks | 6576 | UTC | 66,998 | 54,099 |
-| Mary's Tanks | 6377 | UTC+10 | 16,304 | 14,032 |
-| Lyn's Tanks | 6527 | UTC | 2,815 | 2,484 |
+| Simply Elsie | 7356 | UTC | 3,148 | 2,731 |
+| Maggie's Tanks | 6576 | UTC | 114,209 | 94,337 |
+| Mary's Tanks | 6377 | UTC+10 | 24,261 | 20,948 |
+| Lyn's Tanks | 6527 | UTC | 3,067 | 2,723 |
+| **Total** | | | **144,685** | **120,739** |
+
+Each account has its own Commslayer connection (`mcp__CommSlayer_Simply_Elsie__*`,
+`mcp__Commslayer__*` = Maggie's, `mcp__Commslayer_Mary_s_Tank__*`, `mcp__Commslayer_Lyn_s__*`),
+so all four can be refreshed independently.
 
 Account 6570 (*Mary and James*) is deliberately excluded.
 
@@ -33,7 +37,7 @@ Account 6570 (*Mary and James*) is deliberately excluded.
 
 | File | Role |
 |---|---|
-| `nodes.py` | Mary's contact-reason id → (name, parent) registry and the week grid |
+| `nodes.py` | the week grid (and a legacy Mary's id → (name, parent) registry, no longer used) |
 | `elsie.py` `maggies.py` `mary.py` `lyns.py` | per-account weekly `own_amount` counts, an independently fetched full-period checksum, a `WINDOW` dict for a named ad-hoc range, and daily created/closed series |
 | `mapping.py` | maps Commslayer contact-reason paths onto the 10 reported issues and their reasons |
 | `build.py` | validates, expands the mapping and emits `dashboard_data.json` |
@@ -49,10 +53,10 @@ cd issue_dashboard && python3 build.py
 
 ## Resolution
 
-Each account is fetched over **ten non-overlapping weekly windows** that tile the
+Each account is fetched over **thirteen non-overlapping weekly windows** that tile the
 period exactly. Weekly is the finest affordable granularity — the contact-reason tree
 returns the full taxonomy on every call regardless of window size, so per-day fetches
-would be 276 calls of identical size.
+would be 360 calls of identical size.
 
 Consequently:
 
@@ -63,45 +67,53 @@ Consequently:
 
 ## Coverage
 
-Stores are **not covered to the same date**. Commslayer's connection is now pinned to one
-account at a time and no longer exposes account switching, so only the
-currently-connected account can be refreshed:
+All four stores are covered to the **same date**, 28 Sep 2026 — the last fully-elapsed day.
+Every account now has its own connection, so each is fetched over the same thirteen weekly
+windows.
 
-| Store | Covered to |
-|---|---|
-| Simply Elsie, Mary's Tanks, Lyn's Tanks | 25 Aug 2026 |
-| Maggie's Tanks | 7 Sep 2026 |
+Each store still carries `covTo` / `covWk` in `dashboard_data.json`, and days or weeks past a
+store's coverage would be `null` — never `0`. That machinery is currently a no-op but is kept:
+if a store ever falls behind, the dashboard shows **Incomplete Data**, names the short stores,
+prints `—` in their columns, and excludes them from the KPIs, totals and chart for that range
+rather than counting them as zero.
 
-Each store carries `covTo` / `covWk` in `dashboard_data.json`, and days or weeks past a store's
-coverage are `null` — never `0`. Any range ending after 25 August makes the dashboard show
-**Incomplete Data**, name the short stores, and print `—` in their columns; those stores are
-excluded from the KPIs, totals and chart for that range rather than counted as zero. To restore
-four-store coverage, connect the other accounts' `mcp_url` values as separate integrations.
+## History is not frozen
+
+Commslayer keeps classifying tickets **after** the fact, so a window captured weeks ago
+understates itself. Measured on this refresh: Simply Elsie's 1 Jul – 25 Aug was 1,292 classified
+tickets when captured on 8 Sep and is **1,337** now (+3.5%), almost all of it in the last week of
+the window (19–25 Aug went 323 → 370).
+
+**Every week for every store is therefore re-fetched on each refresh**, not carried forward.
+Extending the grid without re-fetching history would silently understate the older weeks.
 
 ## Tickets vs issues
 
 One ticket can carry more than one issue. 29 source reasons are inherently multi-topic
 and expand to several `(issue, reason)` pairs — e.g. *"item arrived damaged and has a
-sizing issue"* becomes 1 ticket and 2 issues. Across the dataset: **87,615 tickets →
-97,851 issues** (1.117 per ticket).
+sizing issue"* becomes 1 ticket and 2 issues. Across the dataset: **144,685 tickets,
+120,739 of them classified → 163,566 issues** (1.13 issues per classified ticket).
+
+Classification coverage is **83.4%**; the remainder carry no contact reason at source. The issue
+table, breakdown and issue KPIs count the classified population, while Total Tickets counts every
+ticket — so issue counts do not add up to the ticket total, by design.
 
 ## Verification
 
-`build.py` reconciles the ten weekly windows against a separately fetched
-full-period total for every account. Result: **1 of 382 reason nodes differs, by 1
-ticket in 71,907 (0.001%)**, caused by a ticket being reclassified between calls.
+`build.py` reconciles the thirteen weekly windows against a separately fetched full-period
+total for every account. Result on this refresh: **398 reason nodes, 0 differences** — all four
+accounts reconcile exactly, and each store's daily series sums to its own reported period total
+to the ticket (`dayDelta = 0` for all four).
 
-Two variances are surfaced in the dashboard rather than smoothed away:
+One variance remains and is surfaced in the dashboard rather than smoothed away:
 
-1. **Mary's UTC+10 boundary** — its daily series covers 16,241 of 16,304 tickets
-   (0.4%); the remainder falls outside the UTC day buckets. The dashboard headlines
-   87,615 (sum of daily series) rather than 87,678 (sum of period totals) so that no
-   two sections can disagree.
-2. **Two closure definitions** — the daily `closed` series (93,334) counts closure
-   events including tickets raised before the window, while `closed_tickets.current`
-   (89,118) is a created-cohort measure. Only the daily series filters by date, so it
-   is used throughout; this is why the resolution rate can exceed 100% when the
-   backlog shrinks.
+- **Two closure definitions** — the daily `closed` series (170,336) counts closure events
+  including tickets raised before the window, while `closed_tickets.current` (130,321) is a
+  created-cohort measure. Only the daily series filters by date, so it is used throughout; this
+  is why the resolution rate can exceed 100% when the backlog shrinks.
+
+Mary's UTC+10 boundary gap (63 tickets in earlier builds) is **gone**: the API now returns its
+dates on the `+10:00` offset and its daily series reconciles exactly.
 
 ## Known limits of the source
 
@@ -135,3 +147,18 @@ Two variances are surfaced in the dashboard rather than smoothed away:
   25 Aug was 249, actually 1,467). Both corrected. Still Maggie's only. 18 further contact-reason nodes
   mapped, including three new multi-issue ones (item damage and size exchange, item fit and refund
   request, order and discount inquiry).
+
+- **29 Sep 2026** - **all four stores brought current to 28 Sep** and the entire dataset re-fetched.
+  Simply Elsie, Mary's Tanks and Lyn's Tanks each gained their own Commslayer connection, ending the
+  single-account pinning that had frozen them at 25 Aug; the grid went from ten weeks to thirteen
+  (1 Jul - 28 Sep, 90 days, no partial days). Crucially, **all 13 weeks were re-fetched for every
+  store rather than extended**, after discovering that Commslayer keeps classifying tickets after
+  capture - Elsie's Jul-Aug window had grown 3.5% since 8 Sep. All four accounts now reconcile
+  exactly (398 nodes, 0 differences) and every daily series matches its period total to the ticket.
+  13 new contact-reason nodes mapped. Dataset: 144,685 tickets, 120,739 classified, 163,566 issues.
+
+  Note on interpretation: Maggie's **re-cut its fit taxonomy** in the week of 2 Sep -
+  *"item fit and damage issue"* collapsed (624 -> 36/wk) and was replaced by *"item fit issue"*
+  (63 -> 1,533/wk) and *"item fit and refund request"* (0 -> 1,143/wk). Sizing, Refund and Product
+  Quality moves across that boundary are therefore substantially reclassification, not a change in
+  what customers wrote in about.

@@ -345,4 +345,19 @@ M={
 "Product question>Product and shipping inquiry>Product and shipping inquiry":[(PRQ,"Sizing / Spec Question"),(SHP,NR)],
 "Order issue>Product inquiry":[(PRQ,NR)],
 "Order issue>Order cancellation inquiry":[(ORD,"Cancel Order")],
+
+# ---- nodes that appeared in the taxonomy after the 2026-09-08 build (added 2026-09-29) ----
+"General inquiry>Empty message":[(OTH,"Empty / Unclear Message")],
+"General inquiry>Empty message inquiry":[(OTH,"Empty / Unclear Message")],
+"General inquiry>Negative feedback complaint":[(OTH,"Complaint")],
+"General inquiry>Website feedback inquiry":[(OTH,"Feedback")],
+"Order issue>Order update inquiry>Order confirmation follow-up":[(ORD,"Order Status")],
+"Order issue>Order confirmation acknowledgement>Product origin and quality>Product quality complaint":[(QUA,"Product Not as Described")],
+"Website technical issue>Website removal confirmation":[(ORD,"Website Problem")],
+"Product inquiry>Donation inquiry":[(PRQ,"General Product Question")],
+"General support request>Fair Trading inquiry":[(OTH,"Complaint")],
+"General support request>Onboarding and setup inquiry":[(OTH,NR)],
+"General support request>Personal loss notification":[(OTH,NR)],
+"General support request>Data privacy inquiry":[(OTH,NR)],
+"General support request>Connect with team member>Locate contact person":[(OTH,NR)],
 }
