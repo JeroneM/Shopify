@@ -360,4 +360,10 @@ M={
 "General support request>Personal loss notification":[(OTH,NR)],
 "General support request>Data privacy inquiry":[(OTH,NR)],
 "General support request>Connect with team member>Locate contact person":[(OTH,NR)],
+# ---- nodes that appeared in the taxonomy after the 2026-09-29 build (added 2026-10-05) ----
+# Mary's: "unsolicited marketing email from a third-party vendor promoting their services".
+"General support request>Marketing solicitation":[(OTH,"Solicitation / Spam")],
+# Elsie's: a forwarded automated notification OR a tracking report - the node conflates the
+# two, so there is no confident issue. Same treatment as "Forwarded email inquiry".
+"General inquiry>Automated system report":[(OTH,NR)],
 }

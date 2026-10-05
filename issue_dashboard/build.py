@@ -37,7 +37,7 @@ def expand(week):
 DAYS=[]
 import datetime as dt
 d0=dt.date(2026,7,1)
-for k in range(90): DAYS.append((d0+dt.timedelta(days=k)).isoformat())
+for k in range(96): DAYS.append((d0+dt.timedelta(days=k)).isoformat())
 WEEKS=[]
 for s,e in zip(nodes.WEEKS,nodes.WEEK_END):
     a=dt.date.fromisoformat(s); b=dt.date.fromisoformat(e)
@@ -45,12 +45,12 @@ for s,e in zip(nodes.WEEKS,nodes.WEEK_END):
                   "label":f"{a.day}–{b.day} {b.strftime('%b')}" if a.month==b.month
                           else f"{a.day} {a.strftime('%b')}–{b.day} {b.strftime('%b')}"})
 
-out={"generated":"2026-09-29","from":"2026-07-01","to":"2026-09-28",
+out={"generated":"2026-10-05","from":"2026-07-01","to":"2026-10-04",
      "days":DAYS,"weeks":WEEKS,"issues":ISSUES,"stores":[]}
 for name,sid,tz,W,dc,dl,tot in STORES:
 
     # All four accounts now have their own Commslayer connection, so every store is fetched
-    # over the same 13 weekly windows. The padding below is a no-op while that holds; it stays
+    # over the same 14 weekly windows. The padding below is a no-op while that holds; it stays
     # so a store that ever falls behind pads with None (never 0 - a zero would read as
     # "no tickets" instead of "not retrieved").
     NDAY, NWK = len(DAYS), len(WEEKS)

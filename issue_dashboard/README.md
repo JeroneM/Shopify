@@ -1,14 +1,14 @@
 # Customer Issue Dashboard
 
 Builds a complete-population customer-issue dashboard for four Commslayer accounts
-covering **1 July – 28 September 2026** for all four accounts.
+covering **1 July – 4 October 2026** for all four accounts.
 
 Published artifact: <https://claude.ai/code/artifact/ec8f9d75-a5b9-4537-a6f8-944ed0f0d1fd>
 
 ## Why aggregates instead of ticket rows
 
 `conversations_list` caps at **500 records per account** (10 pages × 50) and accepts
-`days` of at most **30**, so it can neither reach 1 July nor enumerate the 144k+ tickets
+`days` of at most **30**, so it can neither reach 1 July nor enumerate the 156k+ tickets
 in the window. Every figure therefore comes from the **reporting endpoints**, which
 aggregate the whole population server-side:
 
@@ -21,11 +21,11 @@ aggregate the whole population server-side:
 
 | Account | ID | Timezone | Tickets | Classified |
 |---|---|---|---|---|
-| Simply Elsie | 7356 | UTC | 3,148 | 2,731 |
-| Maggie's Tanks | 6576 | UTC | 114,209 | 94,337 |
-| Mary's Tanks | 6377 | UTC+10 | 24,261 | 20,948 |
-| Lyn's Tanks | 6527 | UTC | 3,067 | 2,723 |
-| **Total** | | | **144,685** | **120,739** |
+| Simply Elsie | 7356 | UTC | 3,260 | 2,837 |
+| Maggie's Tanks | 6576 | UTC | 125,089 | 104,436 |
+| Mary's Tanks | 6377 | UTC+10 | 24,822 | 21,445 |
+| Lyn's Tanks | 6527 | UTC | 3,081 | 2,737 |
+| **Total** | | | **156,252** | **131,455** |
 
 Each account has its own Commslayer connection (`mcp__CommSlayer_Simply_Elsie__*`,
 `mcp__Commslayer__*` = Maggie's, `mcp__Commslayer_Mary_s_Tank__*`, `mcp__Commslayer_Lyn_s__*`),
@@ -53,10 +53,10 @@ cd issue_dashboard && python3 build.py
 
 ## Resolution
 
-Each account is fetched over **thirteen non-overlapping weekly windows** that tile the
+Each account is fetched over **fourteen non-overlapping weekly windows** that tile the
 period exactly. Weekly is the finest affordable granularity — the contact-reason tree
 returns the full taxonomy on every call regardless of window size, so per-day fetches
-would be 360 calls of identical size.
+would be 384 calls of identical size.
 
 Consequently:
 
@@ -67,8 +67,8 @@ Consequently:
 
 ## Coverage
 
-All four stores are covered to the **same date**, 28 Sep 2026 — the last fully-elapsed day.
-Every account now has its own connection, so each is fetched over the same thirteen weekly
+All four stores are covered to the **same date**, 4 Oct 2026 — the last fully-elapsed day.
+Every account has its own connection, so each is fetched over the same fourteen weekly
 windows.
 
 Each store still carries `covTo` / `covWk` in `dashboard_data.json`, and days or weeks past a
@@ -79,36 +79,54 @@ rather than counting them as zero.
 
 ## History is not frozen
 
-Commslayer keeps classifying tickets **after** the fact, so a window captured weeks ago
-understates itself. Measured on this refresh: Simply Elsie's 1 Jul – 25 Aug was 1,292 classified
-tickets when captured on 8 Sep and is **1,337** now (+3.5%), almost all of it in the last week of
-the window (19–25 Aug went 323 → 370).
+Past weeks keep moving in three distinct ways, all of them observed directly by re-fetching.
+
+1. **Late classification.** Commslayer keeps classifying tickets after the fact, so a freshly
+   captured window understates itself. Measured on the 29 Sep refresh: Simply Elsie's
+   1 Jul – 25 Aug was 1,292 classified tickets when captured on 8 Sep and 1,337 three weeks
+   later (+3.5%), concentrated in the final week (19–25 Aug: 323 → 370).
+2. **Closures get reversed.** A resolved ticket that the customer replies to is reopened and
+   stops counting as closed on its original day. Between the 29 Sep and 5 Oct refreshes
+   **1,944 of Maggie's closures were undone**, every one of them in the trailing three weeks and
+   rising toward the most recent days (9 Sep −5, 21 Sep −122, 28 Sep −260). One of Mary's
+   27 Sep closures went the same way (130 → 129).
+3. **Tickets disappear.** One Maggie's conversation created 5 Sep no longer exists — visible as
+   −1 on that day's created series *and* −1 on `Order issue > Edit order` in the week of 2 Sep.
+   The two independent signals agreeing is what pinned it down.
 
 **Every week for every store is therefore re-fetched on each refresh**, not carried forward.
-Extending the grid without re-fetching history would silently understate the older weeks.
+Extending the grid without re-fetching history would silently understate the older weeks and
+overstate past closures.
 
 ## Tickets vs issues
 
 One ticket can carry more than one issue. 29 source reasons are inherently multi-topic
 and expand to several `(issue, reason)` pairs — e.g. *"item arrived damaged and has a
-sizing issue"* becomes 1 ticket and 2 issues. Across the dataset: **144,685 tickets,
-120,739 of them classified → 163,566 issues** (1.13 issues per classified ticket).
+sizing issue"* becomes 1 ticket and 2 issues. Across the dataset: **156,252 tickets,
+131,455 of them classified → 177,819 issues** (1.14 issues per classified ticket).
 
-Classification coverage is **83.4%**; the remainder carry no contact reason at source. The issue
+Classification coverage is **84.1%**; the remainder carry no contact reason at source. The issue
 table, breakdown and issue KPIs count the classified population, while Total Tickets counts every
 ticket — so issue counts do not add up to the ticket total, by design.
 
 ## Verification
 
-`build.py` reconciles the thirteen weekly windows against a separately fetched full-period
-total for every account. Result on this refresh: **398 reason nodes, 0 differences** — all four
-accounts reconcile exactly, and each store's daily series sums to its own reported period total
-to the ticket (`dayDelta = 0` for all four).
+`build.py` reconciles the fourteen weekly windows against a separately fetched full-period
+total for every account, node by node. Result on this refresh: **401 reason nodes, 0 differences**
+— all four accounts reconcile exactly, and each store's daily series sums to its own reported
+period total to the ticket (`dayDelta = 0` for all four).
+
+The checksum earned its keep this time: Maggie's tiled weeks came to 104,437 against a
+full-period 104,436, a single `Order issue > Edit order` ticket. Rather than absorb it, the
+gap was bisected (Jul 1 – Aug 11 clean at 643, Aug 12–25 clean at 386, W11 clean at 507,
+W9 clean at 202) down to the week of **2 September**, where the stored 340 became 339 — the
+ticket that had been deleted. A one-in-104,436 discrepancy is the sort of thing a period total
+alone would never surface.
 
 One variance remains and is surfaced in the dashboard rather than smoothed away:
 
-- **Two closure definitions** — the daily `closed` series (170,336) counts closure events
-  including tickets raised before the window, while `closed_tickets.current` (130,321) is a
+- **Two closure definitions** — the daily `closed` series (185,812) counts closure events
+  including tickets raised before the window, while `closed_tickets.current` (139,965) is a
   created-cohort measure. Only the daily series filters by date, so it is used throughout; this
   is why the resolution rate can exceed 100% when the backlog shrinks.
 
@@ -162,3 +180,17 @@ dates on the `+10:00` offset and its daily series reconciles exactly.
   (63 -> 1,533/wk) and *"item fit and refund request"* (0 -> 1,143/wk). Sizing, Refund and Product
   Quality moves across that boundary are therefore substantially reclassification, not a change in
   what customers wrote in about.
+
+- **5 Oct 2026** - window extended to **4 Oct** (fourteen weeks, 96 days, no partial days). W13 grew
+  from 6 days to the full 23-29 Sep week and a new W14 covers 30 Sep - 4 Oct. The last three weeks
+  were re-fetched per store and the full-period checksum used to *prove* whether anything older had
+  drifted - it had, in three separate ways (see **History is not frozen**): 1,944 of Maggie's
+  closures reversed across 9-28 Sep, one of Mary's 27 Sep closures undone, and one Maggie's ticket
+  from 5 Sep deleted outright. The deleted ticket showed up as a 1-in-104,436 checksum gap on
+  `Order issue > Edit order` and was bisected down to the week of 2 Sep rather than absorbed.
+  Weeks 1-11 were otherwise byte-identical for all four stores, and the first 90 days of every
+  created series matched the stored values exactly - which is what made the three real changes
+  stand out. 2 new contact-reason nodes mapped (*marketing solicitation* -> Solicitation / Spam;
+  *automated system report* -> Needs Review, since the node conflates system notifications with
+  tracking reports). All four accounts reconcile exactly: **401 nodes, 0 differences**.
+  Dataset: 156,252 tickets, 131,455 classified (84.1%), 177,819 issues.
